@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Shipping Policy | Cheapify{% endblock %}
+
+{% block content %}
+<style>
+    .shipping-wrapper {
+        max-width: 850px;
+        margin: 50px auto;
+        padding: 0 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+    .shipping-header { text-align: center; margin-bottom: 40px; }
+    .shipping-header h1 { color: #ff3f6c; font-weight: 800; }
+    
+    .shipping-card {
+        background: #fff;
+        border: 1px solid #eee;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .shipping-card h2 { font-size: 18px; color: #111; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .shipping-card i { color: #ff3f6c; }
+    .shipping-card p { font-size: 14px; color: #666; line-height: 1.6; }
+</style>
+
+<div class="shipping-wrapper">
+    <div class="shipping-header">
+        <h1>Shipping Policy</h1>
+        <p>Cheapify से शॉपिंग करने के लिए शुक्रिया! जानिए आपका ऑर्डर आप तक कैसे पहुँचता है।</p>
+    </div>
+
+    <div class="shipping-card">
+        <h2><i class="fa-solid fa-truck-fast"></i> 1. Delivery Timeline</h2>
+        <p>आमतौर पर हम ऑर्डर मिलने के 24-48 घंटों के भीतर उसे डिस्पैच कर देते हैं। मेट्रो शहरों में डिलीवरी 3-5 दिनों में और बाकी जगहों पर 5-7 वर्किंग दिनों में हो जाती है।</p>
+    </div>
+
+    <div class="shipping-card">
+        <h2><i class="fa-solid fa-hand-holding-dollar"></i> 2. Shipping Charges</h2>
+        <p>₹999 से ऊपर के सभी ऑर्डर्स पर <strong>FREE DELIVERY</strong> है। उससे कम के ऑर्डर्स पर हम एक छोटा सा फ्लैट चार्ज लेते हैं जो चेकआउट के समय दिख जाएगा।</p>
+    </div>
+
+    <div class="shipping-card">
+        <h2><i class="fa-solid fa-location-dot"></i> 3. Order Tracking</h2>
+        <p>जैसे ही आपका पैकेट निकलता है, हम आपको ईमेल और SMS के जरिए एक Tracking Link भेजते हैं जिससे आप देख सकते हैं कि आपका ऑर्डर कहाँ पहुँचा है।</p>
+    </div>
+
+    <div class="shipping-card">
+        <h2><i class="fa-solid fa-box-open"></i> 4. International Shipping</h2>
+        <p>अभी हम सिर्फ भारत (India) के अंदर ही डिलीवरी कर रहे हैं। जल्द ही हम दुनिया भर में पहुँचने की कोशिश करेंगे!</p>
+    </div>
+</div>
+{% endblock %}

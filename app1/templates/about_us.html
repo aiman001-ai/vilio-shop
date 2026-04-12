@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us | Cheapify{% endblock %}
+
+{% block content %}
+<style>
+    .about-section {
+        max-width: 900px;
+        margin: 60px auto;
+        padding: 0 20px;
+        text-align: center;
+        color: #282c3f;
+    }
+    .about-section h1 {
+        font-size: 40px;
+        font-weight: 800;
+        color: #ff3f6c;
+        margin-bottom: 20px;
+    }
+    .about-section p {
+        font-size: 18px;
+        line-height: 1.8;
+        color: #535766;
+        margin-bottom: 30px;
+    }
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 50px;
+    }
+    .stat-box {
+        padding: 30px;
+        background: #f9f9f9;
+        border-radius: 15px;
+        border: 1px solid #eee;
+    }
+    .stat-box h3 { font-size: 24px; color: #ff3f6c; margin-bottom: 10px; }
+    .stat-box p { font-size: 14px; margin: 0; }
+
+    @media (max-width: 600px) {
+        .stats-container { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="about-section">
+    <h1>Welcome to Cheapify</h1>
+    <p>
+        हमारा मानना है कि स्टाइल सिर्फ अमीर लोगों के लिए नहीं है। <strong>Cheapify</strong> की शुरुआत इसलिए हुई ताकि हम आपको लेटेस्ट फैशन, बेस्ट क्वालिटी और ऐसी कीमत में दे सकें जो आपकी जेब पर भारी न पड़े। हम फैशन और समझदारी (Value for money) का मेल हैं।
+    </p>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <h3>100%</h3>
+            <p>Quality Products</p>
+        </div>
+        <div class="stat-box">
+            <h3>Fast</h3>
+            <p>Pan India Delivery</p>
+        </div>
+        <div class="stat-box">
+            <h3>Best</h3>
+            <p>Lowest Price</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 60px;">
+        <h2 style="color: #282c3f;">हमारी कहानी</h2>
+        <p style="font-size: 16px;">
+            Cheapify सिर्फ एक स्टोर नहीं, एक भरोसा है। हम सीधे मैन्युफैक्चरर्स के साथ काम करते हैं ताकि बीच के मार्जिन को हटाकर वो बचत आप तक पहुँचा सकें। हर एक टी-शर्ट और जींस जो आप यहाँ देखते हैं, वो बहुत ही प्यार और सावधानी से चुनी गई है।
+        </p>
+    </div>
+</div>
+{% endblock %}

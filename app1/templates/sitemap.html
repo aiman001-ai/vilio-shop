@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top: 100px; padding-bottom: 80px; max-width: 1000px;">
+    <h1 style="border-bottom: 2px solid #f5f5f6; padding-bottom: 20px; color: #282c3f; font-weight: 700;">Site Map</h1>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-top: 40px;">
+        
+        <div>
+            <h3 style="font-size: 1.1rem; color: #ff3f6c; text-transform: uppercase; margin-bottom: 20px;">Shop by Category</h3>
+            <ul style="list-style: none; padding: 0; line-height: 2.5;">
+                {% for cat in categories %}
+                <li><a href="{% url 'category_default' cat.name|lower %}" style="text-decoration: none; color: #535766; font-weight: 500;">{{ cat.name }} Collection</a></li>
+                {% endfor %}
+                <li><a href="{% url 'insider_page' %}" style="text-decoration: none; color: #535766;">Cheapify Insider</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 style="font-size: 1.1rem; color: #ff3f6c; text-transform: uppercase; margin-bottom: 20px;">Company</h3>
+            <ul style="list-style: none; padding: 0; line-height: 2.5;">
+                <li><a href="/" style="text-decoration: none; color: #535766;">Home</a></li>
+                <li><a href="{% url 'careers' %}" style="text-decoration: none; color: #535766;">Careers</a></li>
+                <li><a href="{% url 'blog_list' %}" style="text-decoration: none; color: #535766;">Blog</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">About Us</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">Contact Us</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 style="font-size: 1.1rem; color: #ff3f6c; text-transform: uppercase; margin-bottom: 20px;">Help & Support</h3>
+            <ul style="list-style: none; padding: 0; line-height: 2.5;">
+                <li><a href="#" style="text-decoration: none; color: #535766;">Track Order</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">Returns & Exchanges</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">Shipping Policy</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">FAQs</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 style="font-size: 1.1rem; color: #ff3f6c; text-transform: uppercase; margin-bottom: 20px;">User Account</h3>
+            <ul style="list-style: none; padding: 0; line-height: 2.5;">
+                <li><a href="/accounts/login/" style="text-decoration: none; color: #535766;">Login</a></li>
+                <li><a href="/accounts/signup/" style="text-decoration: none; color: #535766;">Register</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">My Wishlist</a></li>
+                <li><a href="#" style="text-decoration: none; color: #535766;">My Cart</a></li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

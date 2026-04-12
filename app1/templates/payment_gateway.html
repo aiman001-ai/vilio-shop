@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align: center; margin-top: 100px; padding: 20px;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <h2 class="mt-4">Payment Redirecting...</h2>
+    <p>Please do not refresh the page or press back button.</p>
+    
+    <button id="rzp-button1" style="display:none;">Pay</button>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "{{ razorpay_merchant_key }}", 
+        "amount": "{{ amount }}", // Ye pehle se views se *100 hokar aa raha hai
+        "currency": "INR",
+        "name": "Cheapify",
+        "description": "Order Payment",
+        "order_id": "{{ razorpay_order_id }}", 
+        "handler": function (response){
+            // ✅ UPDATE: address_id ko bhi URL mein pass kar rahe hain
+            window.location.href = "/payment-success/?payment_id=" + response.razorpay_payment_id + 
+                                   "&order_id=" + response.razorpay_order_id + 
+                                   "&address_id={{ address_id }}";
+        },
+        "prefill": {
+            "name": "{{ request.user.username }}",
+            "email": "{{ request.user.email }}"
+        },
+        "theme": {
+            "color": "#f08804" // Cheapify theme color
+        },
+        "modal": {
+            "ondismiss": function(){
+                // Agar user payment cancel karke popup band kare toh wapas cart bhejein
+                window.location.href = "/checkout/";
+            }
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    
+    // Automatic open popup
+    window.onload = function(){
+        rzp1.open();
+    };
+</script>
+{% endblock %}

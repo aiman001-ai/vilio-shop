@@ -1,0 +1,756 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} | Cheapify{% endblock %}
+
+{% block content %}
+<div class="product-container">
+    <div class="gallery-section">
+        <div class="main-img-card">
+            {% if product.image %}
+                <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+                <img id="mainImage" src="{% static 'images/no-image.png' %}" alt="No Image">
+            {% endif %}
+        </div>
+        
+        <div class="thumbnail-row">
+            {% if product.image %}
+                <img class="thumb active" src="{{ product.image.url }}" onclick="changeImage(this.src, this)">
+            {% endif %}
+            
+            {% for variant in variants %}
+                <img class="thumb variant-thumb" src="{{ variant.color_image.url }}" 
+                     onclick="selectVariant('{{ variant.color_image.url }}', '{{ variant.color_name }}', '{{ variant.size_name }}', {{ variant.stock }}, this)">
+            {% endfor %}
+
+            {% for img in product.images.all %}
+                <img class="thumb" src="{{ img.image.url }}" onclick="changeImage(this.src, this)">
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="details-section">
+        
+        
+        <h2 class="brand-name">{{ product.brand|upper }}</h2>
+        <h1 class="prod-title">{{ product.name }}</h1>
+        
+        <div class="price-box">
+            <span class="discount-price">₹{{ product.price }}</span>
+            {% if product.original_price > product.price %}
+                <span class="original-price">₹{{ product.original_price }}</span>
+                <span class="discount-percentage">({{ product.discount_percentage }}% OFF)</span>
+            {% endif %}
+        </div>
+
+        {% if product.has_variants and variants %}
+<div class="selection-box">
+    <h4 class="section-title">SELECT COLOR</h4>
+    <div class="color-options">
+        {% for variant in variants %}
+            <div class="color-item-wrapper" 
+                 onclick="selectVariant('{{ variant.color_image.url }}', '{{ variant.color_name }}', '{{ variant.size_name }}', {{ variant.stock }}, this)">
+                <div class="color-item" title="{{ variant.color_name }}">
+                    <img src="{{ variant.color_image.url }}">
+                </div>
+                <span class="color-label">{{ variant.color_name }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+<h4 class="section-title" style="margin-top: 15px; margin-bottom: 8px;">SELECT SIZE</h4>
+<div class="size-container" id="size-container">
+    {% if not product.has_variants %}
+        {% for s in simple_sizes_list %}
+            <button type="button" 
+                    class="size-btn {% if s.stock <= 0 %}out-of-stock{% endif %}" 
+                    {% if s.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ s.size_name }}', this)"{% endif %}
+                    data-stock="{{ s.stock }}">
+                {{ s.size_name }}
+            </button>
+        {% endfor %}
+    {% else %}
+        <p id="color-msg" style="color: #94969f; font-size: 13px; margin: 0;">Please select a color first.</p>
+    {% endif %}
+</div>
+
+<p id="stock-info" style="font-size: 13px; margin: 5px 0 0 0; font-weight: 700; min-height: 18px;">
+    {% if not product.has_variants %} Select a size {% endif %}
+</p>
+
+        <p class="description">{{ product.description }}</p>
+
+       
+
+        <input type="hidden" id="selectedColor" value="">
+        <input type="hidden" id="selectedSize" value="">
+
+        <div class="action-btns">
+            <button id="cartBtn" onclick="validatedAddToCart('{{ product.id }}')" class="btn-cart">
+                <i class="fa-solid fa-cart-shopping"></i> ADD TO BAG
+            </button>
+            
+            <button id="buyBtn" onclick="validatedBuyNow('{{ product.id }}')" class="btn-buy">
+                <i class="fa-solid fa-bolt"></i> BUY NOW
+            </button>
+        </div>
+        
+        <div class="trust-badges">
+            <span><i class="fa-solid fa-truck"></i> Free Delivery</span>
+            <span><i class="fa-solid fa-rotate-left"></i> 7 Days Return</span>
+            <span><i class="fa-solid fa-shield-halved"></i> 100% Authentic</span>
+        </div>
+
+         <div style="margin-top: 10px;">
+    <a href="javascript:void(0)" onclick="openSizeChart()" style="color: #ff3f6c; font-size: 13px; font-weight: 700; text-decoration: none;">
+        <i class="fa-solid fa-ruler-combined"></i> SIZE CHART
+    </a>
+</div>
+
+<div class="product-specs" style="margin-top: 30px; border-top: 1px solid #f5f5f6; padding-top: 20px;">
+    <h4 class="section-title">PRODUCT DETAILS</h4>
+    
+    {% if product.additional_info %}
+    <p style="font-size: 14px; color: #535766; line-height: 1.6;">
+        {{ product.additional_info }}
+    </p>
+    {% endif %}
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+        {% if product.fabric %}
+        <div class="spec-item">
+            <span style="color: #94969f; font-size: 12px; display: block;">Fabric</span>
+            <span style="color: #282c3f; font-size: 14px; font-weight: 500;">{{ product.fabric }}</span>
+        </div>
+        {% endif %}
+
+        {% if product.fit %}
+        <div class="spec-item">
+            <span style="color: #94969f; font-size: 12px; display: block;">Fit</span>
+            <span style="color: #282c3f; font-size: 14px; font-weight: 500;">{{ product.fit }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if product.care_instructions %}
+    <div style="margin-top: 15px;">
+        <span style="color: #94969f; font-size: 12px; display: block;">Care Instructions</span>
+        <span style="color: #282c3f; font-size: 13px;">{{ product.care_instructions }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<p style="font-size: 12px; color: #94969f; margin-top: 20px;">Product ID: {{ product.id }}</p>
+        
+    </div>
+    
+</div>
+<div class="suggestions-wrapper">
+    <h3 class="section-title">SIMILAR PRODUCTS</h3>
+    <div class="slider-container">
+        <button class="slide-btn prev" onclick="scrollSlider(-1)">&#10094;</button>
+        <button class="slide-btn next" onclick="scrollSlider(1)">&#10095;</button>
+
+        <div class="suggestion-slider" id="suggestionSlider">
+            {% for item in suggestions %}
+            <div class="suggestion-card">
+                <a href="{% url 'product_detail' item.id %}">
+                    <div class="suggest-img-box">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:100%; height:100%; object-fit:cover;">
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}" alt="No Image" style="width:100%; height:100%; object-fit:cover;">
+                        {% endif %}
+                        <div class="suggest-rating">
+    {# Product ID ke base par random rating generate karne ka desi jugaad #}
+    {% with id_last_digit=item.id|stringformat:"s"|slice:"-1:" %}
+        {% if id_last_digit == "1" %}4.2
+        {% elif id_last_digit == "2" %}4.5
+        {% elif id_last_digit == "3" %}4.1
+        {% elif id_last_digit == "4" %}4.7
+        {% elif id_last_digit == "5" %}4.3
+        {% elif id_last_digit == "6" %}4.6
+        {% elif id_last_digit == "7" %}4.4
+        {% elif id_last_digit == "8" %}4.8
+        {% elif id_last_digit == "9" %}4.0
+        {% else %}4.2{% endif %}
+    {% endwith %}
+    
+    <i class="fa-solid fa-star"></i> | 
+    
+    {# Reviews count ko bhi dynamic dikhane ke liye ID ka use #}
+    {{ item.id }}k
+</div>
+                    </div>
+                    <div class="suggest-info">
+                        <h4 class="suggest-brand">{{ item.brand|upper }}</h4>
+                        <p class="suggest-name">{{ item.name|truncatechars:18 }}</p>
+                        <div class="suggest-price-row">
+                            <span class="curr-price">₹{{ item.price }}</span>
+                            {% if item.original_price > item.price %}
+                                <span class="old-price">₹{{ item.original_price }}</span>
+                                <span class="perc-off">{{ item.discount_percentage }}%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}      
+          </div>
+    </div>
+    <div class="brand-service-section">
+    <div class="service-container">
+        <a href="/return-policy/" class="service-item">
+            <div class="service-icon">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+            </div>
+            <div class="service-text">
+                <h4>EASY RETURNS</h4>
+                <p>14 Days Hassle-free Returns</p>
+            </div>
+        </a>
+
+        <a href="{% url 'shipping_policy' %}" class="service-item">
+    <div class="service-icon">
+        <i class="fa-solid fa-truck-fast"></i>
+    </div>
+    <div class="service-text">
+        <h4>FREE SHIPPING</h4>
+        <p>On all orders above ₹999</p>
+    </div>
+</a>
+
+        <a href="{% url 'privacy_policy' %}" class="service-item">
+    <div class="service-icon">
+        <i class="fa-solid fa-user-lock"></i>
+    </div>
+    <div class="service-text">
+        <h4>PRIVACY POLICY</h4>
+        <p>100% Safe & Secure Data</p>
+    </div>
+</a>
+
+        <a href="/about-us/" class="service-item">
+            <div class="service-icon">
+                <i class="fa-solid fa-gem"></i>
+            </div>
+            <div class="service-text">
+                <h4>OUR STORY</h4>
+                <p>Quality fashion, Cheapify prices</p>
+            </div>
+        </a>
+    </div>
+</div>
+</div>
+
+<style>
+    /* 1. Layout Container */
+.product-container { 
+    display: grid; 
+    grid-template-columns: 55% 45%; 
+    gap: 40px; 
+    max-width: 1250px; 
+    margin: 30px auto; 
+    padding: 0 20px; 
+}
+
+/* 2. Gallery Section */
+.gallery-section { 
+    position: sticky; 
+    top: 100px; 
+    height: fit-content; 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.main-img-card { 
+    border: 1px solid #f0f0f0; 
+    background: #fff; 
+    width: 100%;
+    max-width: 450px; 
+    height: 500px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden;
+    margin: 0 auto; 
+}
+
+.main-img-card img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; 
+    padding: 10px; 
+}
+
+.thumbnail-row { 
+    display: flex; 
+    gap: 10px; 
+    margin-top: 15px; 
+    overflow-x: auto; 
+    padding-bottom: 5px; 
+    width: 100%;
+    max-width: 450px; 
+    justify-content: center;
+}
+
+.thumb { 
+    width: 60px; 
+    height: 75px; 
+    object-fit: cover; 
+    border: 1px solid #eee; 
+    cursor: pointer; 
+    flex-shrink: 0; 
+}
+
+.thumb.active { border: 2px solid #ff3f6c; }
+
+/* 3. Product Details Section */
+.brand-name { font-size: 24px; font-weight: 700; color: #282c3f; margin-bottom: 5px; }
+.prod-title { font-size: 20px; color: #535766; font-weight: 400; margin-bottom: 15px; }
+
+.price-box { margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
+.discount-price { font-size: 24px; font-weight: 700; color: #282c3f; }
+.original-price { font-size: 20px; color: #7e818c; text-decoration: line-through; }
+.discount-percentage { font-size: 20px; color: #ff905a; font-weight: 700; }
+
+.section-title { font-size: 14px; font-weight: 700; margin-bottom: 15px; color: #282c3f; }
+.selection-box { margin-bottom: 30px; }
+
+/* Color Options */
+.color-options { display: flex; gap: 12px; flex-wrap: wrap; }
+.color-item-wrapper { cursor: pointer; text-align: center; border: 2px solid transparent; padding: 2px; }
+.color-item { width: 50px; height: 65px; border: 1px solid #eaeaec; }
+.color-item img { width: 100%; height: 100%; object-fit: cover; }
+.color-label { display: block; font-size: 11px; margin-top: 4px; text-transform: capitalize; }
+.color-item-wrapper.active { border-color: #ff3f6c; }
+
+/* Size Options */
+.size-container { display: flex !important; gap: 12px; flex-wrap: wrap; margin-top: 5px !important; align-items: center; }
+.size-btn { min-width: 55px; height: 55px; border-radius: 50%; border: 1px solid #bfc0c6; background: #fff; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.size-btn.active { border: 2px solid #ff3f6c; color: #ff3f6c; }
+.size-btn.out-of-stock { color: #bfc0c6 !important; cursor: not-allowed !important; border: 1px dashed #bfc0c6 !important; opacity: 0.6; background: #f9f9f9 !important; position: relative; }
+.size-btn.out-of-stock::after { content: ""; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: #bfc0c6; transform: rotate(-45deg); }
+
+/* Action Buttons */
+.action-btns { display: flex; gap: 15px; margin-top: 30px; }
+.btn-cart { flex: 1.2; background: #ff3f6c; color: #fff; border: none; padding: 16px; font-weight: 700; font-size: 16px; cursor: pointer; border-radius: 4px; }
+.btn-buy { flex: 0.8; background: #fff; color: #282c3f; border: 1px solid #d4d5d9; padding: 16px; font-weight: 700; font-size: 16px; cursor: pointer; border-radius: 4px; }
+.btn-disabled { background: #f0f0f0 !important; color: #999 !important; cursor: not-allowed !important; pointer-events: none; border: 1px solid #e0e0e0 !important; }
+
+/* Trust Badges */
+.trust-badges { margin-top: 30px; display: flex; gap: 20px; font-size: 13px; font-weight: 600; border-top: 1px solid #f5f5f6; padding-top: 20px; }
+.trust-badges i { color: #ff3f6c; }
+
+/* 4. Suggestion Slider Section */
+.suggestions-wrapper { max-width: 100%; margin: 50px auto; padding: 0 20px; overflow: hidden; }
+.slider-container { position: relative; width: 100%; }
+.suggestion-slider { display: flex; gap: 15px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; -webkit-overflow-scrolling: touch; }
+.suggestion-slider::-webkit-scrollbar { display: none; }
+
+.suggestion-card { flex: 0 0 210px; background: #fff; border: 1px solid #f0f0f0; }
+.suggest-img-box { position: relative; width: 100%; height: 280px; overflow: hidden; }
+.suggest-img-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.suggest-rating { position: absolute; bottom: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); padding: 2px 8px; font-size: 12px; font-weight: 700; color: #282c3f; border-radius: 20px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 2; }
+.suggest-rating i { color: #14958f; font-size: 10px; }
+
+.suggest-info { padding: 12px 10px; }
+.suggest-brand { font-size: 14px; font-weight: 700; color: #282c3f; margin: 0; }
+.suggest-name { font-size: 13px; color: #535766; margin: 3px 0 8px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.suggest-price-row { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
+.curr-price { font-size: 14px; font-weight: 700; color: #282c3f; }
+.old-price { font-size: 12px; color: #7e818c; text-decoration: line-through; }
+.perc-off { font-size: 12px; color: #ff905a; font-weight: 700; }
+
+.slide-btn { position: absolute; width: 40px; height: 40px; background: #fff; border: 1px solid #d4d5d9; border-radius: 50%; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; top: 50%; transform: translateY(-50%); }
+.slide-btn:hover { background: #f5f5f6; }
+.slide-btn.prev { left: -20px; }
+.slide-btn.next { right: -20px; }
+
+/* 5. Brand Service Section */
+.brand-service-section { background: #f9f9f9; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 40px 0; margin-top: 50px; }
+.service-container { max-width: 1250px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 0 20px; }
+.service-item { text-decoration: none; display: flex; align-items: center; gap: 15px; padding: 15px; transition: all 0.3s ease; border-radius: 8px; }
+.service-item:hover { background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transform: translateY(-3px); }
+.service-icon { font-size: 28px; color: #ff3f6c; background: #fff; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 3px 10px rgba(0,0,0,0.03); }
+.service-text h4 { margin: 0; font-size: 14px; font-weight: 700; color: #282c3f; letter-spacing: 0.5px; }
+.service-text p { margin: 4px 0 0 0; font-size: 12px; color: #7e818c; }
+
+/* 6. Responsive Media Queries */
+
+/* Tablet & Smaller Laptops */
+@media (max-width: 1024px) {
+    .service-container { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+}
+
+/* Mobile Devices */
+@media (max-width: 900px) {
+    .product-container { grid-template-columns: 1fr; display: block; padding: 0 15px; overflow-x: hidden; }
+    .gallery-section { position: relative; top: 0; }
+    .main-img-card { height: 350px; }
+    body, html { overflow-x: hidden; width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .suggest-img-box { height: 210px; }
+    .suggest-rating { bottom: 6px; left: 6px; font-size: 10px; padding: 1px 6px; }
+    .suggestion-card { min-width: 160px; }
+    .slide-btn { display: none; }
+}
+
+@media (max-width: 600px) {
+    .brand-service-section { padding: 30px 0; }
+    .service-container { grid-template-columns: 1fr; gap: 15px; }
+    .service-item { border-bottom: 1px solid #eee; padding-bottom: 20px; }
+    .service-item:last-child { border-bottom: none; }
+}
+
+/* Large Screens & Desktop Cleanups */
+@media (min-width: 1400px) {
+    .product-container { gap: 60px; max-width: 1100px; }
+    .suggestion-card { flex: 0 0 190px; max-width: 190px; }
+    .suggest-info { padding: 10px 8px; }
+    .suggest-brand { font-size: 13px; }
+    .suggest-name { font-size: 12px; }
+}
+
+/* --- Final Optimized Size Chart Modal (Image Version) --- */
+.modal-overlay {
+    display: none; 
+    position: fixed; 
+    z-index: 10001; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.7); /* Background thoda dark kiya hai taaki image pop kare */
+    backdrop-filter: blur(5px);
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 12px;
+    width: 92%;
+    max-width: 600px; /* Chart image ke liye perfect width */
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Modal Open Animation */
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-modal {
+    position: absolute;
+    right: 15px; top: 10px;
+    font-size: 32px; 
+    font-weight: 300;
+    color: #333;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 10;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #ff3f6c;
+}
+
+/* Size Chart Image Styling */
+.size-chart-container {
+    margin-top: 25px;
+    width: 100%;
+    text-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.size-chart-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    border: 1px solid #f0f0f0;
+}
+
+/* Jab image na ho tab ke liye style */
+.no-chart-msg {
+    padding: 40px 20px;
+    text-align: center;
+    background: #f9f9f9;
+    border: 1px dashed #d4d5d9;
+    border-radius: 8px;
+    color: #94969f;
+}
+
+/* --- Responsive Media Queries --- */
+
+/* Laptops & Desktops */
+@media (min-width: 992px) {
+    .modal-content { 
+        margin: 60px auto; 
+        padding: 30px; 
+    }
+}
+
+/* Tablets (iPad etc.) */
+@media (max-width: 991px) and (min-width: 768px) {
+    .modal-content { 
+        width: 80%; 
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 767px) {
+    .modal-content { 
+        width: 95%; 
+        margin: 15% auto; 
+        padding: 15px; 
+    }
+    
+    /* Mobile par image ko zoom karke dekhne ke liye scroll allow karein */
+    .size-chart-container {
+        overflow-x: auto;
+    }
+    
+    .size-chart-container img {
+        min-width: 450px; /* Mobile par details choti na ho jayein isliye scroll bar aayega */
+    }
+    
+    .section-title { 
+        font-size: 16px !important; 
+    }
+}
+</style>
+
+<script>
+// --- बदलाव: window.onload हटा दिया ताकि कुछ भी ऑटो-सिलेक्ट न हो ---
+
+function changeImage(src, element) {
+    document.getElementById('mainImage').src = src;
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    element.classList.add('active');
+}
+
+// 1. कलर वेरिएंट चुनने पर साइज बटन्स बनाना
+function selectVariant(imgSrc, colorName, sizeDetails, totalStock, element) {
+    document.getElementById('mainImage').src = imgSrc;
+    document.getElementById('selectedColor').value = colorName;
+    document.getElementById('selectedSize').value = ""; 
+    
+    document.querySelectorAll('.color-item-wrapper').forEach(i => i.classList.remove('active'));
+    element.closest('.color-item-wrapper').classList.add('active');
+
+    const sizeContainer = document.getElementById('size-container');
+    const stockInfo = document.getElementById('stock-info');
+    sizeContainer.innerHTML = ''; 
+
+    // sizeDetails अब "S:10,M:5" फॉर्मेट में आएगा
+    const sizesArray = sizeDetails.split(',');
+
+    sizesArray.forEach((item) => {
+        if (!item) return;
+        // स्टॉक और साइज अलग करें
+        const parts = item.split(':');
+        const sizeName = parts[0];
+        const stock = parts[1] || 0;
+        
+        const btn = document.createElement('button');
+        btn.type = "button";
+        btn.innerText = sizeName;
+        btn.setAttribute('data-stock', stock);
+
+        if (parseInt(stock) <= 0) {
+            btn.className = 'size-btn out-of-stock';
+            btn.disabled = true;
+        } else {
+            btn.className = 'size-btn';
+            btn.onclick = function() { setChosenSize(sizeName, btn); };
+        }
+        sizeContainer.appendChild(btn);
+    });
+
+    stockInfo.innerText = "Select a size";
+    stockInfo.style.color = "#282c3f";
+}
+
+// 2. साइज चुनने पर स्टॉक दिखाना और Simple Product के लिए कलर सेट करना
+function setChosenSize(size, element) {
+    // 1. साइज की वैल्यू इनपुट में डालें
+    document.getElementById('selectedSize').value = size;
+
+    // 2. सबसे ज़रूरी: बिना कलर वाले प्रोडक्ट के लिए कलर "Default" सेट करें
+    const hasVariants = "{{ product.has_variants }}" === "True";
+    if (!hasVariants) {
+        document.getElementById('selectedColor').value = "Default";
+    }
+
+    // 3. बटन्स की Active क्लास अपडेट करें
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    element.classList.add('active');
+
+    // 4. स्टॉक की जानकारी अपडेट करें
+    let stock = element.getAttribute('data-stock');
+    let stockInfo = document.getElementById('stock-info');
+    if (stockInfo && stock !== null) {
+        stockInfo.innerText = "Stock: " + stock;
+        stockInfo.style.color = parseInt(stock) > 0 ? "#155724" : "red";
+    }
+}
+
+function validateSelection() {
+    const color = document.getElementById('selectedColor').value;
+    const size = document.getElementById('selectedSize').value;
+    const hasVariants = "{{ product.has_variants }}" === "True";
+
+    if (hasVariants && !color) {
+        showPopup("⚠️ Please select a Color!");
+        return false;
+    }
+    if (!size) {
+        showPopup("⚠️ Please select a Size!");
+        return false;
+    }
+    
+    // बदलाव: अगर वेरिएंट नहीं है, तो खाली स्ट्रिंग भेजें, 'Default' नहीं
+    return { color: hasVariants ? color : "", size: size };
+}
+
+function validatedAddToCart(productId) {
+    const selection = validateSelection();
+    if (!selection) return;
+    
+    const url = `/add-to-cart/${productId}/?color=${selection.color}&size=${selection.size}`;
+    
+    fetch(url, { 
+        method: 'GET', 
+        headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.login_required) {
+            window.location.href = data.login_url;
+        } else if (data.success) {
+            showPopup("Added to bag! ✅");
+
+            // 🔥 यहाँ से LIVE अपडेट होगा:
+            const badge = document.getElementById('cart-count-badge');
+            if (badge) {
+                badge.innerText = data.global_cart_count; // Backend से नया काउंट लेकर अपडेट करेगा
+                badge.style.display = "block"; // अगर पहले 0 था तो अब दिखाने लगेगा
+            }
+        } else {
+            showPopup("❌ " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        showPopup("❌ Something went wrong!");
+    });
+}
+
+function validatedBuyNow(productId) {
+    const selection = validateSelection();
+    if (!selection) return;
+    window.location.href = `/shop-now/${productId}/?color=${selection.color}&size=${selection.size}`;
+}
+
+function showPopup(msg) {
+    const existing = document.querySelector('.custom-popup');
+    if(existing) existing.remove();
+
+    const p = document.createElement('div');
+    p.className = 'custom-popup';
+    p.innerText = msg;
+    p.style.cssText = `position:fixed; top:120px; right:20px; background:#282c3f; color:white; padding:15px 25px; border-radius:4px; z-index:10000; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:600;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3000);
+}
+
+function scrollSlider(direction) {
+    const slider = document.getElementById('suggestionSlider');
+    // एक बार में 3 कार्ड्स जितना स्क्रॉल होगा
+    const scrollAmount = 230 * 3; 
+    
+    if (direction === 1) {
+        slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    } else {
+        slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    }
+}
+
+// स्लाइडर की बटन विजिबिलिटी कंट्रोल करने के लिए (Optional but Pro)
+const sliderElement = document.getElementById('suggestionSlider');
+if (sliderElement) {
+    sliderElement.addEventListener('scroll', () => {
+        const prevBtn = document.querySelector('.slide-btn.prev');
+        const nextBtn = document.querySelector('.slide-btn.next');
+        
+        // अगर शुरू में है तो Prev बटन छुपाएं
+        if (sliderElement.scrollLeft <= 5) {
+            prevBtn.style.opacity = "0.3";
+            prevBtn.style.pointerEvents = "none";
+        } else {
+            prevBtn.style.opacity = "1";
+            prevBtn.style.pointerEvents = "auto";
+        }
+    });
+}
+
+function openSizeChart() {
+    const modal = document.getElementById('sizeChartModal');
+    if (modal) {
+        modal.style.display = "block";
+        document.body.style.overflow = "hidden"; // Background scroll stop karne ke liye
+    }
+}
+
+function closeSizeChart() {
+    const modal = document.getElementById('sizeChartModal');
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto"; // Scroll vapas chalu karne ke liye
+    }
+}
+
+// Modal ke bahar click karne par band karne ke liye
+window.onclick = function(event) {
+    const modal = document.getElementById('sizeChartModal');
+    if (event.target == modal) {
+        closeSizeChart();
+    }
+}
+
+</script>
+<div id="sizeChartModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeSizeChart()">&times;</span>
+        
+        <h3 class="section-title" style="text-align: center; font-size: 18px; margin-bottom: 15px;">SIZE CHART</h3>
+        
+        <div class="size-chart-img-container" style="text-align: center;">
+            {% if product.size_chart %}
+                <img src="{{ product.size_chart.url }}" alt="Size Chart" style="max-width: 100%; height: auto; border-radius: 4px;">
+            {% else %}
+                <div style="padding: 40px; color: #94969f;">
+                    <i class="fa-solid fa-circle-info" style="font-size: 30px; margin-bottom: 10px;"></i>
+                    <p>Size chart not available for this product.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <p style="font-size: 11px; color: #7e818c; margin-top: 15px; text-align: center;">
+            *Measurements are in inches. Please measure carefully before ordering.
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout | Cheapify{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f1f3f6; font-family: Arial, sans-serif; }
+    .container { width: 90%; margin: 20px auto; display: flex; gap: 20px; }
+    .left { width: 70%; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .right { width: 30%; background: #fff; padding: 20px; border-radius: 4px; height: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    .section-title { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
+    
+    /* Cart Items */
+    .cart-item { display: flex; gap: 15px; border-bottom: 1px solid #eee; padding: 15px 0; }
+    .cart-item img { width: 100px; height: 100px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+    .cart-details h4 { margin: 0 0 5px; font-size: 16px; }
+    
+    /* Address & Payment Boxes */
+    .address-box, .payment-box {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: block;
+        transition: 0.2s;
+    }
+    .address-box:hover, .payment-box:hover { border-color: #f08804; background: #fff9f3; }
+    
+    /* Radio Button styling */
+    input[type="radio"] { margin-right: 10px; accent-color: #f08804; transform: scale(1.2); }
+    
+    .place-btn {
+        width: 100%; padding: 14px; background: #f08804; border: 1px solid #a88734;
+        font-size: 16px; cursor: pointer; font-weight: bold; border-radius: 4px; margin-top: 20px;
+    }
+    .place-btn:hover { background: #e47911; }
+    
+    .price { color: #B12704; font-weight: bold; }
+    .summary-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 15px; }
+    /* --- Media Queries (Responsiveness) --- */
+
+    /* Tablets (992px se niche) */
+    @media (max-width: 992px) {
+        .container { flex-direction: column; width: 98%; }
+        .left, .right { width: 100%; flex: none; box-sizing: border-box; }
+        .right { position: static; order: 2; } /* Mobile par summary niche dikhegi */
+        .left { order: 1; }
+    }
+
+    /* Small Mobile (600px se niche) */
+    @media (max-width: 600px) {
+        .container { margin: 10px auto; }
+        .left, .right { padding: 15px; border-radius: 0; } /* Edge to edge feel */
+        .section-title { font-size: 18px; }
+        
+        .cart-item img { width: 60px; height: 80px; }
+        .cart-details h4 { font-size: 14px; }
+        
+        .address-box, .payment-box { padding: 12px; font-size: 13px; }
+        
+        .place-btn { 
+            position: fixed; /* Amazon/Flipkart jaisa fixed bottom button mobile par */
+            bottom: 0; left: 0; 
+            margin-top: 0; border-radius: 0; 
+            z-index: 1000;
+        }
+        body { padding-bottom: 60px; } /* Button ke liye space */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="left">
+        <h2 class="section-title">Checkout</h2>
+
+        <h3>1. Review Your Items</h3>
+        {% for c in cart_items %}
+        <div class="cart-item">
+            <img src="{{ c.display_image }}" alt="{{ c.product.name }}">
+            <div class="cart-details">
+                <h4>{{ c.product.name }}</h4>
+                <p style="font-size: 14px; color: #555;">
+                    {% if c.color %} <span>Color: <strong>{{ c.color }}</strong></span> {% endif %}
+                    {% if c.size %} <span style="margin-left: 15px;">Size: <strong>{{ c.size }}</strong></span> {% endif %}
+                </p>
+                <p>Qty: {{ c.quantity }}</p>
+                <p class="price">₹{{ c.subtotal }}</p>
+            </div>
+        </div>
+        {% empty %}
+            <p>Your cart is empty.</p>
+        {% endfor %}
+
+        <form method="post" action="{% url 'place_order' %}" id="checkout-form">
+            {% csrf_token %}
+            
+            <h3 style="margin-top: 30px;">2. Select Payment Method</h3>
+            <div class="payment-methods">
+                <label class="payment-box">
+                    <input type="radio" name="payment_method" value="COD" checked>
+                    <strong>Cash on Delivery (COD)</strong>
+                </label>
+                <label class="payment-box">
+                    <input type="radio" name="payment_method" value="ONLINE">
+                    <strong>Online Payment (UPI / Cards / NetBanking)</strong>
+                </label>
+            </div>
+
+            <h3 style="margin-top: 30px;">3. Select Delivery Address</h3>
+            {% for address in addresses %}
+                <label class="address-box">
+                    <input type="radio" name="address_id" value="{{ address.id }}" required>
+                    <strong>{{ address.name }}</strong> — {{ address.phone }}<br>
+                    <span style="font-size: 14px; color: #444;">
+                        {{ address.house }}, {{ address.street }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
+                    </span>
+                </label>
+            {% empty %}
+                <p style="color: red;">No address found. <a href="{% url 'add_address' %}">Add New Address</a></p>
+            {% endfor %}
+
+            {% if addresses %}
+                <button type="submit" class="place-btn">Place Your Order</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="right">
+        <h3 class="section-title">Order Summary</h3>
+        <div class="summary-row">
+            <span>Items:</span>
+            <span>₹{{ total }}</span>
+        </div>
+        <div class="summary-row">
+            <span>Delivery:</span>
+            <span style="color: green;">FREE</span>
+        </div>
+        <hr>
+        <div class="summary-row" style="font-size: 18px;">
+            <strong>Order Total:</strong>
+            <strong class="price">₹{{ total }}</strong>
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 15px;">
+            By placing your order, you agree to Cheapify's privacy notice and conditions of use.
+        </p>
+    </div>
+</div>
+{% endblock %}

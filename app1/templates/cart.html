@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<div style="padding:40px; max-width:900px; margin:auto;">
+    <h1>🛒 Your Cart</h1>
+
+    {% if cart_items %}
+        {% for item in cart_items %}
+            <div id="cart-item-{{ item.item_id }}" style="display:flex; gap:20px; align-items:center; border:1px solid #ccc; padding:15px; margin:15px 0;">
+        
+        <div style="width: 120px;">
+            {% if item.display_image %}
+                <img src="{{ item.display_image }}" width="120" style="border-radius:6px; height: 150px; object-fit: cover;">
+            {% else %}
+                <div style="width:120px; height:150px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:6px;">No Image</div>
+            {% endif %}
+        </div>
+
+        <div style="flex:1;">
+    <h3>{{ item.product.name }}</h3>
+    
+    <p style="margin: 5px 0; color: #555;">
+        {% if item.color %} <span>Color: <strong>{{ item.color }}</strong></span> {% endif %}
+        {% if item.size %} <span style="margin-left: 15px;">Size: <strong>{{ item.size }}</strong></span> {% endif %}
+    </p>
+                    <p>Price: ₹{{ item.product.price }}</p>
+
+                    <div style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                        <button type="button" class="decrease-btn" data-id="{{ item.item_id }}" style="padding:6px 12px; cursor:pointer;">−</button>
+                        <strong id="qty-{{ item.item_id }}">{{ item.quantity }}</strong>
+                        <button type="button" class="increase-btn" data-id="{{ item.item_id }}" style="padding:6px 12px; cursor:pointer;">+</button>
+                    </div>
+
+                    <p><strong>Subtotal: <span id="subtotal-{{ item.item_id }}">₹{{ item.subtotal }}</span></strong></p>
+                </div>
+            </div>
+        {% endfor %}
+
+        <h2 id="total-display" style="margin-top:30px;">Total: ₹{{ total }}</h2>
+
+        <div style="margin-top:30px; text-align:right;">
+            <a href="{% url 'checkout' %}"
+               style="
+                    padding:12px 24px;
+                    background:#28a745;
+                    color:#fff;
+                    text-decoration:none;
+                    border-radius:6px;
+                    font-size:16px;
+                    font-weight:bold;
+               ">
+                Proceed to Checkout →
+            </a>
+        </div>
+        
+    {% else %}
+        <p>Your cart is empty 😔</p>
+    {% endif %}
+
+    <a href="{% url 'home' %}" style="display:inline-block; margin-top:20px;">⬅ Back to Shop</a>
+</div>
+
+<script>
+console.log("Cart JS Loaded!");
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateHeaderBadge() {
+    const cartBadge = document.getElementById('cart-count-badge');
+    if (cartBadge) {
+        let newTotalCount = 0;
+        document.querySelectorAll('[id^="qty-"]').forEach(qtyTag => {
+            newTotalCount += parseInt(qtyTag.innerText) || 0;
+        });
+        cartBadge.innerText = newTotalCount;
+        cartBadge.style.display = newTotalCount > 0 ? 'block' : 'none';
+    }
+}
+
+document.addEventListener("click", function(e) {
+    const btn = e.target;
+    if (btn.classList.contains('increase-btn') || btn.classList.contains('decrease-btn')) {
+        const itemId = btn.getAttribute('data-id');
+        const action = btn.classList.contains('increase-btn') ? 'increase' : 'decrease';
+        const csrftoken = getCookie('csrftoken');
+
+        fetch(`/cart/${action}/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Agar quantity 0 ho gayi toh row hata do
+                if (data.quantity === 0) {
+                    const itemRow = document.getElementById(`cart-item-${itemId}`);
+                    if (itemRow) itemRow.remove();
+                    if (document.querySelectorAll('[id^="cart-item-"]').length === 0) {
+                        location.reload();
+                    }
+                } else {
+                    // UI update karein
+                    const qtyElement = document.getElementById(`qty-${itemId}`);
+                    const subtotalElement = document.getElementById(`subtotal-${itemId}`);
+                    if (qtyElement) qtyElement.innerText = data.quantity;
+                    if (subtotalElement) subtotalElement.innerText = "₹" + data.subtotal;
+                }
+                
+                // Total update karein
+                const totalDisplay = document.getElementById("total-display");
+                if (totalDisplay) totalDisplay.innerText = "Total: ₹" + data.total;
+
+                updateHeaderBadge();
+            } else {
+                // 🚨 YE HAI MAIN ADDITION: Stock khatam hone par alert dikhayega
+                alert(data.message); 
+            }
+        })
+        .catch(err => console.error("Error:", err));
+    }
+});
+</script>
+{% endblock %}

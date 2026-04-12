@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy | Cheapify{% endblock %}
+
+{% block content %}
+<style>
+    .policy-container {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 0 20px;
+        line-height: 1.8;
+        color: #282c3f;
+    }
+    .policy-container h1 { font-size: 32px; font-weight: 800; margin-bottom: 20px; border-bottom: 3px solid #ff3f6c; display: inline-block; }
+    .policy-container h2 { font-size: 20px; margin-top: 30px; color: #111; }
+    .policy-container p { font-size: 15px; color: #535766; margin-bottom: 15px; }
+    .trust-note { background: #f9f9f9; padding: 20px; border-left: 5px solid #ff3f6c; margin: 30px 0; border-radius: 4px; }
+</style>
+
+<div class="policy-container">
+    <h1>Privacy Policy</h1>
+    <p>Last Updated: February 2026</p>
+
+    <div class="trust-note">
+        <strong>Cheapify Promise:</strong> हम आपकी प्राइवेसी का सम्मान करते हैं। आपका डेटा सिर्फ आप तक ऑर्डर पहुँचाने के लिए इस्तेमाल होता है, बेचने के लिए नहीं।
+    </div>
+
+    <h2>1. Information We Collect</h2>
+    <p>जब आप Cheapify से कुछ खरीदते हैं, तो हम आपका नाम, पता, फोन नंबर और ईमेल लेते हैं। यह सब इसलिए ताकि हमारा डिलीवरी बॉय आपके घर तक सही पैकेट पहुँचा सके।</p>
+
+    <h2>2. Data Security</h2>
+    <p>आपका पेमेंट पूरी तरह सुरक्षित है। हम आपके कार्ड डिटेल्स या पिन सेव नहीं करते। हम केवल भरोसेमंद पेमेंट पार्टनर्स (जैसे Razorpay/Cashfree) का उपयोग करते हैं।</p>
+
+    <h2>3. Cookies</h2>
+    <p>हम छोटी कुकीज़ का इस्तेमाल करते हैं ताकि आपको बार-बार लॉगिन न करना पड़े और आपकी कार्ट में सामान सुरक्षित रहे।</p>
+
+    <h2>4. Contact Us</h2>
+    <p>अगर आपके मन में कोई सवाल है, तो हमें यहाँ ईमेल करें: <strong>support@cheapify.com</strong></p>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-top: 80px; padding: 40px 20px; text-align: center; background: #fff;">
+    <h1 style="font-size: 2.5rem; color: #282c3f; letter-spacing: 2px;">CHEAPIFY <span style="color: #ff3f6c;">BLOG</span></h1>
+    <p style="color: #7e818c;">Latest trends, styling tips, and fashion news.</p>
+</div>
+
+<div class="container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
+        {% for blog in blogs %}
+        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s;">
+            <img src="{{ blog.image.url }}" style="width: 100%; height: 250px; object-fit: cover;">
+            <div style="padding: 20px;">
+                <small style="color: #ff3f6c; font-weight: bold; text-transform: uppercase;">{{ blog.created_at|date:"M d, Y" }}</small>
+                <h2 style="margin: 10px 0; font-size: 1.5rem; color: #282c3f;">{{ blog.title }}</h2>
+                <p style="color: #535766; font-size: 14px; line-height: 1.6;">{{ blog.content|truncatewords:20 }}</p>
+                <a href="{% url 'blog_detail' blog.slug %}" style="text-decoration: none; color: #282c3f; font-weight: bold; border-bottom: 2px solid #ff3f6c; padding-bottom: 2px;">Read More</a>
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+            <h3>Coming Soon! Our stylists are writing fresh content for you.</h3>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

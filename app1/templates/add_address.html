@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Address{% endblock %}
+
+{% block content %}
+<style>
+    .address-container {
+        max-width: 600px;
+        margin: 40px auto;
+        border: 1px solid #ddd;
+        padding: 30px;
+        border-radius: 6px;
+        background: #fff;
+    }
+    .address-container h2 {
+        margin-bottom: 20px;
+    }
+    .address-container input,
+    .address-container textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* padding fix karne ke liye */
+    }
+    .address-container button {
+        background: black;
+        color: white;
+        padding: 12px;
+        border: none;
+        width: 100%;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 4px;
+    }
+    .address-container button:hover {
+        background: #333;
+    }
+    /* Pincode loader style */
+    #pin-loader {
+        display: block;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 10px;
+        color: #007bff;
+    }
+</style>
+
+<div class="address-container">
+    <h2>Add New Address</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <input type="text" name="name" placeholder="Full Name" autocomplete="name" required>
+
+        <input type="text" name="mobile" placeholder="Mobile Number" autocomplete="tel" required>
+
+        <input type="text" name="pincode" id="pincode" placeholder="Pincode (6 Digits)" autocomplete="postal-code" maxlength="6" required>
+        <span id="pin-loader"></span>
+
+        <textarea name="address" placeholder="Full Address (House No, Street, Area)" autocomplete="address-line1" rows="3" required></textarea>
+
+        <input type="text" name="city" id="city" placeholder="City" autocomplete="address-level2" required>
+
+        <input type="text" name="state" id="state" placeholder="State" autocomplete="address-level1" required>
+
+        <button type="submit">Save Address</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('pincode').addEventListener('input', function() {
+    const pincode = this.value;
+    const loader = document.getElementById('pin-loader');
+    const cityField = document.getElementById('city');
+    const stateField = document.getElementById('state');
+
+    if (pincode.length === 6) {
+        loader.innerText = "🔍 Fetching location details...";
+        loader.style.color = "#007bff";
+
+        fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data[0].Status === "Success") {
+                const details = data[0].PostOffice[0];
+                cityField.value = details.District;
+                stateField.value = details.State;
+                loader.innerText = "✅ Location found!";
+                loader.style.color = "green";
+            } else {
+                loader.innerText = "❌ Invalid Pincode!";
+                loader.style.color = "red";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            loader.innerText = "⚠️ Could not connect to API";
+        });
+    } else {
+        loader.innerText = "";
+    }
+});
+</script>
+
+{% endblock %}

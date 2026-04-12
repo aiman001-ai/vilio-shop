@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Signup | MyClothing{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signup-box {
+        width: 380px;
+        margin: 80px auto;
+        padding: 25px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    button {
+        width: 100%;
+        padding: 10px;
+        background: black;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="signup-box">
+    <h2>Create Account</h2>
+
+    <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="phone" placeholder="Mobile Number" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Signup</button>
+</form>
+
+
+    <p style="margin-top:10px;">
+        Already have an account?
+        <a href="{% url 'login' %}">Login</a>
+    </p>
+</div>
+
+{% endblock %}

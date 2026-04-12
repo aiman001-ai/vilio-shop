@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}My Addresses{% endblock %}
+
+{% block content %}
+<style>
+    .addr-box {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 15px auto;
+        max-width: 600px;
+        border-radius: 8px;
+        background: #fff;
+    }
+    .edit-link {
+        display: inline-block;
+        margin-top: 10px;
+        background: #417690;
+        color: white !important;
+        padding: 5px 15px;
+        border-radius: 5px;
+        text-decoration: none;
+    }
+</style>
+
+<h2 style="text-align:center; margin-top:20px;">My Saved Addresses</h2>
+
+{% for a in addresses %}
+<div class="addr-box">
+    <strong>{{ a.name }}</strong><br>
+    {{ a.address }}<br>
+    {{ a.city }}, {{ a.state }} - {{ a.pincode }}<br>
+    📞 {{ a.mobile }}
+    <br>
+    <a href="{% url 'edit_address' a.id %}" class="edit-link">✏️ Edit Address</a>
+</div>
+{% empty %}
+<p style="text-align:center;">No address saved yet.</p>
+{% endfor %}
+{% endblock %}

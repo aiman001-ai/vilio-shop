@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="background-color: #f8f9fa; min-height: 100vh; padding: 120px 20px 60px;">
+    <div class="container" style="max-width: 900px; margin: 0 auto;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1 style="color: #282c3f; font-size: 1.8rem; margin: 0;">My Orders</h1>
+            <span style="color: #7e818c;">{{ orders|length }} Items Ordered</span>
+        </div>
+
+        {% for order in orders %}
+        <div style="background: white; border-radius: 12px; border: 1px solid #eaeaec; margin-bottom: 30px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+            
+            <div style="background: #fdfdfd; padding: 15px 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="color: #7e818c; font-size: 13px;">ORDER ID:</span>
+                    <span style="color: #282c3f; font-weight: 600;">#{{ order.id }}</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="color: #7e818c; font-size: 13px;">PLACED ON:</span>
+                    <span style="color: #282c3f; font-weight: 600;">{{ order.created_at|date:"d M Y" }}</span>
+                </div>
+            </div>
+
+            <div style="padding: 25px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 40px; position: relative;">
+                    <div style="position: absolute; top: 15px; left: 5%; right: 5%; height: 2px; background: #e0e0e0; z-index: 1;"></div>
+                    
+                    <div style="z-index: 2; text-align: center; width: 20%;">
+                        <div style="width: 30px; height: 30px; background: #03a685; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                            <i class="fas fa-check" style="font-size: 12px;"></i>
+                        </div>
+                        <span style="font-size: 12px; color: #282c3f; font-weight: 600; display: block;">Placed</span>
+                    </div>
+
+                    <div style="z-index: 2; text-align: center; width: 20%;">
+                        <div style="width: 30px; height: 30px; background: {% if order.status == 'Shipped' or order.status == 'Delivered' %}#03a685{% else %}#e0e0e0{% endif %}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                            <i class="fas fa-truck" style="font-size: 12px;"></i>
+                        </div>
+                        <span style="font-size: 12px; color: #7e818c; display: block;">Shipped</span>
+                    </div>
+
+                    <div style="z-index: 2; text-align: center; width: 20%;">
+                        <div style="width: 30px; height: 30px; background: {% if order.status == 'Delivered' %}#03a685{% else %}#e0e0e0{% endif %}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                            <i class="fas fa-home" style="font-size: 12px;"></i>
+                        </div>
+                        <span style="font-size: 12px; color: #7e818c; display: block;">Delivered</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; align-items: center; background: #fafafa; padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; color: #ff3f6c;">📦</div>
+                    <div>
+                        <p style="margin: 0; color: #282c3f; font-weight: 600;">Tracking Status: <span style="color: #ff3f6c;">{{ order.status|default:"Processing" }}</span></p>
+                        <p style="margin: 5px 0 0; color: #7e818c; font-size: 14px;">Your package is being prepared for the next step.</p>
+                    </div>
+                    <div style="margin-left: auto;">
+                        <a href="#" style="color: #ff3f6c; text-decoration: none; font-weight: bold; font-size: 14px;">DETAILS ></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 100px 20px;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🛍️</div>
+            <h2 style="color: #282c3f;">You haven't ordered anything yet!</h2>
+            <p style="color: #7e818c; margin-bottom: 30px;">Start shopping to fill your wardrobe with the latest trends.</p>
+            <a href="/" style="background: #ff3f6c; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold;">SHOP NOW</a>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    :root {
+        --primary-color: #ff3f6c;
+        --text-dark: #282c3f;
+        --text-light: #7e818c;
+        --border-color: #eaeaec;
+        --success-green: #03a685;
+    }
+
+    .orders-container { 
+        max-width: 850px; 
+        margin: 40px auto; 
+        padding: 0 20px; 
+        font-family: 'Assistant', sans-serif;
+    }
+
+    .page-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    .order-count {
+        font-size: 14px;
+        color: var(--text-light);
+        margin-bottom: 25px;
+    }
+
+    .order-card { 
+        border: 1px solid var(--border-color);
+        border-radius: 4px; 
+        margin-bottom: 20px; 
+        background: #fff; 
+        transition: box-shadow 0.3s ease;
+    }
+
+    .order-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .order-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        background: #f5f5f6;
+        padding: 12px 20px; 
+    }
+
+    .order-id { font-weight: 700; font-size: 13px; color: var(--text-dark); }
+    .order-date { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+    /* Modern Progress Bar */
+    .track-wrapper {
+        padding: 30px 40px 10px 40px;
+    }
+
+    .track-container { 
+        display: flex; 
+        justify-content: space-between; 
+        position: relative; 
+    }
+
+    .track-line { 
+        position: absolute; 
+        top: 6px; 
+        left: 0; 
+        right: 0; 
+        height: 4px; 
+        background: #eaeaec; 
+        z-index: 1;
+        border-radius: 2px;
+    }
+
+    .track-line-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: var(--success-green);
+        z-index: 2;
+        transition: width 0.5s ease;
+    }
+
+    .track-step { 
+        position: relative;
+        z-index: 3;
+        text-align: center; 
+        font-size: 12px; 
+        color: var(--text-light); 
+        background: #fff;
+        padding: 0 10px;
+    }
+
+    .track-step::before {
+        content: '';
+        display: block;
+        width: 12px;
+        height: 12px;
+        background: #eaeaec;
+        border-radius: 50%;
+        margin: 0 auto 8px auto;
+    }
+
+    .track-step.active { color: var(--text-dark); font-weight: 700; }
+    .track-step.active::before { background: var(--success-green); }
+    
+    .track-step.cancelled::before { background: #ff3f6c; }
+
+    /* Status Box */
+    .status-section { 
+        padding: 20px;
+        display: flex; 
+        align-items: flex-start; 
+        gap: 15px; 
+    }
+
+    .status-icon {
+        background: #f5f5f6;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 20px;
+    }
+
+    .status-text-main { font-weight: 700; font-size: 14px; color: var(--text-dark); margin: 0; }
+    .status-text-sub { font-size: 13px; color: var(--text-light); margin: 3px 0 0 0; }
+
+    .btn-details { 
+        margin-left: auto;
+        color: var(--primary-color); 
+        font-weight: 700; 
+        text-decoration: none; 
+        font-size: 12px; 
+        border: 1px solid var(--border-color);
+        padding: 8px 15px;
+        border-radius: 2px;
+    }
+
+    /* Professional Cancel Button */
+    .btn-cancel {
+        background: transparent; 
+        color: var(--text-dark); 
+        border: 1px solid #d4d5d9;
+        padding: 8px 16px; 
+        border-radius: 2px; 
+        cursor: pointer; 
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover { 
+        border-color: var(--text-dark);
+        background: #fafafa;
+    }
+
+    .cancelled-tag {
+        color: #ff3f6c;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .order-footer {
+        padding: 12px 20px;
+        border-top: 1px dotted var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        background: #fff;
+    }
+
+    .total-amount { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+</style>
+
+<div class="orders-container">
+    <h3 class="page-title">My Orders</h3>
+    <p class="order-count">Total {{ orders.count }} orders placed</p>
+
+    {% for order in orders %}
+    <div class="order-card">
+        <div class="order-header">
+            <div>
+                <div class="order-id">Order ID: #{{ order.id }}</div>
+                <div class="order-date">Placed on {{ order.created_at|date:"d M Y, h:i A" }}</div>
+            </div>
+            
+            <div>
+                {% if order.status|lower == 'cancelled' %}
+                    <span class="cancelled-tag">Cancelled</span>
+                {% elif order.can_cancel %}
+                    <form action="{% url 'cancel_order' order.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-cancel" onclick="return confirm('Do you really want to cancel this order?')">Cancel Order</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="track-wrapper">
+            <div class="track-container">
+                <div class="track-line">
+                    <div class="track-line-progress" style="width: 
+                        {% if order.status|lower == 'placed' %}10%
+                        {% elif order.status|lower == 'shipped' %}50%
+                        {% elif order.status|lower == 'delivered' %}100%
+                        {% else %}0%{% endif %};">
+                    </div>
+                </div>
+
+                <div class="track-step {% if order.status|lower != 'cancelled' %}active{% endif %}">Placed</div>
+                <div class="track-step {% if order.status|lower == 'shipped' or order.status|lower == 'delivered' %}active{% endif %}">Shipped</div>
+                <div class="track-step {% if order.status|lower == 'delivered' %}active{% endif %}">Delivered</div>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <div class="status-icon">
+                {% if order.status|lower == 'cancelled' %}📑{% else %}📦{% endif %}
+            </div>
+            <div style="flex-grow: 1;">
+                <p class="status-text-main">
+                    {% if order.status|lower == 'cancelled' %}Order Cancelled{% else %}Status: {{ order.status }}{% endif %}
+                </p>
+                <p class="status-text-sub">
+                    {% if order.status|lower == 'cancelled' %}
+                        This order was cancelled. Refund (if any) will be processed as per policy.
+                    {% elif order.status|lower == 'delivered' %}
+                        Your item has been delivered.
+                    {% else %}
+                        Your package is being prepared for the next step.
+                    {% endif %}
+                </p>
+            </div>
+            <a href="#" class="btn-details">VIEW DETAILS</a>
+        </div>
+        
+        <div class="order-footer">
+            <span class="total-amount">Total Paid: ₹{{ order.total_amount }}</span>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 50px; background: #fff; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-light);">You haven't placed any orders yet.</p>
+        <a href="/" style="color: var(--primary-color); font-weight: 700; text-decoration: none;">START SHOPPING</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

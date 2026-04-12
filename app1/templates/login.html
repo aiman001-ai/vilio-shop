@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}Login | Cheapify{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-box {
+        width: 350px;
+        margin: 100px auto;
+        padding: 30px;
+        border: 1px solid #ddd;
+        text-align: center;
+        border-radius: 6px;
+    }
+
+    .google-btn {
+        display: block;
+        padding: 12px;
+        background: #4285F4;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 4px;
+    }
+
+    .google-btn:hover {
+        background: #357ae8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-box">
+    <h2>Login</h2>
+
+    <a href="{% provider_login_url 'google' %}" class="google-btn">
+        🔐 Login with Google
+    </a>
+</div>
+{% endblock %}

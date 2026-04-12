@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Address{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #fff; font-family: sans-serif;">
+    <h2 style="text-align: center; color: #417690;">Edit Address Details</h2>
+    <hr>
+    <form method="POST">
+        {% csrf_token %}
+        <div style="margin-bottom: 15px;">
+            <label>Full Name</label>
+            <input type="text" name="name" value="{{ a.name }}" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" required>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label>Mobile Number</label>
+            <input type="text" name="mobile" value="{{ a.mobile }}" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" required>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label>Address (House No, Street, Area)</label>
+            <textarea name="address" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" rows="3" required>{{ a.address }}</textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label>City</label>
+                <input type="text" name="city" value="{{ a.city }}" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" required>
+            </div>
+            <div style="flex: 1;">
+                <label>Pincode</label>
+                <input type="text" name="pincode" value="{{ a.pincode }}" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" required>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label>State</label>
+            <input type="text" name="state" value="{{ a.state }}" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;" required>
+        </div>
+        
+        <button type="submit" style="background: #417690; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; width: 100%; font-size: 16px; font-weight: bold;">💾 Save Changes</button>
+        
+        <p style="text-align: center; margin-top: 15px;">
+            <a href="{% url 'my_addresses' %}" style="text-decoration: none; color: #666;">Cancel</a>
+        </p>
+    </form>
+</div>
+{% endblock %}

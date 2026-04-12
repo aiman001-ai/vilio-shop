@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Return & Exchange Policy | Cheapify{% endblock %}
+
+{% block content %}
+<style>
+    .return-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 0 20px;
+        color: #282c3f;
+    }
+    .return-header { text-align: center; margin-bottom: 40px; }
+    .return-header h1 { color: #ff3f6c; font-weight: 800; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    
+    .policy-box {
+        background: #fff;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+    }
+    .step { margin-bottom: 25px; }
+    .step h3 { font-size: 18px; margin-bottom: 10px; color: #111; display: flex; align-items: center; gap: 10px; }
+    .step i { color: #ff3f6c; font-size: 20px; }
+    .step p { font-size: 15px; color: #535766; line-height: 1.6; padding-left: 30px; }
+    
+    .important-note {
+        background: #fff1f4;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #ff3f6c;
+        font-size: 14px;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="return-container">
+    <div class="return-header">
+        <h1>Returns & Exchanges</h1>
+        <p>फिटिंग सही नहीं आई? चिंता मत करो, हम यहाँ हैं!</p>
+    </div>
+
+    <div class="policy-box">
+        <div class="step">
+            <h3><i class="fa-solid fa-calendar-check"></i> 14 Days Window</h3>
+            <p>आप डिलीवरी के 14 दिनों के भीतर अपना प्रोडक्ट रिटर्न या एक्सचेंज कर सकते हैं। बस ध्यान रहे कि टैग लगा होना चाहिए और कपड़ा इस्तेमाल किया हुआ न हो।</p>
+        </div>
+
+        <div class="step">
+            <h3><i class="fa-solid fa-rotate"></i> Easy Exchange</h3>
+            <p>अगर साइज का इशू है, तो हम बिना किसी एक्स्ट्रा चार्ज के उसे एक्सचेंज कर देंगे। हमारा डिलीवरी बॉय नया साइज लेकर आएगा और पुराना वाला ले जाएगा।</p>
+        </div>
+
+        <div class="step">
+            <h3><i class="fa-solid fa-indian-rupee-sign"></i> Full Refund</h3>
+            <p>रिटर्न के मामले में, क्वालिटी चेक होने के 48 घंटों के भीतर आपका पैसा आपके ओरिजिनल पेमेंट मोड (या बैंक अकाउंट) में वापस आ जाएगा।</p>
+        </div>
+
+        <div class="step">
+            <h3><i class="fa-solid fa-ban"></i> क्या रिटर्न नहीं होगा?</h3>
+            <p>इनरवियर (Underwear), मोजे (Socks), और 'Final Sale' वाले प्रोडक्ट्स हाइजीन कारणों से रिटर्न नहीं किए जा सकते।</p>
+        </div>
+
+        <div class="important-note">
+            <strong>Note:</strong> रिटर्न रिक्वेस्ट डालने के लिए अपनी 'My Orders' सेक्शन में जाएँ या हमें <strong>returns@cheapify.com</strong> पर मेल करें।
+        </div>
+    </div>
+</div>
+{% endblock %}

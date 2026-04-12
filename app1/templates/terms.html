@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="background-color: #f4f4f7; min-height: 100vh; padding: 100px 20px;">
+    <div style="max-width: 850px; margin: 0 auto; background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.1); border-radius: 2px; position: relative; overflow: hidden;">
+        
+        <div style="height: 8px; background: linear-gradient(to right, #ff3f6c, #282c3f);"></div>
+
+        <div style="padding: 60px;">
+            <div style="border-bottom: 2px solid #eee; padding-bottom: 30px; margin-bottom: 40px;">
+                <h1 style="font-family: 'Times New Roman', serif; font-size: 2.8rem; color: #1a1a1a; margin: 0;">Legal Agreement</h1>
+                <p style="color: #ff3f6c; font-weight: bold; margin-top: 10px; letter-spacing: 1px;">CHEAPIFY INDIA - VERSION 2.0</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <span style="background: #eee; padding: 5px 12px; border-radius: 20px; font-size: 12px; color: #666;">Effective: Feb 2026</span>
+                    <button onclick="window.print()" style="background: none; border: 1px solid #ddd; padding: 5px 15px; border-radius: 5px; cursor: pointer; color: #535766;">
+                        <i class="fas fa-print"></i> Print Document
+                    </button>
+                </div>
+            </div>
+
+            <div style="position: relative;">
+                
+                <div style="display: flex; margin-bottom: 50px;">
+                    <div style="font-size: 3rem; font-weight: 900; color: #f0f0f0; min-width: 80px; line-height: 1;">01</div>
+                    <div>
+                        <h3 style="color: #282c3f; margin-top: 10px;">User Eligibility</h3>
+                        <p style="color: #535766; line-height: 1.8; font-size: 1.05rem;">
+                            Cheapify provides its services to users who are legally capable of forming binding contracts. 
+                            By browsing, you agree that you are not a minor or are under direct adult supervision. 
+                            We reserve the right to restrict access to any user without prior notice.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; margin-bottom: 50px;">
+                    <div style="font-size: 3rem; font-weight: 900; color: #f0f0f0; min-width: 80px; line-height: 1;">02</div>
+                    <div>
+                        <h3 style="color: #282c3f; margin-top: 10px;">Platform Usage & Security</h3>
+                        <p style="color: #535766; line-height: 1.8; font-size: 1.05rem;">
+                            Your account is your responsibility. Any activity originating from your IP or account will be 
+                            deemed as your action. Unauthorized scraping or data mining on Cheapify is strictly prohibited 
+                            and will result in legal action.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; margin-bottom: 50px;">
+                    <div style="font-size: 3rem; font-weight: 900; color: #f0f0f0; min-width: 80px; line-height: 1;">03</div>
+                    <div>
+                        <h3 style="color: #282c3f; margin-top: 10px;">Intellectual Property</h3>
+                        <p style="color: #535766; line-height: 1.8; font-size: 1.05rem;">
+                            All graphics, logos, and product descriptions are the exclusive property of Cheapify. 
+                            Reproduction of any content without written consent will lead to immediate termination of service.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: #282c3f; color: white; padding: 30px; border-radius: 4px; margin-top: 40px;">
+                    <h4 style="color: #ff3f6c; margin-top: 0;">Limitation of Liability</h4>
+                    <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 0;">
+                        Cheapify shall not be liable for any indirect, incidental, or consequential damages resulting 
+                        from the use or inability to use our services or products.
+                    </p>
+                </div>
+
+            </div>
+
+            <div style="margin-top: 60px; text-align: center; border-top: 1px dashed #ccc; padding-top: 30px;">
+                <p style="color: #999; font-size: 14px;">Questions regarding these terms?</p>
+                <a href="{% url 'contact_us' %}" style="color: #282c3f; font-weight: bold; text-decoration: none; border-bottom: 2px solid #ff3f6c;">Contact Legal Team</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
