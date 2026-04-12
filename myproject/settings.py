@@ -15,7 +15,8 @@ SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.10', '127.0.0.1', 'localhost', '*']
+# settings.py
+ALLOWED_HOSTS = ['vilio-shop.onrender.com', 'localhost', '127.0.0.1']
 
 
 # ======================
