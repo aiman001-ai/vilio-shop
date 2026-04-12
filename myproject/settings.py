@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
-DEBUG = True
+DEBUG = False
 
 # settings.py
 ALLOWED_HOSTS = ['vilio-shop.onrender.com', 'localhost', '127.0.0.1']
@@ -96,9 +96,13 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        # Niche apni Neon wali string paste karein
-        default='postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require',
-        conn_max_age=600,
+        # Render par jo DATABASE_URL set kiya hai, ye use uthayega
+        default=os.environ.get('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'),
+        
+        # Ye hai wo magic line speed ke liye
+        conn_max_age=600, 
+        
+        # Neon (Postgres) ke liye ye zaroori hai
         ssl_require=True
     )
 }
