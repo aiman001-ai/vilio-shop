@@ -104,7 +104,6 @@ DATABASES = {
     'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb')
 }
 
-# In teen lines ka hona bohot zaroori hai
 DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['default']['OPTIONS'] = {
     'sslmode': 'require',
