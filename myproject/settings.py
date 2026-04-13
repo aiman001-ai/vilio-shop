@@ -20,6 +20,11 @@ ALLOWED_HOSTS = ['vilio-shop.onrender.com', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = ['https://vilio-shop.onrender.com']
 
+# Ye do lines aur add karein
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+
 # ======================
 # Application definition
 # ======================
@@ -96,17 +101,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # ==========
 
 DATABASES = {
-    'default': dj_database_url.config(
-        # Render par jo DATABASE_URL set kiya hai, ye use uthayega
-        default=os.environ.get('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'),
-        
-        # Ye hai wo magic line speed ke liye
-        conn_max_age=600, 
-        
-        # Neon (Postgres) ke liye ye zaroori hai
-        ssl_require=True
-    )
+    'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require')
 }
+
+# Ye engine line zaroori hai
+DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
 
 
 # =================
