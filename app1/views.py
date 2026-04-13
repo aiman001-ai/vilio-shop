@@ -919,7 +919,7 @@ Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
             message,
             settings.EMAIL_HOST_USER,
             [admin_email],
-            fail_silently=False,
+            fail_silently=True,
         )
         print("Notification sent to Admin!")
     except Exception as e:
