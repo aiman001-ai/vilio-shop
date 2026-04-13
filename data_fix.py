@@ -1,29 +1,31 @@
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings') # Apne project ka naam check kar lena
+# Dhyaan dein: 'myproject' ko apne folder name se replace karein (jahan settings.py hai)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings') 
 django.setup()
 
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
 
-# 1. Site object theek karein
-site, created = Site.objects.get_or_create(id=1, defaults={'domain': 'vilio-shop.onrender.com', 'name': 'Vilio'})
-if not created:
+def final_fix():
+    # 1. Site Object (Live URL ke liye)
+    site, _ = Site.objects.get_or_create(id=1)
     site.domain = 'vilio-shop.onrender.com'
     site.name = 'Vilio'
     site.save()
 
-# 2. Google Social App create karein
-# Apni Client ID aur Secret yahan dalo
-app, created = SocialApp.objects.get_or_create(
-    provider='google',
-    name='Google Login',
-    defaults={
-        'client_id': '1099158331729-o56udcsu7gvsb83vcjas4e23nruv2enq.apps.googleusercontent.com', 
-        'secret': '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',
-    }
-)
-app.sites.add(site)
+    # 2. Google App (Zabardasti delete karke naya banayein)
+    SocialApp.objects.filter(provider='google').delete()
+    
+    app = SocialApp.objects.create(
+        provider='google',
+        name='Google Login',
+        client_id='1099158331729-o56udcsu7gvsb83vcjas4e23nruv2enq.apps.googleusercontent.com',
+        secret='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'
+    )
+    app.sites.add(site)
+    print("✅ Database updated with Live Credentials!")
 
-print("Database fixed: Site and SocialApp created!")
+if __name__ == "__main__":
+    final_fix()
