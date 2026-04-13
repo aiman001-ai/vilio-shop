@@ -20,8 +20,8 @@ app, created = SocialApp.objects.get_or_create(
     provider='google',
     name='Google Login',
     defaults={
-        'client_id': 'YOUR_GOOGLE_CLIENT_ID', 
-        'secret': 'YOUR_GOOGLE_SECRET_KEY',
+        'client_id': '1099158331729-o56udcsu7gvsb83vcjas4e23nruv2enq.apps.googleusercontent.com', 
+        'secret': '****mO5t',
     }
 )
 app.sites.add(site)
