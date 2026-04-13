@@ -526,8 +526,8 @@ def place_order(request):
             payment_status="Pending"
         )
         
-        # 2. एडमिन को ईमेल भेजें
-        send_admin_order_notification(order)
+        # 2. एडमिन को ईमेल भेजें (Timeout fix ke liye abhi disabled hai)
+        # send_admin_order_notification(order)
 
         # 3. स्टॉक घटाएँ और Order Items बनाएँ
         for item in cart_items:
@@ -557,10 +557,6 @@ def place_order(request):
 
     # --- CASE 2: ONLINE PAYMENT ---
     elif payment_method == "ONLINE":
-        # नोट: यहाँ Razorpay का क्लाइंट-साइड से डेटा आने के बाद का लॉजिक है
-        # अगर आप Razorpay use कर रहे हैं, तो आमतौर पर payment_id और order_id 
-        # success callback से मिलते हैं।
-        
         razorpay_payment_id = request.POST.get('razorpay_payment_id')
         razorpay_order_id = request.POST.get('razorpay_order_id')
 
@@ -575,8 +571,8 @@ def place_order(request):
             razorpay_payment_id=razorpay_payment_id
         )
 
-        # एडमिन को ईमेल भेजें
-        send_admin_order_notification(order)
+        # एडमिन को ईमेल भेजें (Timeout fix ke liye abhi disabled hai)
+        # send_admin_order_notification(order)
 
         for item in cart_items:
             try:
