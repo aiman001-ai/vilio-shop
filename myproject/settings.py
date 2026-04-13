@@ -18,6 +18,7 @@ DEBUG = False
 # settings.py
 ALLOWED_HOSTS = ['vilio-shop.onrender.com', 'localhost', '127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = ['https://vilio-shop.onrender.com']
 
 # ======================
 # Application definition
