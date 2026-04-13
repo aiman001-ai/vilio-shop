@@ -101,11 +101,13 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # ==========
 
 DATABASES = {
-    'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require')
+    'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb')
 }
 
-# Ye engine line zaroori hai
 DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+DATABASES['default']['OPTIONS'] = {
+    'sslmode': 'require',
+}
 
 
 # =================
