@@ -1,31 +1,75 @@
 {% extends "base.html" %}
+{% load static %}
 {% load socialaccount %}
 
 {% block title %}Login | Cheapify{% endblock %}
 
 {% block extra_css %}
 <style>
-    .login-box {
-        width: 350px;
-        margin: 100px auto;
-        padding: 30px;
-        border: 1px solid #ddd;
-        text-align: center;
-        border-radius: 6px;
+    /* Page background */
+    body {
+        background-color: #f8f9fa;
     }
 
+    /* Login Box - Mobile Responsive */
+    .login-box {
+        width: 90%; /* Mobile ke liye width kam rakhi hai */
+        max-width: 400px; /* Bade screen par 400px se zyada nahi hoga */
+        margin: 80px auto;
+        padding: 40px 30px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .login-box h2 {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 25px;
+    }
+
+    /* GOOGLE BUTTON - Exact Match to your Image */
     .google-btn {
-        display: block;
-        padding: 12px;
-        background: #4285F4;
-        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        background-color: #ffffff; /* White background */
+        color: #3c4043; /* Google's dark grey font */
         text-decoration: none;
-        font-weight: bold;
+        font-family: 'Roboto', arial, sans-serif;
+        font-weight: 500;
+        font-size: 14px;
+        border: 1px solid #dadce0; /* Light grey border */
         border-radius: 4px;
+        transition: background-color .2s, box-shadow .2s;
+        cursor: pointer;
     }
 
     .google-btn:hover {
-        background: #357ae8;
+        background-color: #f8f9fa;
+        border-color: #d2e3fc;
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    }
+
+    .google-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+    }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 480px) {
+        .login-box {
+            margin: 50px auto;
+            padding: 30px 20px;
+        }
+        .login-box h2 {
+            font-size: 22px;
+        }
     }
 </style>
 {% endblock %}
@@ -35,7 +79,8 @@
     <h2>Login</h2>
 
     <a href="{% provider_login_url 'google' %}" class="google-btn">
-        🔐 Login with Google
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" class="google-icon">
+        Sign in with Google
     </a>
 </div>
 {% endblock %}
