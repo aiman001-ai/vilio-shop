@@ -12,17 +12,28 @@
     }
 
     /* Login Box - Mobile Responsive */
+    /* Laptop/Desktop ke liye normal margin */
     .login-box {
-        width: 90%; /* Mobile ke liye width kam rakhi hai */
-        max-width: 400px; /* Bade screen par 400px se zyada nahi hoga */
-        margin: 80px auto;
+        width: 90%; 
+        max-width: 400px; 
+        margin: 120px auto 50px auto; /* Default margin */
         padding: 40px 30px;
         background: #fff;
         border: 1px solid #e0e0e0;
         text-align: center;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        box-sizing: border-box;
+        box-sizing: border-box; 
+    }
+
+    /* MOBILE KE LIYE SPECIAL FIX */
+    @media (max-width: 768px) {
+        .login-box {
+            /* Mobile par header ke niche se nikalne ke liye margin badha diya */
+            margin-top: 180px !important; 
+            margin-bottom: 80px;
+            padding: 30px 20px;
+        }
     }
 
     .login-box h2 {

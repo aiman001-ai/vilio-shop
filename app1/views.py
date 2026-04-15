@@ -642,16 +642,18 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
     return render(request, 'category_products.html', context)
 
 def category_default(request, category_slug):
-    # 1. 'category_slug' नाम यहाँ होना जरूरी है (ताकि TypeError न आए)
+    # 1. पहले चेक करें कि क्या यह कैटेगरी डेटाबेस में है? 
+    # अगर नहीं होगी, तो यह 404 दिखा देगा, 500 (सर्वर क्रैश) नहीं।
+    category_obj = get_object_or_404(Category, name__iexact=category_slug)
     
-    # 2. डेटाबेस से उस पूरी कैटेगरी के सारे प्रोडक्ट्स उठाएं
-    products = Product.objects.filter(category__name__iexact=category_slug)
+    # 2. उस कैटेगरी के सारे एक्टिव प्रोडक्ट्स उठाएं
+    products = Product.objects.filter(category=category_obj, is_active=True)
     
-    # 3. आपकी 'category_products.html' फाइल को रेंडर करें
-    # इससे नया पेज खुलेगा और 'men' वाले सारे कपड़े दिखेंगे
+    # 3. डेटा को टेम्पलेट पर भेजें
     context = {
         'products': products,
-        'category': category_slug,
+        'category_name': category_obj.name, # असली नाम (e.g. "Women")
+        'category_slug': category_slug,      # URL वाला नाम (e.g. "women")
         'sub_category': 'All Products', 
     }
     

@@ -1,954 +1,944 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    
 
+<!DOCTYPE html>
+
+<html lang="en">
 
 <head>
-    
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>{% block title %}Cheapify{% endblock %}</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playwrite+AT:ital,wght@1,100..400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playwrite+AT:ital,wght@1,100..400&display=swap" rel="stylesheet">
 
-  <style>
-    /* ===== 1. FONTS & GLOBAL ===== */
-    /* अलग-अलग डिफाइन करें */
-@font-face {
-    font-family: 'Squeaky';
-    src: url("{% static 'fonts/Squeaky_PERSONAL_USE_ONLY.otf' %}") format('opentype');
-    font-weight: normal;
-    font-style: normal;
-}
+    <style>
+        @media (max-width: 768px) {
+            /* Mobile par hover animation band karke hum class se control karenge */
+            .nested-item:hover > .deep-menu {
+                display: none; 
+            }
 
-@font-face {
-    font-family: 'Identify';
-    src: url("{% static 'fonts/IdentifyDemoRegular-0WM3d.otf' %}") format('opentype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'DoodleShow';
-    src: url("{% static 'fonts/DoodleShow.otf' %}") format('opentype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-    body {
-        margin: 0;
-        font-family: 'Inter', sans-serif;
-        padding-top: 105px; /* (Header 60px + Category 45px) */
-    }
-
-    /* ===== 2. PRIMARY HEADER (BLACK) ===== */
-    header {
-        background: #131313;
-        color: #fff;
-        height: 60px;
-        padding: 0 40px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 1000;
-        box-sizing: border-box;
-    }
-
-    /* Logo Styling */
-    .logo {
-        display: flex;
-        align-items: center;
-    }
-
-    .text-logo {
-        font-family: 'Jamday', sans-serif;
-    font-size: 36px; /* Logo ke liye perfect size */
-    color: #bd0c0c;
-    text-decoration: none;
-    text-transform: uppercase; /* VILIO capital mein achha lagega */
-    letter-spacing: 1.5px;
-    display: inline-block;
-    }
-
-    .text-logo:hover {
-        color: #74040a;
-        transform: scale(1.05);
-    }
-
-    /* ===== 3. MINIMAL SEARCH BAR ===== */
-    .search-bar {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        max-width: 350px;
-        height: 36px;
-        background: #1a1a1a;
-        border-radius: 20px;
-        padding: 2px 4px 2px 10px;
-        border: 1px solid #333;
-        margin: 0 15px;
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .search-bar:focus-within {
-        border-color: #ff3f6c;
-        background: #222;
-        box-shadow: 0 0 10px rgba(255, 63, 108, 0.1);
-    }
-
-    .search-bar select {
-        height: 24px;
-        border: none;
-        background: transparent;
-        color: #888;
-        padding: 0 5px;
-        font-size: 11px;
-        font-weight: 600;
-        cursor: pointer;
-        outline: none;
-        border-right: 1px solid #333;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        -webkit-appearance: none;
-    }
-
-    .search-bar input {
-        flex: 1;
-        height: 100%;
-        border: none;
-        background: transparent;
-        padding: 0 35px 0 10px;
-        font-size: 13px;
-        color: #fff;
-        outline: none;
-    }
-
-    .search-bar button {
-        position: absolute;
-        right: 4px;
-        height: 28px;
-        width: 28px;
-        border: none;
-        background: #ff3f6c;
-        color: white;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        font-size: 11px;
-        z-index: 2;
-    }
-
-    /* ===== 4. NAV & ICONS ===== */
-    nav { 
-    display: flex; 
-    align-items: center; 
-    /* gap को हटा दें या कम कर दें ताकि कंट्रोल आपके हाथ में रहे */
-    gap: 0; 
-}
-
-    .profile-icon {
-        width: 26px;
-        height: 26px;
-        color: #eee9e9;
-        align-items: center;
-    }
-
-    .cart-icon {
-        position: relative;
-        margin-left: 25px;
-        color: #eee9e9;
-        text-decoration: none;
-        font-size: 24px;
-        display: flex;
-        align-items: center;
-    }
-
-    .cart-count {
-        position: absolute;
-        top: 33%;
-        right: 7px;
-        transform: translateY(-50%);
-        color: #c72a2a;
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    
-
-    /* ===== 5. DROPDOWNS (ACCOUNT & ADDRESS) ===== */
-    .account-dropdown { 
-    position: relative; 
-    display: inline-block; 
-    margin-left: 0px; 
-    margin-right: -12px;/* इसे जोड़ने से आइकन राइट में खिसक जाएगा */
-    margin-top: 4px;
-}
-    
-    .account-menu {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: 100%;
-        background: #fff;
-        min-width: 180px;
-        box-shadow: 0 4px 12px rgba(168, 47, 47, 0.93);
-        z-index: 999;
-        padding: 8px 0;
-    }
-
-    .account-dropdown:hover .account-menu { display: block; }
-
-    .account-menu a {
-    display: block;
-    padding: 10px 15px;
-    color: #111;
-    text-decoration: none;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-}
-
-/* Sirf normal paragraphs par Inter lage, .user par nahi */
-.account-menu p:not(.user) {
-    font-family: 'Inter', sans-serif;
-}
-
-
-    .account-menu .user { 
-    background: #eee; 
-    font-weight: 600; 
-    padding-top: 15px;    /* इसे बढ़ाने से बैकग्राउंड ऊपर की ओर फैल जाएगा */
-    padding-bottom: 10px; 
-    margin-top: -8px;     /* अगर आप पूरे बॉक्स को ही ऊपर खिसकाना चाहते हैं */
-    border-radius: 8px 8px 0 0; /* ताकि ऊपर के कोने गोल रहें */
-}
-
-    /* Underline Effect on Hover */
-    .account-menu a span { position: relative; }
-    .account-menu a span::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        bottom: -2px;
-        width: 0;
-        height: 1px;
-        background-color: #0a0d88;
-        transition: width 0.25s ease;
-    }
-    .account-menu a:hover span::after { width: 100%; }
-
-    /* Address Submenu */
-    .address-item { position: relative; }
-    .address-submenu {
-        display: none;
-        position: absolute;
-        right: 100%;
-        top: 0;
-        background: #fff;
-        min-width: 180px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        border-radius: 4px;
-    }
-    .address-item:hover .address-submenu { display: block; }
-
-    /* ===== 6. SECONDARY HEADER (WHITE) ===== */
-    #category-header {
-        position: fixed;
-        top: 60px;
-        left: 0;
-        width: 100%;
-        background: #ffffff;
-        height: 45px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 60px;
-        border-bottom: 1px solid #eee;
-        z-index: 998;
-        transition: transform 0.3s ease;
-    }
-
-    .cat-item { position: relative; font-weight: 600; cursor: pointer; padding: 10px 15px; }
-    #category-header a { text-decoration: none; color: #111; font-size: 14px; }
-
-    /* ===== SECONDARY HEADER SUB-MENU UPGRADE ===== */
-.sub-menu {
-    display: block;            /* इसे हमेशा ब्लॉक रखें ताकि हम एनीमेशन लगा सकें */
-    visibility: hidden;         /* डिफ़ॉल्ट रूप से छुपा हुआ */
-    opacity: 0;                /* पूरी तरह ट्रांसपेरेंट */
-    position: absolute;
-    top: 100%;
-    left: 50%;                 /* सेंटर में लाने के लिए */
-    transform: translateX(-50%) translateY(15px); /* थोड़ा नीचे से ऊपर आने वाला इफेक्ट */
-    background: #ffffff;
-    min-width: 180px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* सॉफ्ट शैडो */
-    border-radius: 8px;        /* गोल कोने */
-    padding: 8px 0;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* बाउंस एनीमेशन */
-    z-index: 1001;
-    border: 1px solid #f0f0f0;
-}
-
-/* होवर करने पर सब-मेनू का स्टाइल */
-.cat-item:hover .sub-menu {
-    visibility: visible;
-    opacity: 1;
-    transform: translateX(-50%) translateY(0); /* अपनी असली जगह पर आ जाएगा */
-}
-
-/* सब-मेनू के अंदर के लिंक्स */
-.sub-menu a {
-    display: block;
-    padding: 12px 20px !important;
-    color: #333 !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-    text-align: left;
-}
-
-/* लिंक पर होवर इफेक्ट */
-.sub-menu a:hover {
-    background: #f8f8f8;
-    color: #ff3f6c !important; /* Myntra जैसा पिंक-रेड टच */
-}
-
-/* छोटे से त्रिकोण (Triangle) के लिए जो ऊपर की तरफ इशारा करे */
-.sub-menu::before {
-    content: "";
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-bottom: 6px solid #ffffff;
-}
-
-    /* ===== 7. RESPONSIVE FIXES (MOBILE) ===== */
-    @media (max-width: 768px) {
-        header { padding: 0 15px; }
-
-        /* Logo मोबाइल पर छोटा और लेफ्ट में */
-        .logo { flex: 0 1 auto; justify-content: flex-start; }
-        .text-logo { 
-            font-size: 30px; 
-            letter-spacing: 0.5px;
-            margin-left: -5px; 
+            /* Jab JS ye class add karega tab menu dikhega */
+            .deep-menu.is-open {
+                display: block !important;
+                position: static;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                padding-left: 20px;
+            }
         }
 
-        /* सर्च बार मोबाइल एडजस्टमेंट */
+        /* ===== 1. FONTS & GLOBAL ===== */
+        @font-face {
+            font-family: 'Squeaky';
+            src: url("{% static 'fonts/Squeaky_PERSONAL_USE_ONLY.otf' %}") format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Identify';
+            src: url("{% static 'fonts/IdentifyDemoRegular-0WM3d.otf' %}") format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'DoodleShow';
+            src: url("{% static 'fonts/DoodleShow.otf' %}") format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            padding-top: 105px;
+        }
+
+        /* ===== 2. PRIMARY HEADER (BLACK) ===== */
+        header {
+            background: #131313;
+            color: #fff;
+            height: 60px;
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .text-logo {
+            font-family: 'Jamday', sans-serif;
+            font-size: 36px;
+            color: #bd0c0c;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: inline-block;
+        }
+
+        .text-logo:hover {
+            color: #74040a;
+            transform: scale(1.05);
+        }
+
+        /* ===== 3. MINIMAL SEARCH BAR ===== */
         .search-bar {
-            max-width: 160px;
-            margin: 0 8px;
-            padding-left: 5px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 350px;
+            height: 36px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 2px 4px 2px 10px;
+            border: 1px solid #333;
+            margin: 0 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: #ff3f6c;
+            background: #222;
+            box-shadow: 0 0 10px rgba(255, 63, 108, 0.1);
         }
 
         .search-bar select {
-            display: block !important; /* अब गायब नहीं होगा */
-            font-size: 10px;
-            max-width: 42px;
-            padding: 0 2px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: #888;
+            padding: 0 5px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            border-right: 1px solid #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            -webkit-appearance: none;
         }
 
         .search-bar input {
-        flex: 1;          /* बची हुई जगह पूरी ले ले */
-        min-width: 0;     /* सबसे ज़रूरी: यह टेक्स्ट को अंदर सिकोड़कर रखेगा */
-        width: 100%;      /* फिक्स विड्थ */
-        font-size: 12px;
-        height: 100%;
-        padding: 0 28px 0 5px; /* बटन के लिए दाईं ओर जगह छोड़ी */
-        background: transparent;
-        border: none;
-        outline: none;
-        color: #fff;
-    }
-        .search-bar button { height: 24px; width: 24px; font-size: 10px; }
+            flex: 1;
+            height: 100%;
+            border: none;
+            background: transparent;
+            padding: 0 35px 0 10px;
+            font-size: 13px;
+            color: #fff;
+            outline: none;
+        }
 
-        #category-header { gap: 20px; }
-    }
+        .search-bar button {
+            position: absolute;
+            right: 4px;
+            height: 28px;
+            width: 28px;
+            border: none;
+            background: #ff3f6c;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 11px;
+            z-index: 2;
+        }
 
-    @media (max-width: 480px) {
-        .text-logo { font-size: 23px; }
-        .search-bar { 
-        max-width: 130px; 
-        height: 28px;    /* पहले 36px थी, अब 28px कर दी गई है */
-        padding: 0 2px 0 8px; /* पैडिंग थोड़ी कम की ताकि फिट रहे */
-        
-    }
-        .search-bar select { max-width: 35px; font-size: 9px; }
-    }
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
 
-.user {
-    font-family: 'Identify', sans-serif;
-    font-size: 12px;            /* यहाँ से आप टेक्स्ट छोटा कर सकते हैं (12px से 14px बेस्ट है) */
-    color: #0146dd;             /* आपका नीला रंग */
-    background: #eee;           /* हल्का ग्रे बैकग्राउंड */
-    padding: 12px 15px;         /* पैडिंग भी थोड़ी कम कर दी */
-    margin: 0;
-    display: block;
-    text-align: left;           /* लेफ्ट अलाइनमेंट ज्यादा क्लीन लगता है */
-    letter-spacing: 0.5px;      /* छोटा करने पर ज्यादा गैप बुरा लगेगा, इसलिए इसे कम किया */
-    
-    /* हल्का सा निखार देने के लिए */
-    font-weight: normal;
-    margin-top: -8px;
-    border-radius: 8px 8px 0 0;
-}
-.custom-username {
-    font-family: inherit;
-    color: inherit;
-    font-weight: normal; /* इस फॉन्ट में बोल्ड की जरूरत नहीं होती */
-}
+        .profile-icon {
+            width: 26px;
+            height: 26px;
+            color: #eee9e9;
+            align-items: center;
+        }
 
-/* Nested Container Logic */
-/* 1. Sub-menu (2nd Level) को सुधारें */
-.sub-menu {
-    overflow: visible; /* यह ज़रूरी है ताकि इसके अंदर का deep-menu बाहर निकल सके */
-    z-index: 1001;
-}
+        .cart-icon {
+            position: relative;
+            margin-left: 25px;
+            color: #eee9e9;
+            text-decoration: none;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+        }
 
-/* 2. Nested Item (2nd level items) */
-.nested-item {
-    position: relative;
-    padding: 0; /* पैडिंग अंदर के <a> को देने दें */
-}
+        .cart-count {
+            position: absolute;
+            top: 33%;
+            right: 7px;
+            transform: translateY(-50%);
+            color: #c72a2a;
+            font-size: 12px;
+            font-weight: bold;
+        }
 
-/* 3. Deep Menu (3rd Level) - असली सुधार यहाँ है */
-.deep-menu {
-    display: none;
-    position: absolute;
-    left: 100%;       /* बिल्कुल दाईं ओर धकेलें */
-    top: 0;           /* ऊपर से बराबर रखें */
-    margin-left: 2px; /* थोड़ा सा गैप ताकि चिपका न लगे */
-    background: #ffffff;
-    min-width: 180px;
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    padding: 8px 0;
-    border: 1px solid #f0f0f0;
-    z-index: 1005;    /* इसे सबसे ऊपर रखें */
-}
+        .account-dropdown {
+            position: relative;
+            display: inline-block;
+            margin-left: 0px;
+            margin-right: -12px;
+            margin-top: 4px;
+        }
 
-/* 4. Hover होने पर दिखाने का तरीका */
-.nested-item:hover > .deep-menu {
-    display: block;
-}
+        .account-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: #fff;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(168, 47, 47, 0.93);
+            z-index: 999;
+            padding: 8px 0;
+        }
 
-/* 5. Arrow का स्टाइल (optional but looks good) */
-.nested-item a i {
-    font-size: 10px;
-    color: #999;
-    margin-left: 15px;
-}
+        .account-dropdown:hover .account-menu {
+            display: block;
+        }
 
+        .account-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #111;
+            text-decoration: none;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
 
-/* ===== MEGA FOOTER CSS ===== */
-.main-footer {
-    background: #bae4f5;
-    padding: 50px 0 0 0;
-    margin-top: 100px;
-    border-top: 1px solid #c0c0c4;
-    font-family: 'Inter', sans-serif;
-}
+        .account-menu p:not(.user) {
+            font-family: 'Inter', sans-serif;
+        }
 
-.footer-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 30px;
-    padding: 0 20px;
-}
+        .account-menu .user {
+            background: #eee;
+            font-weight: 600;
+            padding-top: 15px;
+            padding-bottom: 10px;
+            margin-top: -8px;
+            border-radius: 8px 8px 0 0;
+        }
 
-.footer-column h3 {
-    font-size: 12px;
-    font-weight: 700;
-    color: #282c3f;
-    margin-bottom: 25px;
-    text-transform: uppercase;
-}
+        .account-menu a span {
+            position: relative;
+        }
 
-.footer-column ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+        .account-menu a span::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 0;
+            height: 1px;
+            background-color: #0a0d88;
+            transition: width 0.25s ease;
+        }
 
-.footer-column ul li {
-    margin-bottom: 8px;
-}
+        .account-menu a:hover span::after {
+            width: 100%;
+        }
 
-.footer-column ul li a {
-    text-decoration: none;
-    color: #696b79;
-    font-size: 14px;
-    transition: color 0.2s;
-}
+        .address-item {
+            position: relative;
+        }
 
-.footer-column ul li a:hover {
-    color: #282c3f;
-    font-weight: 500;
-}
+        .address-submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: 0;
+            background: #fff;
+            min-width: 180px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
 
-/* App Links & Social */
-.app-links img {
-    width: 140px;
-    margin-bottom: 15px;
-    display: block;
-    cursor: pointer;
-}
+        .address-item:hover .address-submenu {
+            display: block;
+        }
 
-.social-icons {
-    display: flex;
-    gap: 15px;
-    font-size: 20px;
-}
+        #category-header {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            border-bottom: 1px solid #eee;
+            z-index: 998;
+            transition: transform 0.3s ease;
+        }
 
-.social-icons a {
-    color: #696b79;
-    transition: transform 0.3s;
-}
+        .cat-item {
+            position: relative;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px 15px;
+        }
 
-.social-icons a:hover {
-    color: #ff3f6c;
-    transform: translateY(-3px);
-}
+        #category-header a {
+            text-decoration: none;
+            color: #111;
+            font-size: 14px;
+        }
 
-/* Promises Section */
-.promises {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+        .sub-menu {
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(15px);
+            background: #ffffff;
+            min-width: 180px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 8px 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1001;
+            border: 1px solid #f0f0f0;
+        }
 
-.promise-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+        .cat-item:hover .sub-menu {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
 
-.promise-item img {
-    width: 48px;
-    height: 40px;
-}
+        .sub-menu a {
+            display: block;
+            padding: 12px 20px !important;
+            color: #333 !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+            text-align: left;
+        }
 
-.promise-item p {
-    font-size: 13px;
-    color: #696b79;
-    margin: 0;
-}
+        .sub-menu a:hover {
+            background: #f8f8f8;
+            color: #ff3f6c !important;
+        }
 
-/* Footer Bottom */
-.footer-bottom {
-    background: #131313;
-    text-align: center;
-    margin-top: 50px;
-    padding: 5px 0;      /* पैडिंग को बहुत थोड़ा रखें */
-    border-top: 1px solid #f50707;
-    color: #94969f;
-    font-size: 12px;     /* फॉन्ट थोड़ा छोटा करने से भी साइज कम दिखेगा */
-}
+        .sub-menu::before {
+            content: "";
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #ffffff;
+        }
 
-/* सबसे ज़रूरी: अंदर के पैराग्राफ का गैप खत्म करना */
-.footer-bottom p {
-    margin: 0;           /* डिफ़ॉल्ट ऊपर-नीचे का मार्जिन हटाया */
-    padding: 2px 0;      /* मैन्युअली बहुत कम गैप दिया */
-    line-height: 1;      /* लाइनों के बीच की जगह कम की */
-}
+        .nested-item {
+            position: relative;
+            padding: 0;
+        }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .footer-container {
-        grid-template-columns: 1fr 1fr;
-    }
-}
+        .deep-menu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            margin-left: 2px;
+            background: #ffffff;
+            min-width: 180px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            padding: 8px 0;
+            border: 1px solid #f0f0f0;
+            z-index: 1005;
+        }
 
-/* ===== MOBILE BUTTON FIX ===== */
-@media (max-width: 480px) {
-    .app-links {
-        gap: 8px !important; /* Gap kam karein */
-        justify-content: flex-start;
-    }
+        .nested-item:hover > .deep-menu {
+            display: block;
+        }
 
-    .app-links div[style*="width: 160px"] {
-        width: 135px !important; /* Width kam karein */
-        padding: 6px 10px !important; /* Padding kam karein */
-        gap: 8px !important;
-    }
+        .nested-item a i {
+            font-size: 10px;
+            color: #999;
+            margin-left: 15px;
+        }
 
-    .app-links i {
-        font-size: 1.4rem !important; /* Icons thode chhote */
-    }
+        .user {
+            font-family: 'Identify', sans-serif;
+            font-size: 12px;
+            color: #0146dd;
+            background: #eee;
+            padding: 12px 15px;
+            margin: 0;
+            display: block;
+            text-align: left;
+            letter-spacing: 0.5px;
+            font-weight: normal;
+            margin-top: -8px;
+            border-radius: 8px 8px 0 0;
+        }
 
-    .app-links span[style*="font-size: 16px"] {
-        font-size: 13px !important; /* Text font size kam karein */
-    }
-    
-    .app-links span[style*="font-size: 10px"] {
-        font-size: 9px !important;
-    }
-}
+        .custom-username {
+            font-family: inherit;
+            color: inherit;
+            font-weight: normal;
+        }
 
-.letter {
-    display: inline-block;
-    transition: transform 0.2s ease;
-    cursor: pointer;
-}
+        .sub-menu {
+            overflow: visible;
+            z-index: 1001;
+        }
 
-.letter:hover {
-    transform: scale(1.25) !important; /* Force scale */
-}
+        .main-footer {
+            background: #bae4f5;
+            padding: 50px 0 0 0;
+            margin-top: 100px;
+            border-top: 1px solid #c0c0c4;
+            font-family: 'Inter', sans-serif;
+        }
 
-/* ===== PROMISES HORIZONTAL MOBILE FIX ===== */
-@media (max-width: 600px) {
-    /* 1. Container ko side-by-side rakhein (No Column) */
-    .promises > div {
-        display: flex !important;
-        flex-direction: row !important; /* Force side-by-side */
-        gap: 8px !important; /* Gap bahut kam kar diya taaki fit ho jaye */
-        justify-content: space-between !important;
-        margin-top: 20px !important;
-    }
+        .footer-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
 
-    /* 2. Har item ko 50% width de taaki dono barabar fit ho jayein */
-    .promise-item {
-        max-width: 48% !important; /* Screen ka aadha hissa */
-        gap: 8px !important; /* Icon aur text ke beech ka gap kam */
-    }
+        .footer-column h3 {
+            font-size: 12px;
+            font-weight: 700;
+            color: #282c3f;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
 
-    /* 3. Icon circle ka size mobile ke liye chhota karein */
-    .promise-item div[style*="min-width: 50px"] {
-        min-width: 35px !important;
-        height: 35px !important;
-    }
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
 
-    .promise-item i {
-        font-size: 1rem !important; /* Icon size chhota */
-    }
+        .footer-column ul li {
+            margin-bottom: 8px;
+        }
 
-    /* 4. Text ko compress karein taaki wo bahr na bhage */
-    .promise-item p {
-        font-size: 10px !important; /* Font size chhota kiya taaki side-by-side fit ho */
-        line-height: 1.2 !important;
-    }
+        .footer-column ul li a {
+            text-decoration: none;
+            color: #696b79;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
 
-    .promise-item strong {
-        font-size: 11px !important;
-    }
-}
+        .footer-column ul li a:hover {
+            color: #282c3f;
+            font-weight: 500;
+        }
 
-/* ===== MOBILE LOGO SIZE FIX ===== */
+        .app-links img {
+            width: 140px;
+            margin-bottom: 15px;
+            display: block;
+            cursor: pointer;
+        }
 
-/* Tablets and small screens (768px se niche) */
-@media (max-width: 768px) {
-    .doodle-logo-wrapper .letter {
-        font-size: 35px !important; /* Pehle 50px tha */
-    }
-}
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            font-size: 20px;
+        }
 
-/* Mobile phones (480px se niche) */
-@media (max-width: 480px) {
-    .doodle-logo-wrapper .letter {
-        font-size: 32px !important; /* Aur chhota mobile ke liye */
-        margin-top: 5px;
-    }
-    
-    .logo {
-        margin-left: -10px; /* Thoda left shift taaki search bar ko jagah mile */
-    }
-}
-</style>
+        .social-icons a {
+            color: #696b79;
+            transition: transform 0.3s;
+        }
+
+        .social-icons a:hover {
+            color: #ff3f6c;
+            transform: translateY(-3px);
+        }
+
+        .promises {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .promise-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .promise-item img {
+            width: 48px;
+            height: 40px;
+        }
+
+        .promise-item p {
+            font-size: 13px;
+            color: #696b79;
+            margin: 0;
+        }
+
+        .footer-bottom {
+            background: #131313;
+            text-align: center;
+            margin-top: 50px;
+            padding: 5px 0;
+            border-top: 1px solid #f50707;
+            color: #94969f;
+            font-size: 12px;
+        }
+
+        .footer-bottom p {
+            margin: 0;
+            padding: 2px 0;
+            line-height: 1;
+        }
+
+        .letter {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .letter:hover {
+            transform: scale(1.25) !important;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 0 15px;
+            }
+
+            .logo {
+                flex: 0 1 auto;
+                justify-content: flex-start;
+            }
+
+            .text-logo {
+                font-size: 30px;
+                letter-spacing: 0.5px;
+                margin-left: -5px;
+            }
+
+            .search-bar {
+                max-width: 160px;
+                margin: 0 8px;
+                padding-left: 5px;
+            }
+
+            .search-bar select {
+                display: block !important;
+                font-size: 10px;
+                max-width: 42px;
+                padding: 0 2px;
+            }
+
+            .search-bar input {
+                flex: 1;
+                min-width: 0;
+                width: 100%;
+                font-size: 12px;
+                height: 100%;
+                padding: 0 28px 0 5px;
+                background: transparent;
+                border: none;
+                outline: none;
+                color: #fff;
+            }
+
+            .search-bar button {
+                height: 24px;
+                width: 24px;
+                font-size: 10px;
+            }
+
+            #category-header {
+                gap: 20px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .doodle-logo-wrapper .letter {
+                font-size: 35px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .text-logo {
+                font-size: 23px;
+            }
+
+            .search-bar {
+                max-width: 130px;
+                height: 28px;
+                padding: 0 2px 0 8px;
+            }
+
+            .search-bar select {
+                max-width: 35px;
+                font-size: 9px;
+            }
+
+            .doodle-logo-wrapper .letter {
+                font-size: 32px !important;
+                margin-top: 5px;
+            }
+
+            .logo {
+                margin-left: -10px;
+            }
+
+            .app-links {
+                gap: 8px !important;
+                justify-content: flex-start;
+            }
+
+            .app-links div[style*="width: 160px"] {
+                width: 135px !important;
+                padding: 6px 10px !important;
+                gap: 8px !important;
+            }
+
+            .app-links i {
+                font-size: 1.4rem !important;
+            }
+
+            .app-links span[style*="font-size: 16px"] {
+                font-size: 13px !important;
+            }
+
+            .app-links span[style*="font-size: 10px"] {
+                font-size: 9px !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .promises > div {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                justify-content: space-between !important;
+                margin-top: 20px !important;
+            }
+
+            .promise-item {
+                max-width: 48% !important;
+                gap: 8px !important;
+            }
+
+            .promise-item div[style*="min-width: 50px"] {
+                min-width: 35px !important;
+                height: 35px !important;
+            }
+
+            .promise-item i {
+                font-size: 1rem !important;
+            }
+
+            .promise-item p {
+                font-size: 10px !important;
+                line-height: 1.2 !important;
+            }
+
+            .promise-item strong {
+                font-size: 11px !important;
+            }
+        }
+    </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-
-{% load socialaccount %}
-{% if messages %}
-<div style="
-    background:#d4edda;
-    color:#155724;
-    padding:12px;
-    text-align:center;
-    font-weight:bold;
-">
-    {% for message in messages %}
-        {{ message }}
-    {% endfor %}
-</div>
-{% endif %}
-
-
-<header>
-
-    <div class="logo">
-    <a href="{% url 'home' %}" class="doodle-logo-wrapper" style="text-decoration: none; display: flex; gap: 4px;">
-        <span style="font-family: 'DoodleShow'; font-size: 50px; color: #ef4444;" class="letter">V</span>
-        <span style="font-family: 'DoodleShow'; font-size: 50px; color: #3b82f6;" class="letter">I</span>
-        <span style="font-family: 'DoodleShow'; font-size: 50px; color: #22c55e;" class="letter">L</span>
-        <span style="font-family: 'DoodleShow'; font-size: 50px; color: #eab308;" class="letter">I</span>
-        <span style="font-family: 'DoodleShow'; font-size: 50px; color: #ec4899;" class="letter">O</span>
-    </a>
-</div>
-
-    <!-- 🔍 SEARCH BAR -->
-    <form action="{% url 'search' %}" method="get" class="search-bar">
-        <select name="category">
-            <option value="">All</option>
-            <option value="mobile">Men</option>
-            <option value="fashion">Women</option>
-            <option value="electronics">Kids</option>
-        </select>
-
-        <input type="text" name="q" placeholder="Search" required>
-        <button type="submit">🔍</button>
-    </form>
-
-   
-    <nav>
-
-     
-
-        <div class="account-dropdown">
-        <a href="#" class="profile-link">
-    <svg xmlns="http://www.w3.org/2000/svg"
-         fill="none"
-         viewBox="0 0 24 24"
-         stroke-width="1.5"
-         stroke="currentColor"
-         class="profile-icon">
-      <path stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-    </svg>
-</a>   <!-- profile icon always visible -->
-
-        <div class="account-menu">
-
-            {% if user.is_authenticated %}
-               <p class="user">
-    <span class="custom-username">{{ user.username }}</span>
-</p>
-
-<a href="{% url 'cart' %}">
-            <span>Cart (<span id="cart-count">{{ cart_count }}</span>)</span>
-        </a>
-<a href="{% url 'my_orders' %}"><span>My Orders</span></a>
-               <div class="address-item">
-    <a href="#"><span>My Address</span></a>
-    <div class="address-submenu">
-        <a href="{% url 'add_address' %}"><span>Add New Address</span></a>
-        <a href="{% url 'my_addresses' %}"><span>My Addresses</span></a>
+    {% load socialaccount %}
+    {% if messages %}
+    <div style="background:#d4edda; color:#155724; padding:12px; text-align:center; font-weight:bold;">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
     </div>
+    {% endif %}
+
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}" class="doodle-logo-wrapper" style="text-decoration: none; display: flex; gap: 4px;">
+                <span style="font-family: 'DoodleShow'; font-size: 50px; color: #ef4444;" class="letter">V</span>
+                <span style="font-family: 'DoodleShow'; font-size: 50px; color: #3b82f6;" class="letter">I</span>
+                <span style="font-family: 'DoodleShow'; font-size: 50px; color: #22c55e;" class="letter">L</span>
+                <span style="font-family: 'DoodleShow'; font-size: 50px; color: #eab308;" class="letter">I</span>
+                <span style="font-family: 'DoodleShow'; font-size: 50px; color: #ec4899;" class="letter">O</span>
+            </a>
+        </div>
+
+        <form action="{% url 'search' %}" method="get" class="search-bar">
+            <select name="category">
+                <option value="">All</option>
+                <option value="mobile">Men</option>
+                <option value="fashion">Women</option>
+                <option value="electronics">Kids</option>
+            </select>
+            <input type="text" name="q" placeholder="Search" required>
+            <button type="submit">🔍</button>
+        </form>
+
+        <nav>
+            <div class="account-dropdown">
+                <a href="#" class="profile-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                    </svg>
+                </a>
+                <div class="account-menu">
+                    {% if user.is_authenticated %}
+                        <p class="user">
+                            <span class="custom-username">{{ user.username }}</span>
+                        </p>
+                        <a href="{% url 'cart' %}">
+                            <span>Cart (<span id="cart-count">{{ cart_count }}</span>)</span>
+                        </a>
+                        <a href="{% url 'my_orders' %}"><span>My Orders</span></a>
+                        <div class="address-item">
+                            <a href="#"><span>My Address</span></a>
+                            <div class="address-submenu">
+                                <a href="{% url 'add_address' %}"><span>Add New Address</span></a>
+                                <a href="{% url 'my_addresses' %}"><span>My Addresses</span></a>
+                            </div>
+                        </div>
+                        <a href="{% url 'account_logout' %}?next=/"><span>Logout</span></a>
+                    {% else %}
+                        <a href="{% url 'login' %}">🔐 Login / Signup</a>
+                    {% endif %}
                 </div>
+            </div>
 
-                <a href="{% url 'account_logout' %}?next=/"><span>Logout</span></a>
+            <a href="{% url 'cart' %}" class="cart-icon">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span id="cart-count-badge" class="cart-count" style="display: {% if global_cart_count > 0 %}block{% else %}none{% endif %};">
+                    {{ global_cart_count }}
+                </span>
+            </a>
+        </nav>
+    </header>
 
-            {% else %}
-                <a href="{% url 'login' %}">🔐 Login / Signup</a>
-            {% endif %}
+    <div id="category-header">
+        <div class="cat-item">
+            <span>Men</span>
+            <div class="sub-menu">
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'men' 'top' %}" class="submenu-toggle">
+                        Top Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}">Shirts</a>
+                        <a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}">T-Shirts</a>
+                        <a href="{% url 'category_type_products' 'men' 'top' 'jackets' %}">Jackets</a>
+                    </div>
+                </div>
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'men' 'bottom' %}" class="submenu-toggle">
+                        Bottom Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}">Jeans</a>
+                        <a href="{% url 'category_type_products' 'men' 'bottom' 'pants' %}">Pants</a>
+                        <a href="{% url 'category_type_products' 'men' 'bottom' 'cargos' %}">Cargos</a>
+                        <a href="{% url 'category_type_products' 'men' 'bottom' 'track-pants' %}">Track Pants</a> 
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="cat-item">
+            <span>Women</span>
+            <div class="sub-menu">
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'women' 'top' %}" class="submenu-toggle">
+                        Top Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'women' 'top' 'kurtas' %}">Kurtas</a>
+                        <a href="{% url 'category_type_products' 'women' 'top' 'tops' %}">Tops</a>
+                    </div>
+                </div>
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'women' 'bottom' %}" class="submenu-toggle">
+                        Bottom Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'women' 'bottom' 'jeans' %}">Jeans</a>
+                        <a href="{% url 'category_type_products' 'women' 'bottom' 'palazzos' %}">Palazzos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cat-item">
+            <span>Kids</span>
+            <div class="sub-menu">
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'kids' 'top' %}" class="submenu-toggle">
+                        Top Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'kids' 'top' 't-shirts' %}">T-Shirts</a>
+                        <a href="{% url 'category_type_products' 'kids' 'top' 'shirts' %}">Shirts</a>
+                    </div>
+                </div>
+                <div class="nested-item">
+                    <a href="{% url 'category_products' 'kids' 'bottom' %}" class="submenu-toggle">
+                        Bottom Wear <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <div class="deep-menu">
+                        <a href="{% url 'category_type_products' 'kids' 'bottom' 'shorts' %}">Shorts</a>
+                        <a href="{% url 'category_type_products' 'kids' 'bottom' 'jeans' %}">Jeans</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-   <!-- 🛒 CART ICON -->
-        <a href="{% url 'cart' %}" class="cart-icon">
-    <i class="fa-solid fa-cart-shopping"></i>
-    <span id="cart-count-badge" class="cart-count" style="display: {% if global_cart_count > 0 %}block{% else %}none{% endif %};">
-        {{ global_cart_count }}
-    </span>
-</a>
-    </nav>
+    {% block content %}{% endblock %}
 
-</header>
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>ONLINE SHOPPING</h3>
+                <ul>
+                    <li><a href="{% url 'category_default' 'men' %}">Men</a></li>
+                    <li><a href="{% url 'category_default' 'women' %}">Women</a></li>
+                    <li><a href="{% url 'category_default' 'kids' %}">Kids</a></li>
+                    <li><a href="{% url 'insider_page' %}">Cheapify Insider</a></li>
+                </ul>
+            </div>
 
-<!-- 🔽 SECONDARY HEADER -->
-<div id="category-header">
+            <div class="footer-column">
+                <h3>USEFUL LINKS</h3>
+                <ul>
+                    <li><a href="{% url 'about_us' %}">About Us</a></li>
+                    <li><a href="{% url 'careers' %}">Careers</a></li>
+                    <li><a href="{% url 'blog_list' %}">Blog</a></li>
+                    <li><a href="{% url 'sitemap' %}">Site Map</a></li>
+                    <li><a href="{% url 'corporate_info' %}">Corporate Information</a></li>
+                </ul>
+            </div>
 
-    <div class="cat-item">
-        <span>Men</span>
-        <div class="sub-menu">
-            <div class="nested-item">
-                <a href="{% url 'category_products' 'men' 'top' %}">Top Wear <i class="fa fa-chevron-right"></i></a>
-                <div class="deep-menu">
-    <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}">Shirts</a>
-    <a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}">T-Shirts</a>
-    <a href="{% url 'category_type_products' 'men' 'top' 'jackets' %}">Jackets</a>
-</div>
+            <div class="footer-column">
+                <h3>CUSTOMER POLICIES</h3>
+                <ul>
+                    <li><a href="{% url 'contact_us' %}">Contact Us</a></li>
+                    <li><a href="{% url 'faq' %}">FAQ</a></li>
+                    <li><a href="{% url 'terms' %}">T&C</a></li>
+                    <li><a href="{% url 'terms_use' %}">Terms Of Use</a></li>
+                    <li><a href="{% url 'my_orders' %}">Track Orders</a></li>
+                    <li><a href="{% url 'shipping_policy' %}">Shipping</a></li>
+                    <li><a href="{% url 'return_policy' %}">Cancellation & Returns</a></li>
+                    <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
+                </ul>
             </div>
-            <div class="nested-item">
-                <a href="{% url 'category_products' 'men' 'bottom' %}">Bottom Wear <i class="fa fa-chevron-right"></i></a>
-                <div class="deep-menu">
-                <a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}">Jeans</a>
-                <a href="{% url 'category_type_products' 'men' 'bottom' 'pants' %}">Pants</a>
-                <a href="{% url 'category_type_products' 'men' 'bottom' 'cargos' %}">Cargos</a>
-            </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="cat-item">
-    <span>Women</span>
-    <div class="sub-menu">
-        <div class="nested-item">
-            <a href="{% url 'category_products' 'women' 'top' %}">Top Wear <i class="fa fa-chevron-right"></i></a>
-            <div class="deep-menu">
-                <a href="{% url 'category_type_products' 'women' 'top' 'kurtas' %}">Kurtas</a>
-                <a href="{% url 'category_type_products' 'women' 'top' 'tops' %}">Tops</a>
-            </div>
-        </div>
-
-        <div class="nested-item">
-            <a href="{% url 'category_products' 'women' 'bottom' %}">Bottom Wear <i class="fa fa-chevron-right"></i></a>
-            <div class="deep-menu">
-                <a href="{% url 'category_type_products' 'women' 'bottom' 'jeans' %}">Jeans</a>
-                <a href="{% url 'category_type_products' 'women' 'bottom' 'palazzos' %}">Palazzos</a>
-            </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="cat-item">
-    <span>Kids</span>
-    <div class="sub-menu">
-        <div class="nested-item">
-            <a href="{% url 'category_products' 'kids' 'top' %}">Top Wear <i class="fa fa-chevron-right"></i></a>
-            <div class="deep-menu">
-                <a href="{% url 'category_type_products' 'kids' 'top' 't-shirts' %}">T-Shirts</a>
-                <a href="{% url 'category_type_products' 'kids' 'top' 'shirts' %}">Shirts</a>
-            </div>
-        </div>
-
-        <div class="nested-item">
-            <a href="{% url 'category_products' 'kids' 'bottom' %}">Bottom Wear <i class="fa fa-chevron-right"></i></a>
-            <div class="deep-menu">
-                <a href="{% url 'category_type_products' 'kids' 'bottom' 'shorts' %}">Shorts</a>
-                <a href="{% url 'category_type_products' 'kids' 'bottom' 'jeans' %}">Jeans</a>
-            </div>
+            <div class="footer-column">
+                <h3>EXPERIENCE CHEAPIFY APP</h3>
+                <div class="app-links" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
+                        <i class="fab fa-google-play" style="font-size: 1.8rem;"></i>
+                        <div style="line-height: 1.2;">
+                            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Get it on</span>
+                            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">Google Play</span>
+                        </div>
+                    </div>
+                    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
+                        <i class="fab fa-apple" style="font-size: 2rem;"></i>
+                        <div style="line-height: 1.2;">
+                            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Download on the</span>
+                            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">App Store</span>
+                        </div>
+                    </div>
+                </div>
+                <h3>KEEP IN TOUCH</h3>
+                <div class="social-icons">
+                    <a href="#"><i class="fa-brands fa-facebook-square"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                </div>
             </div>
         </div>
-    </div>
-
-</div>
-
-
-{% block content %}{% endblock %}
-
-<footer class="main-footer">
-    <div class="footer-container">
-        <div class="footer-column">
-            <h3>ONLINE SHOPPING</h3>
-            <ul>
-                <li><a href="{% url 'category_default' 'men' %}">Men</a></li>
-                <li><a href="{% url 'category_default' 'women' %}">Women</a></li>
-                <li><a href="{% url 'category_default' 'kids' %}">Kids</a></li>
-                
-                <li><a href="{% url 'insider_page' %}">Cheapify Insider</a></li>
-            </ul>
+        <div class="footer-bottom">
+            <p>© 2026 www.cheapify.com. All rights reserved.</p>
+            <p style="font-size: 11px; opacity: 0.6;">A Passionate Developer Company</p>
         </div>
+    </footer>
 
-        <div class="footer-column">
-            <h3>USEFUL LINKS</h3>
-            <ul>
-                <li><a href="{% url 'about_us' %}">About Us</a></li>
-                <li><a href="{% url 'careers' %}">Careers</a></li>
-                <li><a href="{% url 'blog_list' %}">Blog</a></li>
-                <li><a href="{% url 'sitemap' %}">Site Map</a></li>
-                <li><a href="{% url 'corporate_info' %}">Corporate Information</a></li>
-            </ul>
-        </div>
+    {% load django_browser_reload %}
+    {% django_browser_reload_script %}
 
-        <div class="footer-column">
-            <h3>CUSTOMER POLICIES</h3>
-            <ul>
-                <li><a href="{% url 'contact_us' %}">Contact Us</a></li>
-                <li><a href="{% url 'faq' %}">FAQ</a></li>
-                <li><a href="{% url 'terms' %}">T&C</a></li>
-                <li><a href="{% url 'terms_use' %}">Terms Of Use</a></li>
-                <li><a href="{% url 'my_orders' %}">Track Orders</a></li>
-                <li><a href="{% url 'shipping_policy' %}">Shipping</a></li>
-                <li><a href="{% url 'return_policy' %}">Cancellation & Returns</a></li>
-                <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
-            </ul>
-        </div>
+    <script>
+        let lastScrollTop = 0;
+        const categoryHeader = document.getElementById("category-header");
 
-        <div class="footer-column">
-            <h3>EXPERIENCE CHEAPIFY APP</h3>
-            <div class="app-links" style="display: flex; gap: 15px; flex-wrap: wrap;">
-    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
-        <i class="fab fa-google-play" style="font-size: 1.8rem;"></i>
-        <div style="line-height: 1.2;">
-            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Get it on</span>
-            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">Google Play</span>
-        </div>
-    </div>
+        window.addEventListener("scroll", function () {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (scrollTop > lastScrollTop) {
+                categoryHeader.style.transform = "translateY(-100%)";
+            } else {
+                categoryHeader.style.transform = "translateY(0)";
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+    </script>
 
-    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
-        <i class="fab fa-apple" style="font-size: 2rem;"></i>
-        <div style="line-height: 1.2;">
-            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Download on the</span>
-            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">App Store</span>
-        </div>
-    </div>
-</div>
-            <h3>KEEP IN TOUCH</h3>
-            <div class="social-icons">
-                <a href="#"><i class="fa-brands fa-facebook-square"></i></a>
-                <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                <a href="#"><i class="fa-brands fa-instagram"></i></a>
-            </div>
-        </div>
+    <script>
+        document.querySelectorAll('.submenu-toggle').forEach(item => {
+            item.addEventListener('click', function (e) {
+                if (window.innerWidth <= 768) {
+                    const deepMenu = this.nextElementSibling;
+                    if (deepMenu && !deepMenu.classList.contains('is-open')) {
+                        e.preventDefault();
+                        document.querySelectorAll('.deep-menu').forEach(m => m.classList.remove('is-open'));
+                        deepMenu.classList.add('is-open');
+                    }
+                }
+            });
+        });
 
-       
-
-</div>
-        </div>
-    </div>
-
-    <div class="footer-bottom">
-        <p>© 2026 www.cheapify.com. All rights reserved.</p>
-        <p style="font-size: 11px; opacity: 0.6;">A Passionate Developer Company</p>
-    </div>
-</footer>
-
-{% load django_browser_reload %}
-{% django_browser_reload_script %}
-
-<script>
-    let lastScrollTop = 0;
-    const categoryHeader = document.getElementById("category-header");
-
-    window.addEventListener("scroll", function () {
-        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-        if (scrollTop > lastScrollTop) {
-            // scroll down → hide
-            categoryHeader.style.transform = "translateY(-100%)";
-        } else {
-            // scroll up → show
-            categoryHeader.style.transform = "translateY(0)";
-        }
-
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    });
-</script>
-
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nested-item')) {
+                document.querySelectorAll('.deep-menu').forEach(m => m.classList.remove('is-open'));
+            }
+        });
+    </script>
 </body>
 </html>
