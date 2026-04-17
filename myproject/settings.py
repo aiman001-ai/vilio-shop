@@ -46,8 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles',  # <--- Ise upar rehne do
+    'cloudinary_storage',           # <--- Ise staticfiles ke niche le aao
     'cloudinary',
     'django.contrib.sites',
 
