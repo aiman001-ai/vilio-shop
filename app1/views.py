@@ -1,14 +1,18 @@
 import random
-import razorpay  # Library को अलग से इम्पोर्ट किया
+import razorpay 
 from django.core.mail import send_mail
-from django.conf import settings # Razorpay Keys के लिए ज़रूरी
+from django.conf import settings 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+
+# In dono lines ko dhyan se dekhein, ye alag-alag aayengi
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt  # Sahi import yahan hai
+
 from django.db.models import F, Sum, Q
 
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
@@ -245,20 +249,17 @@ def cart(request):
 
 # ================= QUANTITY CONTROLS (AJAX) =================
 @login_required
+@csrf_exempt
 @require_POST
 def increase_quantity(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     product = cart_item.product
-    
     available_stock = 0
 
-    # 1. Stock Check Logic (Simple vs Variant)
     if not product.has_variants:
-        # Simple product ke liye specific size ka stock nikalein
         size_obj = product.simple_size_stocks.filter(size_name=cart_item.size).first()
         available_stock = size_obj.stock if size_obj else 0
     else:
-        # Variant product (Colors) ke liye stock nikalein
         try:
             color_obj = ProductColor.objects.get(product=product, color_name=cart_item.color)
             size_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=cart_item.size)
@@ -266,7 +267,6 @@ def increase_quantity(request, item_id):
         except:
             available_stock = 0
 
-    # 2. Validation: Kya stock bacha hai?
     if cart_item.quantity >= available_stock:
         return JsonResponse({
             'success': False, 
@@ -275,16 +275,14 @@ def increase_quantity(request, item_id):
             'total': float(calculate_total(request.user))
         })
 
-    # 3. Agar stock hai, toh badhao
     cart_item.quantity += 1
     cart_item.save()
-    
-    data = cart_item_data(request.user, cart_item)
-    data['success'] = True
-    return JsonResponse(data)
+    cart_item.refresh_from_db()
+    return JsonResponse(cart_item_data(request.user, cart_item))
 
-
+# --- 4. Decrease Quantity ---
 @login_required
+@csrf_exempt
 @require_POST
 def decrease_quantity(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
@@ -292,11 +290,9 @@ def decrease_quantity(request, item_id):
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
-        data = cart_item_data(request.user, cart_item)
-        data['success'] = True
-        return JsonResponse(data)
+        cart_item.refresh_from_db()
+        return JsonResponse(cart_item_data(request.user, cart_item))
     else:
-        # Agar 1 se kam ho raha hai toh delete kar do
         cart_item.delete()
         return JsonResponse({
             'success': True, 
@@ -316,9 +312,12 @@ def cart_item_data(user, cart_item):
 
 def calculate_total(user):
     cart = Cart.objects.filter(user=user).first()
-    if not cart: return 0
-    result = cart.items.aggregate(total_price=Sum(F('product__price') * F('quantity')))
-    return result['total_price'] or 0
+    if not cart:
+        return 0
+    total_price = 0
+    for item in cart.items.select_related('product').all():
+        total_price += (item.product.price * item.quantity)
+    return total_price
 
 # ================= ADDRESS & OTP =================
 @login_required
