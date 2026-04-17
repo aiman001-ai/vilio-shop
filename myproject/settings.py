@@ -13,9 +13,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
+# Live ke liye False, Local ke liye True kar sakte ho
 DEBUG = False
 
-# settings.py
 ALLOWED_HOSTS = [
     'vilio-shop.onrender.com', 
     'vilio.shop', 
@@ -30,15 +30,11 @@ CSRF_TRUSTED_ORIGINS = [
     'https://www.vilio.shop'
 ]
 
-# Ye do lines aur add karein
+# Security Settings
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
-
-# Ye lines bhi zaroori hain HTTPS secure connection ke liye
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 
 # ======================
 # Application definition
@@ -50,7 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     'django.contrib.sites',
 
     # allauth
@@ -67,7 +65,6 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -77,21 +74,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # allauth middleware
     'allauth.account.middleware.AccountMiddleware',
-
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
-
 ROOT_URLCONF = 'myproject.urls'
-
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # app/templates auto-detected
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,20 +91,16 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-
-                # 🔥 CART COUNT CONTEXT PROCESSOR
                 'app1.context_processors.cart_count_processor',
             ],
         },
     },
 ]
 
-
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
-
 # ==========
-# Database (Updated to Neon.tech)
+# Database
 # ==========
 
 DATABASES = {
@@ -120,77 +108,21 @@ DATABASES = {
 }
 
 DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-DATABASES['default']['OPTIONS'] = {
-    'sslmode': 'require',
+DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
+# =========================
+# Static & Media (NO CLOUDINARY)
+# =========================
+
+# Cloudinary Configuration
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'drda3jvoc',
+    'API_KEY': '743562395273835',
+    'API_SECRET': '4u7e4Qc9AzyeeQDFwANbuF2F0bU'
 }
 
-
-# =================
-# Password validation
-# =================
-
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
-
-# =========================
-# Authentication Backends
-# =========================
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-)
-
-
-# =========================
-# django-allauth (UPDATED)
-# =========================
-
-ACCOUNT_LOGIN_METHODS = {'email'}
-
-ACCOUNT_SIGNUP_FIELDS = [
-    'email*',
-    'password1*',
-    'password2*',
-]
-
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_PASSWORD_REQUIRED = False
-
-
-# =========================
-# Login / Logout Redirects
-# =========================
-
-LOGIN_REDIRECT_URL = '/post-login/'
-LOGOUT_REDIRECT_URL = '/'
-
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_LOGOUT_ON_POST = False
-
-SOCIALACCOUNT_LOGIN_ON_GET = True
-
-
-# =================
-# Internationalization
-# =================
-
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Kolkata'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-
-
-# =================
-# Static & Media
-# =================
+# Media files ke liye Cloudinary ko default banao
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -200,30 +132,41 @@ STATICFILES_DIRS = [
     BASE_DIR / "app1" / "static",
 ]
 
+# Media Settings (SABSE ZAROORI)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# =================
+# Authentication & Rest
+# =================
 
-# =================
-# Default primary key
-# =================
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+LOGIN_REDIRECT_URL = '/post-login/'
+LOGOUT_REDIRECT_URL = '/'
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'Asia/Kolkata'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 # Razorpay Settings
 RAZORPAY_KEY_ID = 'rzp_test_SFKqTmr3PhUmW7' 
 RAZORPAY_KEY_SECRET = 'Q4bDqvzOmZewngalmji3OfmZ'
 
-
-# =================
-# Email Configuration
-# =================
-
+# Email Config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'aiman7417@gmail.com'
-EMAIL_HOST_PASSWORD = 'rhun pqyy uqwd onzq' 
+EMAIL_HOST_PASSWORD = 'rhun pqyy uqwd onzq'
 DEFAULT_FROM_EMAIL = f"My Store <{EMAIL_HOST_USER}>"
