@@ -198,7 +198,7 @@
                 {% if order.status|lower == 'cancelled' %}
                     <span class="cancelled-tag">Cancelled</span>
                 {% elif order.can_cancel %}
-                    <form action="{% url 'cancel_order' order.id %}" method="post" style="display:inline;">
+                    <form action="/cancel-order/{{ order.id }}/" method="post" style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn-cancel" onclick="return confirm('Do you really want to cancel this order?')">Cancel Order</button>
                     </form>
