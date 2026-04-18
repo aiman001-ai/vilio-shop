@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     home, shop_now, cart, add_to_cart, login_page, verify_otp, 
-    logout_page, add_address, my_addresses, product_detail, 
+    logout_page, add_address, my_addresses, delete_address, product_detail, 
     post_login_redirect, increase_quantity, decrease_quantity,
     checkout, place_order, my_orders, search, 
     category_default, category_products, # Category views
@@ -20,6 +20,8 @@ urlpatterns = [
     path('add-to-cart/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('add-address/', add_address, name='add_address'),
     path('my-addresses/', my_addresses, name='my_addresses'),
+    path('delete-address/<int:id>/', delete_address, name='delete_address'),
+    path('address/edit/<int:id>/', edit_address, name='edit_address'),
 
     # Quantity Update AJAX Routes
     path('cart/increase/<int:item_id>/', increase_quantity, name='increase_quantity'),
@@ -86,6 +88,5 @@ path('shipping-policy/', shipping_policy, name='shipping_policy'),
 path('cancellation-returns/', return_policy, name='return_policy'),
 # urls.py
 path('privacy-policy/', privacy_policy, name='privacy_policy'),
-
-path('address/edit/<int:addr_id>/', edit_address, name='edit_address'),
 ]
+

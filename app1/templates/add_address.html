@@ -1,108 +1,213 @@
 {% extends 'base.html' %}
-
-{% block title %}Add New Address{% endblock %}
+{% block title %}Add New Address | Vilio{% endblock %}
 
 {% block content %}
 <style>
-    .address-container {
-        max-width: 600px;
-        margin: 40px auto;
-        border: 1px solid #ddd;
-        padding: 30px;
-        border-radius: 6px;
-        background: #fff;
+    /* Google Fonts Import for Professional Look */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    .address-wrapper { 
+        background-color: #fcfcfc; 
+        padding: 60px 15px; 
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
     }
-    .address-container h2 {
-        margin-bottom: 20px;
+
+    .address-container { 
+        max-width: 650px; 
+        margin: 0 auto; 
+        background: #ffffff; 
+        padding: 40px; 
+        border-radius: 16px; 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+        border: 1px solid #f0f0f0;
     }
-    .address-container input,
+
+    .address-container h2 { 
+        font-weight: 600; 
+        font-size: 24px;
+        margin-bottom: 8px; 
+        color: #1a1a1a; 
+        text-align: center;
+    }
+
+    .sub-text {
+        text-align: center;
+        color: #777;
+        font-size: 14px;
+        margin-bottom: 35px;
+    }
+
+    /* Grid Layout */
+    .form-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 20px; 
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .form-group { position: relative; }
+
+    .form-group label { 
+        display: block; 
+        font-size: 12px; 
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px; 
+        color: #555; 
+    }
+    
+    .address-container input, 
     .address-container textarea {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box; /* padding fix karne ke liye */
+        width: 100%; 
+        padding: 14px 16px; 
+        border: 1.5px solid #eee;
+        border-radius: 10px; 
+        font-size: 15px; 
+        background-color: #fbfbfb;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #333;
+        box-sizing: border-box;
     }
-    .address-container button {
-        background: black;
-        color: white;
-        padding: 12px;
-        border: none;
-        width: 100%;
-        cursor: pointer;
+
+    .address-container input::placeholder { color: #aaa; }
+
+    .address-container input:focus, 
+    .address-container textarea:focus { 
+        border-color: #000; 
+        background-color: #fff;
+        outline: none; 
+        box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+    }
+
+    /* Pincode Specific Styles */
+    .pincode-wrapper { position: relative; }
+    #pin-loader { 
+        position: absolute; 
+        right: 15px; 
+        top: 38px; 
+        font-size: 12px; 
+        font-weight: 500;
+    }
+
+    /* Button Styling */
+    .btn-save { 
+        background: #000; 
+        color: #fff; 
+        width: 100%; 
+        padding: 16px; 
+        border: none; 
+        border-radius: 12px; 
+        font-weight: 600; 
         font-size: 16px;
-        border-radius: 4px;
+        cursor: pointer; 
+        margin-top: 25px;
+        transition: transform 0.2s, background 0.3s;
+        letter-spacing: 0.5px;
     }
-    .address-container button:hover {
-        background: #333;
+
+    .btn-save:hover {
+        background: #222;
+        transform: translateY(-2px);
     }
-    /* Pincode loader style */
-    #pin-loader {
-        display: block;
-        font-size: 12px;
-        margin-top: -10px;
-        margin-bottom: 10px;
-        color: #007bff;
+
+    .btn-save:active { transform: translateY(0); }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 600px) { 
+        .address-wrapper { padding: 20px 10px; }
+        .address-container { padding: 25px 20px; border-radius: 0; box-shadow: none; border: none; background: transparent; }
+        .form-grid { grid-template-columns: 1fr; gap: 15px; } 
+        .full-width { grid-column: span 1; } 
+        .address-container h2 { font-size: 20px; text-align: left; }
+        .sub-text { text-align: left; margin-bottom: 25px; }
+        .btn-save { position: sticky; bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     }
 </style>
 
-<div class="address-container">
-    <h2>Add New Address</h2>
+<div class="address-wrapper">
+    <div class="address-container">
+        <h2>Shipping Address</h2>
+        <p class="sub-text">Please enter the details where you want your order delivered.</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" placeholder="e.g. Cristiano" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" placeholder="e.g. Ronaldo
+" required>
+                </div>
 
-    <form method="POST">
-        {% csrf_token %}
+                <div class="form-group full-width">
+                    <label>Mobile Number</label>
+                    <input type="tel" name="mobile" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+                </div>
 
-        <input type="text" name="name" placeholder="Full Name" autocomplete="name" required>
+                <div class="form-group full-width pincode-wrapper">
+                    <label>Pincode</label>
+                    <input type="text" name="pincode" id="pincode" placeholder="6-digit area code" maxlength="6" required>
+                    <span id="pin-loader"></span>
+                </div>
 
-        <input type="text" name="mobile" placeholder="Mobile Number" autocomplete="tel" required>
+                <div class="form-group full-width">
+                    <label>Flat, House no., Building, Company, Apartment</label>
+                    <input type="text" name="address" placeholder="H.No 123, Vilio, Apartments" required>
+                </div>
 
-        <input type="text" name="pincode" id="pincode" placeholder="Pincode (6 Digits)" autocomplete="postal-code" maxlength="6" required>
-        <span id="pin-loader"></span>
+                <div class="form-group full-width">
+                    <label>Area, Street, Sector, Village</label>
+                    <textarea name="address_2" rows="2" placeholder="Main Street, Near Clock Tower"></textarea>
+                </div>
 
-        <textarea name="address" placeholder="Full Address (House No, Street, Area)" autocomplete="address-line1" rows="3" required></textarea>
+                <div class="form-group">
+                    <label>Town/City</label>
+                    <input type="text" name="city" id="city" placeholder="City" required>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" name="state" id="state" placeholder="State" required>
+                </div>
+            </div>
 
-        <input type="text" name="city" id="city" placeholder="City" autocomplete="address-level2" required>
-
-        <input type="text" name="state" id="state" placeholder="State" autocomplete="address-level1" required>
-
-        <button type="submit">Save Address</button>
-    </form>
+            <button type="submit" class="btn-save">SAVE AND CONTINUE</button>
+        </form>
+    </div>
 </div>
 
 <script>
-document.getElementById('pincode').addEventListener('input', function() {
-    const pincode = this.value;
-    const loader = document.getElementById('pin-loader');
-    const cityField = document.getElementById('city');
-    const stateField = document.getElementById('state');
-
-    if (pincode.length === 6) {
-        loader.innerText = "🔍 Fetching location details...";
-        loader.style.color = "#007bff";
-
-        fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data[0].Status === "Success") {
-                const details = data[0].PostOffice[0];
-                cityField.value = details.District;
-                stateField.value = details.State;
-                loader.innerText = "✅ Location found!";
-                loader.style.color = "green";
-            } else {
-                loader.innerText = "❌ Invalid Pincode!";
-                loader.style.color = "red";
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            loader.innerText = "⚠️ Could not connect to API";
-        });
-    } else {
-        loader.innerText = "";
-    }
-});
+    document.getElementById('pincode').addEventListener('input', function() {
+        const pincode = this.value;
+        const loader = document.getElementById('pin-loader');
+        if (pincode.length === 6) {
+            loader.innerText = "🔍 Fetching...";
+            loader.style.color = "#666";
+            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data[0].Status === "Success") {
+                    document.getElementById('city').value = data[0].PostOffice[0].District;
+                    document.getElementById('state').value = data[0].PostOffice[0].State;
+                    loader.innerText = "✅ Found"; 
+                    loader.style.color = "#28a745";
+                } else { 
+                    loader.innerText = "❌ Invalid"; 
+                    loader.style.color = "#dc3545"; 
+                }
+            })
+            .catch(err => {
+                loader.innerText = "⚠️ Error";
+                loader.style.color = "#ff9800";
+            });
+        } else {
+            loader.innerText = "";
+        }
+    });
 </script>
-
 {% endblock %}

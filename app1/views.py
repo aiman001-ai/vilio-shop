@@ -323,26 +323,26 @@ def calculate_total(user):
 @login_required
 def add_address(request):
     if request.method == 'POST':
-        # request.POST.get use karne se website crash nahi hogi agar data missing ho
-        name = request.POST.get('name')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
         mobile = request.POST.get('mobile')
         address_text = request.POST.get('address')
+        address_2 = request.POST.get('address_2')
         city = request.POST.get('city')
         state = request.POST.get('state')
         pincode = request.POST.get('pincode')
 
-        # Database mein save
         Address.objects.create(
             user=request.user,
-            name=name,
+            first_name=first_name,
+            last_name=last_name,
             mobile=mobile,
             address=address_text,
+            address_2=address_2,
             city=city,
             state=state,
             pincode=pincode
         )
-
-        # Agar user checkout se aaya tha toh wapas wahi bhejo, warna profile par
         next_page = request.GET.get('next', 'checkout') 
         return redirect(next_page)
 
@@ -844,20 +844,35 @@ def return_policy(request):
 def privacy_policy(request):
     return render(request, 'privacy.html')    
 
-def edit_address(request, addr_id):
-    address = get_object_or_404(Address, id=addr_id, user=request.user)
+@login_required
+def edit_address(request, id):
+    address = get_object_or_404(Address, id=id, user=request.user)
     
-    if request.method == "POST":
-        address.name = request.POST.get('name')
+    if request.method == 'POST':
+        # Data update karna
+        address.first_name = request.POST.get('first_name')
+        address.last_name = request.POST.get('last_name')
         address.mobile = request.POST.get('mobile')
         address.address = request.POST.get('address')
+        address.address_2 = request.POST.get('address_2')
         address.city = request.POST.get('city')
         address.state = request.POST.get('state')
         address.pincode = request.POST.get('pincode')
         address.save()
-        return redirect('my_addresses') # Apne address list wale URL ka naam likho
         
-    return render(request, 'edit_address.html', {'a': address})    
+        messages.success(request, "Address updated successfully!")
+        return redirect('my_addresses')
+
+    # GET request par wahi design wala page dikhao
+    return render(request, 'edit_address.html', {'address': address})  
+
+@login_required
+def delete_address(request, id):
+    # Sirf wahi address delete ho jo usi user ka ho
+    address = get_object_or_404(Address, id=id, user=request.user)
+    address.delete()
+    messages.success(request, "Address deleted successfully!")
+    return redirect('my_addresses')    
 
 
 def send_admin_order_notification(order):

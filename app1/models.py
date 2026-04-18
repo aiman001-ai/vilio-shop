@@ -174,16 +174,17 @@ class OrderItem(models.Model):
 
 class Address(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=50, default="") # Naya
+    last_name = models.CharField(max_length=50, default="")  # Naya
     mobile = models.CharField(max_length=15)
-    address = models.TextField()
+    address = models.TextField() # Street Address
+    address_2 = models.CharField(max_length=255, blank=True, null=True) # Naya (Apartment/Suite)
     city = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
     pincode = models.CharField(max_length=10)
 
-    # ISKO UPDATE KARO: Taki jab hum str(address) karein toh sab mile
     def __str__(self):
-        return f"{self.name}, {self.mobile}, {self.address}, {self.city}, {self.state} - {self.pincode}"
+        return f"{self.first_name} {self.last_name}, {self.mobile}"
 
 
 class Blog(models.Model):
