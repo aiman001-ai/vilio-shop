@@ -12,7 +12,7 @@ from django.http import JsonResponse
 # In dono lines ko dhyan se dekhein, ye alag-alag aayengi
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt  # Sahi import yahan hai
-
+from .models import SimpleProductSizeStock, ColorSizeStock
 from django.db.models import F, Sum, Q
 
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
@@ -499,104 +499,77 @@ def place_order(request):
     address_id = request.POST.get("address_id")
     payment_method = request.POST.get("payment_method")
     
-    # ज़रूरी डेटा गेट करें
+    # 1. Address aur Cart ka data nikalna
     address = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
 
-    # खाली कार्ट चेक करें
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect('cart')
 
-    # टोटल अमाउंट कैलकुलेट करें
     total = sum(item.product.price * item.quantity for item in cart_items)
     full_address_string = f"{address.name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
 
-    # --- CASE 1: CASH ON DELIVERY (COD) ---
+    # --- Order Object Create Karna (Common for both COD/Online) ---
+    order_data = {
+        'user': request.user,
+        'address': full_address_string,
+        'total_amount': total,
+        'status': "Confirmed",
+        'payment_method': payment_method,
+    }
+
     if payment_method == "COD":
-        # 1. ऑर्डर क्रिएट करें
-        order = Order.objects.create(
-            user=request.user,
-            address=full_address_string,
-            total_amount=total,
-            status="Confirmed",
-            payment_method="COD",
-            payment_status="Pending"
-        )
-        
-        # 2. एडमिन को ईमेल भेजें (Timeout fix ke liye abhi disabled hai)
-        # send_admin_order_notification(order)
-
-        # 3. स्टॉक घटाएँ और Order Items बनाएँ
-        for item in cart_items:
-            try:
-                # स्टॉक अपडेट (Variant logic)
-                color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-                size_stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
-                size_stock_obj.stock = max(0, size_stock_obj.stock - item.quantity)
-                size_stock_obj.save()
-            except Exception as e:
-                print(f"Stock Update Error: {e}")
-
-            # ऑर्डर आइटम सेव करें
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                color=item.color,
-                size=item.size,
-                quantity=item.quantity,
-                price=item.product.price
-            )
-        
-        # 4. कार्ट साफ़ करें
-        cart_items.delete()
-        messages.success(request, "🎉 Order placed successfully (COD)!")
-        return redirect('my_orders')
-
-    # --- CASE 2: ONLINE PAYMENT ---
+        order_data['payment_status'] = "Pending"
+        order = Order.objects.create(**order_data)
     elif payment_method == "ONLINE":
-        razorpay_payment_id = request.POST.get('razorpay_payment_id')
-        razorpay_order_id = request.POST.get('razorpay_order_id')
+        order_data['payment_status'] = "Paid"
+        order_data['razorpay_order_id'] = request.POST.get('razorpay_order_id')
+        order_data['razorpay_payment_id'] = request.POST.get('razorpay_payment_id')
+        order = Order.objects.create(**order_data)
+    else:
+        return redirect('checkout')
 
-        order = Order.objects.create(
-            user=request.user,
-            address=full_address_string,
-            total_amount=total,
-            status="Confirmed",
-            payment_method="ONLINE",
-            payment_status="Paid",
-            razorpay_order_id=razorpay_order_id,
-            razorpay_payment_id=razorpay_payment_id
-        )
-
-        # एडमिन को ईमेल भेजें (Timeout fix ke liye abhi disabled hai)
-        # send_admin_order_notification(order)
-
-        for item in cart_items:
-            try:
+    # --- UNIVERSAL STOCK UPDATE LOGIC (For both Simple & Variant Products) ---
+    for item in cart_items:
+        try:
+            # Check karein ki product variant wala hai ya simple
+            if item.product.has_variants:
+                # TYPE 1: Color Variant wala product
                 color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-                size_stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
-                size_stock_obj.stock = max(0, size_stock_obj.stock - item.quantity)
-                size_stock_obj.save()
-            except:
-                pass
+                stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
+            else:
+                # TYPE 2: Bina color wala Simple product (Missing Logic Fixed)
+                stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
+            
+            # Stock Minus Karein
+            stock_obj.stock = max(0, stock_obj.stock - item.quantity)
+            stock_obj.save()
 
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                color=item.color,
-                size=item.size,
-                quantity=item.quantity,
-                price=item.product.price
-            )
+        except Exception as e:
+            # Agar stock model nahi milta toh error print hoga par order crash nahi karega
+            print(f"Stock Update Error for {item.product.name}: {e}")
 
-        cart_items.delete()
+        # OrderItem Create Karein
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            color=item.color,
+            size=item.size,
+            quantity=item.quantity,
+            price=item.product.price
+        )
+    
+    # 4. Cart Saaf Karein
+    cart_items.delete()
+    
+    if payment_method == "COD":
+        messages.success(request, "🎉 Order placed successfully (COD)!")
+    else:
         messages.success(request, "🎉 Online Payment Successful & Order Placed!")
-        return redirect('my_orders')
-
-    # अगर कुछ मैच न हो
-    return redirect('checkout')
+        
+    return redirect('my_orders')
 
 
 @login_required
@@ -665,31 +638,39 @@ def category_default(request, category_slug):
 def cancel_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # Status check: Sirf Confirmed ya Placed order hi cancel honge
-   # Yahan 'Pending' add kiya hai kyunki aapka default status wahi hai
+    # 1. Status Check (Sirf in status wale order cancel honge)
     if order.status in ['Confirmed', 'Placed', 'Pending']:
+        # 2. Time Window Check (Jo aapne model me 5 min set kiya hai)
         if order.can_cancel:
             order_items = OrderItem.objects.filter(order=order)
             
             for item in order_items:
-                c_name = item.color.strip() if item.color else ""
-                s_name = item.size.strip() if item.size else ""
-                
                 try:
-                    color_obj = ProductColor.objects.get(product=item.product, color_name__iexact=c_name)
-                    size_stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name__iexact=s_name)
+                    # --- Universal Stock Restoration Logic ---
+                    if item.product.has_variants:
+                        # Case A: Variant Product ka stock wapas badhao
+                        color_obj = ProductColor.objects.get(product=item.product, color_name__iexact=item.color.strip())
+                        stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name__iexact=item.size.strip())
+                    else:
+                        # Case B: Simple Product ka stock wapas badhao (Jo pehle missing tha)
+                        stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name__iexact=item.size.strip())
                     
-                    # Stock restoration
-                    size_stock_obj.stock = F('stock') + item.quantity
-                    size_stock_obj.save()
-                except:
-                    pass
+                    # F expression use karne se race condition nahi aati
+                    stock_obj.stock = F('stock') + item.quantity
+                    stock_obj.save()
+                    
+                except Exception as e:
+                    # Agar kisi wajah se stock restore na ho, toh error print ho par loop na ruke
+                    print(f"Cancel Restore Error for {item.product.name}: {e}")
 
+            # 3. Order Status Update
             order.status = 'Cancelled'
             order.save()
-            messages.success(request, "Order successfully cancelled.")
+            messages.success(request, "Order successfully cancelled and stock restored.")
         else:
             messages.error(request, "Cancellation time expired (5-minute window).")
+    else:
+        messages.error(request, "This order cannot be cancelled anymore.")
     
     return redirect('my_orders')
 
