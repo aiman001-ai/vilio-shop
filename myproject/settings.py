@@ -118,8 +118,8 @@ DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'drda3jvoc',
     'API_KEY': '743562395273835',
-    'API_SECRET': '4u7e4Qc9AzyeeQDFwANbuF2F0bU'
-    'STATICFILES_STORAGE': None
+    'API_SECRET': '4u7e4Qc9AzyeeQDFwANbuF2F0bU',  # <--- Maine yahan comma laga diya hai
+    'STATICFILES_STORAGE': None,
 }
 
 # Media files ke liye Cloudinary ko default banao
@@ -150,6 +150,11 @@ ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 LOGIN_REDIRECT_URL = '/post-login/'
 LOGOUT_REDIRECT_URL = '/'
+
+# --- Yahan add kar do ---
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Login confirmation skip
+ACCOUNT_LOGOUT_ON_GET = True      # Logout confirmation skip
+SOCIALACCOUNT_AUTO_SIGNUP = True
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
