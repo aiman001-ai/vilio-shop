@@ -138,13 +138,14 @@ STATICFILES_DIRS = [
     BASE_DIR / "app1" / "static",
 ]
 
-# NEW STORAGES SYSTEM (Django 4.2 & 5.0+)
-# Isne purane STATICFILES_STORAGE aur DEFAULT_FILE_STORAGE ko replace kar diya hai
-# Django 6.0/5.0 compatibility for Cloudinary
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# ==========================================
+# STORAGE CONFIGURATION (Django 5.1 & Cloudinary)
+# ==========================================
 
-# Baaki tera STORAGES block waise hi niche rahega
+# WhiteNoise settings (Missing files par crash nahi karega)
+WHITENOISE_MANIFEST_STRICT = False
+
+# Naya Django 5.0+ Storage System
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -153,6 +154,10 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Legacy support (Sirf compatibility ke liye, agar koi purani library ise dhoonde)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # =================
 # Authentication

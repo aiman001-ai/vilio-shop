@@ -28,28 +28,28 @@ class ProductType(models.Model):
         return f"{self.sub_category} -> {self.name}"
 
 class Product(models.Model):
-    brand = models.CharField(max_length=100, default="Cheapify")
+    brand = models.CharField(max_length=100, default="Vilio") # Aapne Vilio rebrand kiya tha
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     price = models.PositiveIntegerField(default=0)
     original_price = models.PositiveIntegerField(default=0, help_text="MRP")
     image = models.ImageField(upload_to='products/', null=True, blank=True)
-    rating = models.FloatField(default=0.0)  # Example: 4.2
-    reviews_count = models.IntegerField(default=0)  # Example: 1000
+    size_chart = models.ImageField(upload_to='size_charts/', null=True, blank=True)
+    
+    rating = models.FloatField(default=0.0)
+    reviews_count = models.IntegerField(default=0)
+    
     fabric = models.CharField(max_length=100, blank=True, null=True, help_text="Example: 100% Cotton")
     fit = models.CharField(max_length=100, blank=True, null=True, help_text="Example: Slim Fit")
     care_instructions = models.TextField(blank=True, null=True, help_text="Wash care details")
     additional_info = models.TextField(blank=True, null=True, help_text="Product ki extra khasiyat")
-    name = models.CharField(max_length=200)
-    # naya field yahan add karein
-    size_chart = models.ImageField(upload_to='size_charts/', null=True, blank=True)
     
     # Hierarchy
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE)
     product_type = models.ForeignKey(ProductType, on_delete=models.SET_NULL, null=True, blank=True)
     
-    # Variants & Stock (Aapka purana logic)
+    # Variants & Stock
     has_variants = models.BooleanField(default=False, verbose_name="Does this product have Colors?")
     simple_stock = models.PositiveIntegerField(default=0, help_text="Only if NO color variants")
     simple_sizes = models.CharField(max_length=100, blank=True, help_text="S,M,L")
@@ -62,6 +62,22 @@ class Product(models.Model):
         if self.original_price and self.original_price > self.price:
             return int(((self.original_price - self.price) / self.original_price) * 100)
         return 0
+
+    # ==========================================
+    # CLOUDINARY ERROR FIX (NAME ATTRIBUTE)
+    # ==========================================
+    def save(self, *args, **kwargs):
+        # Jab hum admin se save karte hain, tab CloudinaryImage object 
+        # kabhi kabhi 'name' property kho deta hai. Ye code usse bypass karega.
+        try:
+            for field_name in ['image', 'size_chart']:
+                field = getattr(self, field_name)
+                if field and hasattr(field, '_file') and field._file:
+                    if not hasattr(field, 'name') or field.name is None:
+                        field.name = field.file.name
+        except Exception:
+            pass
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.brand} - {self.name}"
