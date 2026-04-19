@@ -144,14 +144,14 @@ STATICFILES_DIRS = [
 
 # WhiteNoise settings (Missing files par crash nahi karega)
 WHITENOISE_MANIFEST_STRICT = False
-
-# Naya Django 5.0+ Storage System
+WHITENOISE_USE_FINDERS = True
+# Niche wali line ko change karke simple kar do (Bina compression ke)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage", # 'CompressedManifest' hata diya
     },
 }
 
