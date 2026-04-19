@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'cloudinary',
+    'app1',
     'django.contrib.sites',
 
     # allauth
@@ -61,7 +62,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     # Local apps
-    'app1',
+    
     "django_browser_reload",
 ]
 
@@ -129,12 +130,12 @@ cloudinary.config(
     secure=True
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 # Static files - Whitenoise
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 STATICFILES_DIRS = [
     BASE_DIR / "app1" / "static",
@@ -143,6 +144,16 @@ STATICFILES_DIRS = [
 # Media settings for Django Admin/Models
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Ab yahan par ye block hai
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # =================
 # Authentication
