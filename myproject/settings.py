@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
-# DEBUG: Local pe True rahega, Render pe False
+# DEBUG: Error check karne ke liye True rakha hai
 DEBUG = True
 
 ALLOWED_HOSTS = [
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles', 
     
     'cloudinary',
     'app1',
@@ -61,8 +61,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
-    # Local apps
-    
+    # Development tool
     "django_browser_reload",
 ]
 
@@ -70,7 +69,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Static files handling
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,9 +102,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # ==========================================
-# DATABASE - PERMANENT NEONDB (SQLite REMOVED)
+# DATABASE - NEON POSTGRES
 # ==========================================
-# Ab local aur live dono jagah Neon Postgres use hoga
 DATABASES = {
     'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb')
 }
@@ -114,7 +112,7 @@ DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 DATABASES['default']['CONN_MAX_AGE'] = 600
 
 # =========================
-# CLOUDINARY & MEDIA
+# STORAGE & MEDIA CONFIG
 # =========================
 
 CLOUDINARY_STORAGE = {
@@ -130,22 +128,18 @@ cloudinary.config(
     secure=True
 )
 
-
-
-# Static files - Whitenoise
+# Static and Media URLs
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_DIRS = [
     BASE_DIR / "app1" / "static",
 ]
 
-# Media settings for Django Admin/Models
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Ab yahan par ye block hai
+# NEW STORAGES SYSTEM (Django 4.2 & 5.0+)
+# Isne purane STATICFILES_STORAGE aur DEFAULT_FILE_STORAGE ko replace kar diya hai
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
