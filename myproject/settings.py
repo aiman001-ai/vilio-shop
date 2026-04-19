@@ -140,6 +140,11 @@ STATICFILES_DIRS = [
 
 # NEW STORAGES SYSTEM (Django 4.2 & 5.0+)
 # Isne purane STATICFILES_STORAGE aur DEFAULT_FILE_STORAGE ko replace kar diya hai
+# Django 6.0/5.0 compatibility for Cloudinary
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Baaki tera STORAGES block waise hi niche rahega
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
