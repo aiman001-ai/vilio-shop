@@ -10,7 +10,7 @@ urlpatterns = [
     path('', include('app1.urls')),
     path('accounts/', include('allauth.urls')),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path("__reload__/", include("django_browser_reload.urls")),
+    
 ]
 
 # Agar DEBUG True hai (Development)
