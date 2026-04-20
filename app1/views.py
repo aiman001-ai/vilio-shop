@@ -511,7 +511,10 @@ def place_order(request):
         return redirect('cart')
 
     total = sum(item.product.price * item.quantity for item in cart_items)
-    full_address_string = f"{address.name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+    
+    # FIXED: address.name ki jagah first_name aur last_name use kiya hai
+    full_name = f"{address.first_name} {address.last_name}".strip()
+    full_address_string = f"{full_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
 
     # --- Order Object Create Karna (Common for both COD/Online) ---
     order_data = {
@@ -533,24 +536,19 @@ def place_order(request):
     else:
         return redirect('checkout')
 
-    # --- UNIVERSAL STOCK UPDATE LOGIC (For both Simple & Variant Products) ---
+    # --- UNIVERSAL STOCK UPDATE LOGIC ---
     for item in cart_items:
         try:
-            # Check karein ki product variant wala hai ya simple
             if item.product.has_variants:
-                # TYPE 1: Color Variant wala product
                 color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
                 stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
             else:
-                # TYPE 2: Bina color wala Simple product (Missing Logic Fixed)
                 stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
             
-            # Stock Minus Karein
             stock_obj.stock = max(0, stock_obj.stock - item.quantity)
             stock_obj.save()
 
         except Exception as e:
-            # Agar stock model nahi milta toh error print hoga par order crash nahi karega
             print(f"Stock Update Error for {item.product.name}: {e}")
 
         # OrderItem Create Karein
@@ -572,12 +570,6 @@ def place_order(request):
         messages.success(request, "🎉 Online Payment Successful & Order Placed!")
         
     return redirect('my_orders')
-
-
-@login_required
-def my_orders(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'my_orders.html', {'orders': orders})
 
 # ================= SEARCH & CATEGORIES =================
 def search(request):
