@@ -679,10 +679,11 @@ def payment_success(request):
     address_id = request.GET.get('address_id')
 
     if not payment_id or not order_id or not address_id:
+        messages.error(request, "Payment details missing.")
         return redirect('cart')
 
-    # User ka address aur cart uthao
-    address_obj = get_object_or_404(Address, id=address_id, user=request.user)
+    # 1. Address ki sahi fields fetch karna (first_name, last_name, mobile, address, etc.)
+    address = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
     
@@ -691,10 +692,10 @@ def payment_success(request):
 
     total = sum(item.product.price * item.quantity for item in cart_items)
 
-    # Tumhare model ke hisab se address string build kiya hai
-    full_address = f"{address_obj.first_name} {address_obj.last_name}, Phone: {address_obj.mobile}, {address_obj.address}, {address_obj.city}, {address_obj.state} - {address_obj.pincode}"
+    # Address string banana (Sahi model fields ke sath)
+    full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
 
-    # Order Create
+    # 2. Order Create karna
     order = Order.objects.create(
         user=request.user,
         address=full_address,
@@ -706,22 +707,38 @@ def payment_success(request):
         razorpay_payment_id=payment_id
     )
 
-    # Order Items Create aur Stock Update
+    # 3. Order Items Create & Stock Update (Logic as per your Models)
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
             product=item.product,
+            color=item.color,
+            size=item.size,
             quantity=item.quantity,
             price=item.product.price
         )
+
+        # --- Stock Update Logic ---
+        # Case A: Agar product ke color variants hain
+        if item.product.has_variants:
+            variant_color = ProductColor.objects.filter(product=item.product, color_name=item.color).first()
+            if variant_color:
+                stock_obj = ColorSizeStock.objects.filter(product_color=variant_color, size_name=item.size).first()
+                if stock_obj and stock_obj.stock >= item.quantity:
+                    stock_obj.stock -= item.quantity
+                    stock_obj.save()
         
-        # Stock kam karne ka logic
-        product = item.product
-        if product.stock >= item.quantity:
-            product.stock -= item.quantity
-            product.save()
-    
-    # Cart khaali karo
+        # Case B: Agar simple product hai (without colors)
+        else:
+            stock_obj = SimpleProductSizeStock.objects.filter(product=item.product, size_name=item.size).first()
+            if stock_obj and stock_obj.stock >= item.quantity:
+                stock_obj.stock -= item.quantity
+                stock_obj.save()
+            elif hasattr(item.product, 'simple_stock'): # Backup: agar direct simple_stock field ho
+                item.product.simple_stock -= item.quantity
+                item.product.save()
+
+    # 4. Cart khali karna
     cart_items.delete()
     
     messages.success(request, "🎉 Payment Successful! Your order has been placed.")
