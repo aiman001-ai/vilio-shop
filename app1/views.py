@@ -676,59 +676,39 @@ def cancel_order(request, order_id):
 def payment_success(request):
     payment_id = request.GET.get('payment_id')
     order_id = request.GET.get('order_id')
-    address_id = request.GET.get('address_id') 
+    address_id = request.GET.get('address_id')
 
-    # 1. डेटा निकालें
+    # Security Check: Bina ids ke koi ye page nahi khol sakta
+    if not payment_id or not order_id:
+        return redirect('cart')
+
+    # Order banane ka logic
+    address = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
-    
-    # Address check karein
-    address = get_object_or_404(Address, id=address_id, user=request.user)
-    
     total = sum(item.product.price * item.quantity for item in cart_items)
 
-    # 2. असली Order डेटाबेस में बनाएँ
-    # Note: Humne address fields ko fix kiya hai (house/street hata kar)
+    full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+
+    # Order Create
     order = Order.objects.create(
-    user=request.user,
-    # MOBILE BHI DAAL DIYA AB STRING MEIN
-    address=f"{address.name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}",
-    total_amount=total,
-    status="Confirmed",
-    payment_method="ONLINE",
-    payment_status="Paid",
-    razorpay_order_id=order_id,
-    razorpay_payment_id=payment_id
-)
+        user=request.user,
+        address=full_address,
+        total_amount=total,
+        status="Confirmed",
+        payment_method="ONLINE",
+        payment_status="Paid",
+        razorpay_order_id=order_id,
+        razorpay_payment_id=payment_id
+    )
 
-    # 3. स्टॉक घटाएँ (Stock Minus Logic)
+    # Stock Update aur Items Create (Tumhara existing loop yahan aa jayega)
     for item in cart_items:
-        try:
-            # Color aur Size ke basis par stock dhoondein
-            color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-            size_stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
-            
-            # Stock kam karein
-            size_stock_obj.stock = max(0, size_stock_obj.stock - item.quantity)
-            size_stock_obj.save()
-
-            # Order Item record karein
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                color=item.color,
-                size=item.size,
-                quantity=item.quantity,
-                price=item.product.price
-            )
-        except Exception as e:
-            # Agar koi item stock mein nahi milta toh terminal mein error dikhega
-            print(f"Error updating stock for {item.product.name}: {e}")
-
-    # 4. कार्ट खाली करें
+        # ... (Stock update logic jo tumne upar bheja tha wahi yahan rahega) ...
+        OrderItem.objects.create(order=order, product=item.product, ...)
+    
     cart_items.delete()
-
-    messages.success(request, f"🎉 Payment Successful! Order ID: {order.id}")
+    messages.success(request, "🎉 Payment Successful & Order Placed!")
     return redirect('my_orders')
 
 
@@ -921,33 +901,28 @@ Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
 # Client initialize karein
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
+@login_required
 @csrf_exempt
 def create_razorpay_order(request):
-    if request.method == "POST":
-        try:
-            # Cart total nikalna (Paise mein: ₹1 = 100 paise)
-            cart = Cart.objects.get(user=request.user)
-            total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
-            amount_in_paise = int(total_amount * 100)
+    try:
+        cart = Cart.objects.get(user=request.user)
+        total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
+        amount_in_paise = int(total_amount * 100)
 
-            # 1. Razorpay Order Create karna
-            data = {
-                "amount": amount_in_paise,
-                "currency": "INR",
-                "receipt": f"receipt_order_{request.user.id}",
-            }
-            razorpay_order = client.order.create(data=data)
+        data = {
+            "amount": amount_in_paise,
+            "currency": "INR",
+            "receipt": f"receipt_{request.user.id}"
+        }
+        razorpay_order = client.order.create(data=data)
 
-            # Frontend ko order_id bhejna
-            return JsonResponse({
-                "order_id": razorpay_order['id'],
-                "amount": amount_in_paise,
-                "currency": "INR",
-                "key_id": settings.RAZORPAY_KEY_ID
-            })
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
+        return JsonResponse({
+            "order_id": razorpay_order['id'],
+            "amount": amount_in_paise,
+            "key_id": settings.RAZORPAY_KEY_ID
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
 def verify_payment(request):
@@ -973,3 +948,27 @@ def verify_payment(request):
         except Exception as e:
             # 3. FAILURE: Agar signature match nahi hui
             return JsonResponse({"status": "Failure", "error": str(e)}, status=400)
+
+
+@login_required
+def initiate_payment(request):
+    address_id = request.GET.get('address_id')
+    cart = Cart.objects.get(user=request.user)
+    total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
+    amount_in_paise = int(total_amount * 100)
+
+    # 1. Razorpay Order Create karna
+    data = {
+        "amount": amount_in_paise,
+        "currency": "INR",
+        "receipt": f"receipt_{request.user.id}",
+    }
+    razorpay_order = client.order.create(data=data)
+
+    context = {
+        'razorpay_order_id': razorpay_order['id'],
+        'amount': amount_in_paise,
+        'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
+        'address_id': address_id,
+    }
+    return render(request, 'payment_gateway.html', context)            

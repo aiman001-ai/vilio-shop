@@ -5,7 +5,7 @@ from .views import (
     post_login_redirect, increase_quantity, decrease_quantity,
     checkout, place_order, my_orders, search, 
     category_default, category_products, # Category views
-    cancel_order, payment_success, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment
+    cancel_order, payment_success, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order
 )
 
 urlpatterns = [
@@ -47,6 +47,9 @@ urlpatterns = [
 
     # --- ORDER MANAGEMENT ---
     path('cancel-order/<int:order_id>/', cancel_order, name='cancel_order'),
+
+    path('create-razorpay-order/', create_razorpay_order, name='create_razorpay_order'),
+
     path('payment-success/', payment_success, name='payment_success'),
 
     path('privacy-policy/', privacy_policy, name='privacy_policy'),
