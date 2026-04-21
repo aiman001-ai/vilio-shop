@@ -678,19 +678,26 @@ def payment_success(request):
     order_id = request.GET.get('order_id')
     address_id = request.GET.get('address_id')
 
-    # Security Check: Bina ids ke koi ye page nahi khol sakta
-    if not payment_id or not order_id:
+    # 1. Security Check: Bina valid IDs ke koi access na kar sake
+    if not payment_id or not order_id or not address_id:
+        messages.error(request, "Invalid Payment Session.")
         return redirect('cart')
 
-    # Order banane ka logic
+    # 2. Get User Data
     address = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
+
+    if not cart_items:
+        return redirect('cart')
+
+    # Calculate Total
     total = sum(item.product.price * item.quantity for item in cart_items)
 
-    full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+    # Prepare Address String
+    full_address = f"{address.name}, {address.phone}, {address.house}, {address.street}, {address.city}, {address.state} - {address.pincode}"
 
-    # Order Create
+    # 3. Create Order (Database mein entry)
     order = Order.objects.create(
         user=request.user,
         address=full_address,
@@ -702,14 +709,29 @@ def payment_success(request):
         razorpay_payment_id=payment_id
     )
 
-    # Stock Update aur Items Create (Tumhara existing loop yahan aa jayega)
+    # 4. Create Order Items & Update Stock
     for item in cart_items:
-        # ... (Stock update logic jo tumne upar bheja tha wahi yahan rahega) ...
-        OrderItem.objects.create(order=order, product=item.product, ...)
-    
+        # Create OrderItem entry
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            quantity=item.quantity,
+            price=item.product.price, # Current price save karna zaroori hai
+            size=item.size,           # Agar size use kar rahe ho
+            color=item.color          # Agar color use kar rahe ho
+        )
+
+        # Product ka stock kam karo
+        product = item.product
+        if product.stock >= item.quantity:
+            product.stock -= item.quantity
+            product.save()
+
+    # 5. Cart khaali karo
     cart_items.delete()
-    messages.success(request, "🎉 Payment Successful & Order Placed!")
-    return redirect('my_orders')
+
+    messages.success(request, f"🎉 Order successfully placed! Payment ID: {payment_id}")
+    return redirect('my_orders') # Ya jahan bhi tum orders dikhate ho
 
 
 def privacy_policy(request):
