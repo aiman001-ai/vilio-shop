@@ -681,15 +681,20 @@ def payment_success(request):
     if not payment_id or not order_id or not address_id:
         return redirect('cart')
 
-    address = get_object_or_404(Address, id=address_id, user=request.user)
+    # User ka address aur cart uthao
+    address_obj = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
+    
+    if not cart_items:
+        return redirect('cart')
+
     total = sum(item.product.price * item.quantity for item in cart_items)
 
-    # ERROR FIXED HERE: Model fields ke hisab se address string
-    # Maine 'name' aur 'phone' hata diya hai kyunki error wahi de raha tha
-    full_address = f"{address.house}, {address.street}, {address.city}, {address.state} - {address.pincode}"
+    # Tumhare model ke hisab se address string build kiya hai
+    full_address = f"{address_obj.first_name} {address_obj.last_name}, Phone: {address_obj.mobile}, {address_obj.address}, {address_obj.city}, {address_obj.state} - {address_obj.pincode}"
 
+    # Order Create
     order = Order.objects.create(
         user=request.user,
         address=full_address,
@@ -701,22 +706,25 @@ def payment_success(request):
         razorpay_payment_id=payment_id
     )
 
+    # Order Items Create aur Stock Update
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
             product=item.product,
             quantity=item.quantity,
-            price=item.product.price,
-            size=item.size if hasattr(item, 'size') else None,
-            color=item.color if hasattr(item, 'color') else None
+            price=item.product.price
         )
-        # Stock Update
+        
+        # Stock kam karne ka logic
         product = item.product
-        product.stock -= item.quantity
-        product.save()
+        if product.stock >= item.quantity:
+            product.stock -= item.quantity
+            product.save()
     
+    # Cart khaali karo
     cart_items.delete()
-    messages.success(request, "🎉 Payment Successful & Order Placed!")
+    
+    messages.success(request, "🎉 Payment Successful! Your order has been placed.")
     return redirect('my_orders')
 
 
