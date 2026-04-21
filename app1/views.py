@@ -916,3 +916,60 @@ Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
         print("Notification sent to Admin!")
     except Exception as e:
         print(f"Mail bhejte waqt error aaya: {e}")    
+
+
+# Client initialize karein
+client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+@csrf_exempt
+def create_razorpay_order(request):
+    if request.method == "POST":
+        try:
+            # Cart total nikalna (Paise mein: ₹1 = 100 paise)
+            cart = Cart.objects.get(user=request.user)
+            total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
+            amount_in_paise = int(total_amount * 100)
+
+            # 1. Razorpay Order Create karna
+            data = {
+                "amount": amount_in_paise,
+                "currency": "INR",
+                "receipt": f"receipt_order_{request.user.id}",
+            }
+            razorpay_order = client.order.create(data=data)
+
+            # Frontend ko order_id bhejna
+            return JsonResponse({
+                "order_id": razorpay_order['id'],
+                "amount": amount_in_paise,
+                "currency": "INR",
+                "key_id": settings.RAZORPAY_KEY_ID
+            })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def verify_payment(request):
+    if request.method == "POST":
+        # Razorpay se jo 3 cheezein aayi hain unhe dictionary mein daalna
+        params_dict = {
+            'razorpay_order_id': request.POST.get('razorpay_order_id'),
+            'razorpay_payment_id': request.POST.get('razorpay_payment_id'),
+            'razorpay_signature': request.POST.get('razorpay_signature')
+        }
+
+        try:
+            # 1. Signature verify karna (Ye check karta hai ki payment asli hai ya nahi)
+            client.utility.verify_payment_signature(params_dict)
+            
+            # 2. SUCCESS: Yahan apna order update karne ka logic likho
+            # Jaise: order = Order.objects.get(razorpay_order_id=params_dict['razorpay_order_id'])
+            # order.status = 'Paid'
+            # order.save()
+            
+            return JsonResponse({"status": "Success"})
+            
+        except Exception as e:
+            # 3. FAILURE: Agar signature match nahi hui
+            return JsonResponse({"status": "Failure", "error": str(e)}, status=400)

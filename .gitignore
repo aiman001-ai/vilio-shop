@@ -1,0 +1,21 @@
+# 1. Security (Sabse zaroori)
+.env
+
+# 2. Python/Django temporary files
+__pycache__/
+*.pyc
+db.sqlite3
+*.log
+
+# 3. Media aur Static (Local testing ka kachra)
+media/
+staticfiles/
+
+# 4. Environments
+venv/
+env/
+.python
+
+# 5. OS specific files
+.DS_Store
+Thumbs.db

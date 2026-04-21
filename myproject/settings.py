@@ -4,6 +4,7 @@ Django settings for myproject project.
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -185,9 +186,10 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Razorpay Settings
-RAZORPAY_KEY_ID = 'rzp_test_SFKqTmr3PhUmW7' 
-RAZORPAY_KEY_SECRET = 'Q4bDqvzOmZewngalmji3OfmZ'
+load_dotenv() # Ye line .env file se saari keys load kar degi
+
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 
 # Email Config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
