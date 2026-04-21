@@ -1,71 +1,73 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .brand-link { color: #ff3f6c; text-decoration: none; font-weight: bold; transition: 0.3s; }
+    .brand-link:hover { text-decoration: underline; color: #282c3f; }
+    .policy-card { border: 1px solid #eaeaec; border-radius: 15px; padding: 40px; transition: 0.3s; background: #fff; min-height: 320px; }
+</style>
+
 <div style="background-color: #fff; min-height: 100vh; padding: 120px 20px 60px;">
     <div class="container" style="max-width: 900px; margin: 0 auto;">
         
         <div style="text-align: center; margin-bottom: 60px;">
             <div style="display: inline-block; padding: 10px 20px; background: #fff5f7; color: #ff3f6c; border-radius: 50px; font-weight: bold; font-size: 14px; margin-bottom: 20px;">
-                HASSLE-FREE PROMISE
+                VILIO.SHOP TRUST GUARANTEE
             </div>
-            <h1 style="color: #282c3f; font-size: 2.5rem; margin: 0;">Cancellation & Returns</h1>
-            <p style="color: #7e818c; margin-top: 15px; font-size: 1.1rem;">Changed your mind? No worries. Here’s how we can help.</p>
+            <h1 style="color: #282c3f; font-size: 2.5rem; margin: 0;">Refund & Cancellation Policy</h1>
+            <p style="color: #7e818c; margin-top: 15px; font-size: 1.1rem;">Clear, transparent, and customer-first policies at <a href="/" class="brand-link">vilio.shop</a>.</p>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 50px;">
             
-            <div style="border: 1px solid #eaeaec; border-radius: 15px; padding: 40px; transition: 0.3s;" onmouseover="this.style.borderColor='#ff3f6c'">
+            <div class="policy-card" onmouseover="this.style.borderColor='#ff3f6c'">
                 <div style="font-size: 2.5rem; margin-bottom: 20px;">⏱️</div>
                 <h3 style="color: #282c3f;">Cancellations</h3>
                 <ul style="padding-left: 20px; color: #535766; line-height: 2;">
-                    <li>Cancel anytime before the order is **shipped**.</li>
-                    <li>Full refund credited within **24 hours**.</li>
-                    <li>Once shipped, orders cannot be cancelled.</li>
+                    <li>Orders can be cancelled anytime before they are **dispatched**.</li>
+                    <li>To initiate cancellation, email us at <a href="mailto:sj7034683@gmail.com" class="brand-link">sj7034683@gmail.com</a>.</li>
+                    <li>Refunds are credited within **5-7 business days** to the original payment source.</li>
                 </ul>
             </div>
 
-            <div style="border: 1px solid #eaeaec; border-radius: 15px; padding: 40px; transition: 0.3s;" onmouseover="this.style.borderColor='#03a685'">
+            <div class="policy-card" onmouseover="this.style.borderColor='#03a685'">
                 <div style="font-size: 2.5rem; margin-bottom: 20px;">🔄</div>
-                <h3 style="color: #282c3f;">Returns</h3>
+                <h3 style="color: #282c3f;">Returns & Exchanges</h3>
                 <ul style="padding-left: 20px; color: #535766; line-height: 2;">
-                    <li>**15-day** easy return policy.</li>
-                    <li>Item must be unused with original tags.</li>
-                    <li>Free reverse pickup from your doorstep.</li>
+                    <li>We offer a **7-day** return window from the date of delivery.</li>
+                    <li>To request a return, send your Order ID to <a href="mailto:sj7034683@gmail.com" class="brand-link">sj7034683@gmail.com</a>.</li>
+                    <li>Items must be in original condition with all tags and packaging intact.</li>
                 </ul>
             </div>
         </div>
 
         <div style="background: #f9f9f9; padding: 40px; border-radius: 20px;">
-            <h3 style="text-align: center; color: #282c3f; margin-bottom: 40px;">How to Return an Item?</h3>
+            <h3 style="text-align: center; color: #282c3f; margin-bottom: 40px;">How to return an item?</h3>
             
-            
-
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; position: relative;">
-                <div style="flex: 1; min-width: 150px; text-align: center;">
-                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">STEP 1</div>
-                    <p style="font-size: 14px; color: #535766;">Go to 'My Orders' and click **Return**.</p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; text-align: center;">
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">1. EMAIL US</div>
+                    <p style="font-size: 14px; color: #535766;">Email your request with Order ID to <a href="mailto:sj7034683@gmail.com" style="color: #ff3f6c; text-decoration: none;">our support team</a>.</p>
                 </div>
-                <div style="flex: 1; min-width: 150px; text-align: center;">
-                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">STEP 2</div>
-                    <p style="font-size: 14px; color: #535766;">Pack the item and keep it ready.</p>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">2. PICKUP</div>
+                    <p style="font-size: 14px; color: #535766;">We will arrange a reverse pickup within **48-72 hours**.</p>
                 </div>
-                <div style="flex: 1; min-width: 150px; text-align: center;">
-                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">STEP 3</div>
-                    <p style="font-size: 14px; color: #535766;">Our agent will pick it up in **48 hours**.</p>
-                </div>
-                <div style="flex: 1; min-width: 150px; text-align: center;">
-                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">STEP 4</div>
-                    <p style="font-size: 14px; color: #535766;">Refund is initiated after quality check.</p>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-weight: bold; color: #ff3f6c; margin-bottom: 10px;">3. REFUND</div>
+                    <p style="font-size: 14px; color: #535766;">After a quality check, the refund is initiated within **7 days**.</p>
                 </div>
             </div>
         </div>
 
         <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 40px;">
-            <h4 style="color: #282c3f;">Non-Returnable Items</h4>
-            <p style="color: #7e818c; font-size: 14px; line-height: 1.6;">
-                For hygiene reasons, some items like innerwear, socks, cosmetics, and jewelry are not eligible for return. 
-                Please check the product description page for the specific return policy of each item.
-            </p>
+            <h4 style="color: #282c3f;">Important Notes for Users:</h4>
+            <ul style="color: #7e818c; font-size: 14px; line-height: 1.8;">
+                <li>**Return Shipping:** We provide free reverse pickups for most pin codes. In case of issues, our team will guide you.</li>
+                <li>**Damaged Items:** If you receive a damaged product, please email us within **24 hours** with unboxing photos/videos.</li>
+                <li>**Non-Eligible Items:** Hygiene-related products (innerwear, masks) and customized orders are not eligible for returns.</li>
+                <li>**Refund Mode:** Refunds are always processed back to the **original payment method** (Bank/UPI/Card).</li>
+            </ul>
         </div>
 
     </div>

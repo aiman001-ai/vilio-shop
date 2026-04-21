@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}About Us | Cheapify{% endblock %}
+{% block title %}About Us | Vilio{% endblock %}
 
 {% block content %}
 <style>
@@ -16,6 +16,16 @@
         font-weight: 800;
         color: #ff3f6c;
         margin-bottom: 20px;
+    }
+    /* Link styling for the brand name */
+    .brand-link {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .brand-link:hover {
+        color: #ff3f6c;
+        text-decoration: underline;
     }
     .about-section p {
         font-size: 18px;
@@ -44,9 +54,9 @@
 </style>
 
 <div class="about-section">
-    <h1>Welcome to Cheapify</h1>
+    <h1>Welcome to <a href="/" class="brand-link">vilio.shop</a></h1>
     <p>
-        हमारा मानना है कि स्टाइल सिर्फ अमीर लोगों के लिए नहीं है। <strong>Cheapify</strong> की शुरुआत इसलिए हुई ताकि हम आपको लेटेस्ट फैशन, बेस्ट क्वालिटी और ऐसी कीमत में दे सकें जो आपकी जेब पर भारी न पड़े। हम फैशन और समझदारी (Value for money) का मेल हैं।
+        We believe that style is not just for the rich. <strong><a href="/" class="brand-link">vilio.shop</a></strong> was started so that we can offer you the latest fashion, the best quality, and prices that don’t feel heavy on your pocket. We are a perfect blend of fashion and value for money.
     </p>
 
     <div class="stats-container">
@@ -65,9 +75,9 @@
     </div>
 
     <div style="margin-top: 60px;">
-        <h2 style="color: #282c3f;">हमारी कहानी</h2>
+        <h2 style="color: #282c3f;">Our Story</h2>
         <p style="font-size: 16px;">
-            Cheapify सिर्फ एक स्टोर नहीं, एक भरोसा है। हम सीधे मैन्युफैक्चरर्स के साथ काम करते हैं ताकि बीच के मार्जिन को हटाकर वो बचत आप तक पहुँचा सकें। हर एक टी-शर्ट और जींस जो आप यहाँ देखते हैं, वो बहुत ही प्यार और सावधानी से चुनी गई है।
+            "At <a href="/" class="brand-link">vilio.shop</a>, we believe great fashion shouldn't be a luxury. By working directly with the people who make our clothes, we bring you high-quality essentials at prices that actually make sense. No middleman, no hidden costs—just authentic style delivered to your door."
         </p>
     </div>
 </div>

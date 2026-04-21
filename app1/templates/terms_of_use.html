@@ -1,45 +1,84 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .brand-link {
+        color: #ff3f6c;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .brand-link:hover {
+        text-decoration: underline;
+    }
+    .rule-card {
+        background: white; 
+        padding: 30px; 
+        border-radius: 15px; 
+        border-top: 5px solid #ff3f6c; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+    }
+    .rule-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+
 <div style="background: #fafbfc; min-height: 100vh; padding: 120px 20px 60px;">
     <div class="container" style="max-width: 1100px; margin: 0 auto;">
         
         <div style="background: #282c3f; border-radius: 20px; padding: 60px 40px; color: white; margin-bottom: 40px; position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 10rem; color: rgba(255,255,255,0.05); transform: rotate(-15deg); font-weight: 900;">USE</div>
+            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 10rem; color: rgba(255,255,255,0.05); transform: rotate(-15deg); font-weight: 900;">VILIO</div>
             <h1 style="font-size: 3rem; margin: 0; color: #ff3f6c;">Terms of Use</h1>
-            <p style="font-size: 1.1rem; opacity: 0.8; margin-top: 15px; max-width: 500px;">By using Cheapify, you agree to follow these simple rules. Think of this as our digital friendship agreement.</p>
+            <p style="font-size: 1.1rem; opacity: 0.8; margin-top: 15px; max-width: 600px;">
+                Governing the access and usage of <a href="/" class="brand-link">vilio.shop</a>. By using our platform, you agree to comply with the following legal guidelines.
+            </p>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
             
-            <div style="background: white; padding: 30px; border-radius: 15px; border-top: 5px solid #ff3f6c; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+            <div class="rule-card">
+                <div style="font-size: 2rem; margin-bottom: 15px;">⚖️</div>
+                <h3 style="color: #282c3f; margin-bottom: 15px;">Compliance & Conduct</h3>
+                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">
+                    Users must not use <a href="/" class="brand-link">vilio.shop</a> for any unlawful activities, including fraud, server interference, or unauthorized data access. We maintain zero tolerance for malicious behavior.
+                </p>
+            </div>
+
+            <div class="rule-card">
+                <div style="font-size: 2rem; margin-bottom: 15px;">🛡️</div>
+                <h3 style="color: #282c3f; margin-bottom: 15px;">Intellectual Property</h3>
+                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">
+                    All digital assets, logos, and product content on <a href="/" class="brand-link">vilio.shop</a> are protected under Indian Copyright Laws. Commercial reproduction is strictly prohibited without written consent.
+                </p>
+            </div>
+
+            <div class="rule-card">
                 <div style="font-size: 2rem; margin-bottom: 15px;">🚫</div>
-                <h3 style="color: #282c3f; margin-bottom: 15px;">Zero Tolerance Policy</h3>
-                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Do not use Cheapify to spread hate, upload malware, or attempt to hack our servers. Any suspicious activity will lead to a permanent IP ban.</p>
+                <h3 style="color: #282c3f; margin-bottom: 15px;">Prohibited Automation</h3>
+                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">
+                    The use of automated scripts, bots, or web scrapers on <a href="/" class="brand-link">vilio.shop</a> is forbidden. Accounts found using bots for purchases will be permanently blacklisted.
+                </p>
             </div>
 
-            <div style="background: white; padding: 30px; border-radius: 15px; border-top: 5px solid #ff3f6c; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <div style="font-size: 2rem; margin-bottom: 15px;">📸</div>
-                <h3 style="color: #282c3f; margin-bottom: 15px;">Content Copyright</h3>
-                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Our product images and descriptions are unique. You cannot copy or use them for your own business without our written "A-Okay."</p>
-            </div>
-
-            <div style="background: white; padding: 30px; border-radius: 15px; border-top: 5px solid #ff3f6c; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <div style="font-size: 2rem; margin-bottom: 15px;">🤖</div>
-                <h3 style="color: #282c3f; margin-bottom: 15px;">No Bots Allowed</h3>
-                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Using automated scripts or bots to purchase products during sales is strictly prohibited. We want our real customers to get the best deals.</p>
-            </div>
-
-            <div style="background: white; padding: 30px; border-radius: 15px; border-top: 5px solid #ff3f6c; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <div style="font-size: 2rem; margin-bottom: 15px;">📍</div>
-                <h3 style="color: #282c3f; margin-bottom: 15px;">Account Accuracy</h3>
-                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">You must provide your real name and correct address. If we can't find you, we can't deliver your style!</p>
+            <div class="rule-card">
+                <div style="font-size: 2rem; margin-bottom: 15px;">📝</div>
+                <h3 style="color: #282c3f; margin-bottom: 15px;">Accuracy of Information</h3>
+                <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">
+                    Users are required to provide accurate and verifiable data for order processing. Providing false contact details is a violation of these terms and may lead to order cancellation.
+                </p>
             </div>
         </div>
 
         <div style="margin-top: 40px; background: #fff5f7; border: 1px dashed #ff3f6c; padding: 25px; border-radius: 15px; text-align: center;">
-            <p style="color: #ff3f6c; font-weight: bold; margin: 0;">Violation of these rules may result in account termination and legal proceedings under the IT Act, 2000.</p>
+            <p style="color: #ff3f6c; font-weight: bold; margin: 0;">
+                Violation of these terms may lead to account suspension and legal action under the Information Technology Act, 2000 and other applicable Indian Laws.
+            </p>
         </div>
+        
+        <p style="text-align: center; margin-top: 30px; color: #7e818c; font-size: 0.9rem;">
+            Effective Date: April 2026 | <a href="{% url 'contact_us' %}" class="brand-link">Contact Support</a>
+        </p>
     </div>
 </div>
 {% endblock %}

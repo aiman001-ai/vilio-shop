@@ -1,25 +1,101 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container" style="margin-top: 100px; padding-bottom: 80px; max-width: 800px;">
-    <h1 style="text-align: center; color: #282c3f; font-weight: 700; margin-bottom: 10px;">Frequently Asked Questions</h1>
-    <p style="text-align: center; color: #7e818c; margin-bottom: 40px;">Find answers to your most common queries here.</p>
+<style>
+    .faq-container {
+        margin-top: 100px; 
+        padding-bottom: 80px; 
+        max-width: 850px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .faq-btn {
+        width: 100%; 
+        text-align: left; 
+        padding: 20px; 
+        background: white; 
+        border: none; 
+        outline: none; 
+        cursor: pointer; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        transition: 0.3s;
+    }
+    .faq-btn:hover {
+        background: #fff5f7;
+    }
+    .faq-item {
+        border-bottom: 1px solid #eaeaec; 
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .brand-link { color: #ff3f6c; text-decoration: none; font-weight: bold; }
+</style>
 
-    {% for section in faqs %}
-    <h3 style="color: #ff3f6c; margin-top: 30px; font-size: 1.2rem; text-transform: uppercase;">{{ section.category }}</h3>
+<div class="faq-container">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="color: #282c3f; font-weight: 800; font-size: 2.5rem; margin-bottom: 10px;">Common Questions</h1>
+        <p style="color: #7e818c; font-size: 1.1rem;">Everything you need to know about shopping at <a href="/" class="brand-link">vilio.shop</a></p>
+    </div>
+
+    <h3 style="color: #ff3f6c; margin-top: 40px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; padding-left: 10px;">📦 Shipping & Orders</h3>
     
-    {% for item in section.questions %}
-    <div style="border-bottom: 1px solid #eaeaec; margin-bottom: 5px;">
-        <button class="faq-btn" style="width: 100%; text-align: left; padding: 18px; background: none; border: none; outline: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 600; color: #282c3f; font-size: 1.1rem;">{{ item.q }}</span>
-            <i class="fas fa-chevron-down" style="font-size: 0.8rem; transition: 0.3s;"></i>
+    <div class="faq-item">
+        <button class="faq-btn">
+            <span style="font-weight: 600; color: #282c3f;">How long will it take to receive my order?</span>
+            <i class="fas fa-chevron-down" style="transition: 0.3s;"></i>
         </button>
-        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #f9f9f9; padding: 0 18px;">
-            <p style="padding-bottom: 18px; color: #535766; line-height: 1.6;">{{ item.a }}</p>
+        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #fafafa; padding: 0 20px;">
+            <p style="padding-bottom: 20px; color: #535766; line-height: 1.6;">Most orders at <strong>vilio.shop</strong> are delivered within 3-7 business days depending on your location. We process all orders within 48 hours.</p>
         </div>
     </div>
-    {% endfor %}
-    {% endfor %}
+
+    <div class="faq-item">
+        <button class="faq-btn">
+            <span style="font-weight: 600; color: #282c3f;">Do you offer international shipping?</span>
+            <i class="fas fa-chevron-down" style="transition: 0.3s;"></i>
+        </button>
+        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #fafafa; padding: 0 20px;">
+            <p style="padding-bottom: 20px; color: #535766; line-height: 1.6;">Currently, we deliver only within India. We are looking forward to expanding globally soon!</p>
+        </div>
+    </div>
+
+    <h3 style="color: #ff3f6c; margin-top: 40px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; padding-left: 10px;">💳 Payments & Security</h3>
+    
+    <div class="faq-item">
+        <button class="faq-btn">
+            <span style="font-weight: 600; color: #282c3f;">What payment methods do you accept?</span>
+            <i class="fas fa-chevron-down" style="transition: 0.3s;"></i>
+        </button>
+        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #fafafa; padding: 0 20px;">
+            <p style="padding-bottom: 20px; color: #535766; line-height: 1.6;">We accept all major Credit/Debit cards, UPI (Google Pay, PhonePe, etc.), and Netbanking through our secure payment partner, <strong>Razorpay</strong>.</p>
+        </div>
+    </div>
+
+    <h3 style="color: #ff3f6c; margin-top: 40px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; padding-left: 10px;">🔄 Returns & Refunds</h3>
+    
+    <div class="faq-item">
+        <button class="faq-btn">
+            <span style="font-weight: 600; color: #282c3f;">How do I return an item?</span>
+            <i class="fas fa-chevron-down" style="transition: 0.3s;"></i>
+        </button>
+        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #fafafa; padding: 0 20px;">
+            <p style="padding-bottom: 20px; color: #535766; line-height: 1.6;">You can initiate a return within 7 days of delivery. Just email your Order ID to <a href="mailto:sj7034683@gmail.com" class="brand-link">sj7034683@gmail.com</a> and our team will guide you.</p>
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <button class="faq-btn">
+            <span style="font-weight: 600; color: #282c3f;">When will I get my refund?</span>
+            <i class="fas fa-chevron-down" style="transition: 0.3s;"></i>
+        </button>
+        <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #fafafa; padding: 0 20px;">
+            <p style="padding-bottom: 20px; color: #535766; line-height: 1.6;">Once your return passes the quality check, the refund is processed within 5-7 business days back to your original payment method.</p>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -28,7 +104,15 @@
             const answer = button.nextElementSibling;
             const icon = button.querySelector('i');
             
-            // Toggle answer
+            // Close other open FAQ items (optional - for better UX)
+            document.querySelectorAll('.faq-answer').forEach(el => {
+                if (el !== answer) {
+                    el.style.maxHeight = '0px';
+                    el.previousElementSibling.querySelector('i').style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Toggle current answer
             if (answer.style.maxHeight && answer.style.maxHeight !== '0px') {
                 answer.style.maxHeight = '0px';
                 icon.style.transform = 'rotate(0deg)';

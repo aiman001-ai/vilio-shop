@@ -1,19 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .brand-link { color: inherit; text-decoration: none; transition: 0.3s; }
+    .brand-link:hover { color: #ff3f6c; text-decoration: underline; }
+    
+    .no-jobs-card {
+        background: white;
+        border: 2px dashed #eaeaec;
+        padding: 60px 20px;
+        border-radius: 12px;
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .no-jobs-card i {
+        font-size: 50px;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+</style>
+
 <div style="background: #282c3f; color: white; padding: 80px 20px; text-align: center; margin-top: 60px;">
     <h1 style="font-size: 3rem; font-weight: 800;">Build the Future of <span style="color: #ff3f6c;">Fashion</span></h1>
     <p style="font-size: 1.2rem; max-width: 700px; margin: 20px auto; color: #ccc;">
-        Join our team and help us redefine how India shops. We are looking for innovators, dreamers, and doers.
+        Join our team at <a href="/" class="brand-link" style="color: #ff3f6c;">vilio.shop</a> and help us redefine how India shops. We are looking for innovators, dreamers, and doers.
     </p>
 </div>
 
 <div class="container" style="padding: 60px 20px;">
     <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: center; justify-content: center;">
         <div style="flex: 1; min-width: 300px;">
-            <h2 style="color: #282c3f; font-size: 2rem;">Why work at Cheapify?</h2>
+            <h2 style="color: #282c3f; font-size: 2rem;">Why work at <a href="/" class="brand-link">vilio.shop</a>?</h2>
             <p style="color: #535766; line-height: 1.8;">
-                At Cheapify, we believe in creative freedom and ownership. You won't just be doing a job; you'll be building a brand that millions of people love.
+                At <a href="/" class="brand-link">vilio.shop</a>, we believe in creative freedom and ownership. You won't just be doing a job; you'll be building a brand that millions of people love.
             </p>
             <ul style="list-style: none; padding: 0; color: #282c3f; font-weight: 600;">
                 <li style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color: #03a685;"></i> Flexible Work Hours</li>
@@ -31,23 +51,13 @@
     <div class="container">
         <h2 style="text-align: center; color: #282c3f; margin-bottom: 40px;">Current Openings</h2>
         
-        <div style="max-width: 900px; margin: 0 auto;">
-            {% for job in jobs %}
-            <div style="background: white; border: 1px solid #eaeaec; padding: 25px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;">
-                <div>
-                    <h3 style="margin: 0; color: #282c3f; font-size: 1.2rem;">{{ job.title }}</h3>
-                    <p style="margin: 5px 0 0; color: #7e818c; font-size: 0.9rem;">
-                        <i class="fas fa-map-marker-alt"></i> {{ job.location }} | <i class="fas fa-briefcase"></i> {{ job.type }}
-                    </p>
-                </div>
-                <a href="mailto:careers@cheapify.com?subject=Application for {{ job.title }}" style="background: #ff3f6c; color: white; text-decoration: none; padding: 10px 25px; border-radius: 4px; font-weight: bold; font-size: 14px;">Apply Now</a>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div style="text-align: center; margin-top: 40px;">
-            <p style="color: #535766;">Don't see a role for you? Send your resume anyway!</p>
-            <p style="font-weight: bold; color: #282c3f;">careers@cheapify.com</p>
+        <div class="no-jobs-card">
+            <i class="fas fa-briefcase"></i>
+            <h3 style="color: #282c3f; margin-bottom: 10px;">We are growing fast!</h3>
+            <p style="color: #7e818c; font-size: 1.1rem; margin-bottom: 25px;">
+                Currently, all our positions are filled, but we're always looking for exceptional talent.
+            </p>
+           
         </div>
     </div>
 </div>

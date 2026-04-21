@@ -1,15 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+    .brand-link {
+        color: inherit;
+        text-decoration: none;
+        transition: 0.3s ease; /* Smooth transition ke liye */
+        display: inline-block;
+    }
+    
+    /* Hover effect update: Color aur Underline dono */
+    .brand-link:hover {
+        color: #ff3f6c;
+        text-decoration: underline;
+        text-underline-offset: 4px; /* Underline ko thoda niche rakhne ke liye */
+    }
+
+    .blog-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+    }
+</style>
+
 <div style="margin-top: 80px; padding: 40px 20px; text-align: center; background: #fff;">
-    <h1 style="font-size: 2.5rem; color: #282c3f; letter-spacing: 2px;">CHEAPIFY <span style="color: #ff3f6c;">BLOG</span></h1>
+    <h1 style="font-size: 2.5rem; color: #282c3f; letter-spacing: 2px;">
+        <a href="/" class="brand-link">vilio.shop</a> <span style="color: #ff3f6c;">BLOG</span>
+    </h1>
     <p style="color: #7e818c;">Latest trends, styling tips, and fashion news.</p>
 </div>
 
 <div class="container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
         {% for blog in blogs %}
-        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s;">
+        <div class="blog-card" style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s;">
             <img src="{{ blog.image.url }}" style="width: 100%; height: 250px; object-fit: cover;">
             <div style="padding: 20px;">
                 <small style="color: #ff3f6c; font-weight: bold; text-transform: uppercase;">{{ blog.created_at|date:"M d, Y" }}</small>
@@ -19,8 +42,10 @@
             </div>
         </div>
         {% empty %}
-        <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-            <h3>Coming Soon! Our stylists are writing fresh content for you.</h3>
+        <div style="grid-column: 1/-1; text-align: center; padding: 100px 20px;">
+            <i class="fas fa-feather-alt" style="font-size: 50px; color: #eee; margin-bottom: 20px; display: block;"></i>
+            <h3 style="color: #535766;">Coming Soon!</h3>
+            <p style="color: #7e818c;">Our stylists are crafting fresh fashion stories for you at <a href="/" class="brand-link" style="color: #ff3f6c;">vilio.shop</a>.</p>
         </div>
         {% endfor %}
     </div>

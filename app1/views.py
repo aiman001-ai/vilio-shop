@@ -1,6 +1,4 @@
 import random
-import setuptools.extern.jaraco.text # Ye line help karti hai
-import pkg_resources
 import razorpay
 from django.core.mail import send_mail
 from django.conf import settings 
