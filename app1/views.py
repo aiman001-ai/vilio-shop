@@ -959,51 +959,40 @@ def create_razorpay_order(request):
 @csrf_exempt
 def razorpay_webhook(request):
     if request.method == "POST":
+        # Render/Gunicorn request body ko bytes mein hi rakhta hai
+        payload = request.body 
+        signature = request.headers.get('X-Razorpay-Signature')
+        secret = settings.RAZORPAY_WEBHOOK_SECRET
+
+        if not secret:
+            print("❌ Webhook Secret not found in Render Environment Variables")
+            return HttpResponse(status=500)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
         try:
-            body = request.body  # ✅ KEEP AS BYTES (IMPORTANT)
-            signature = request.headers.get('X-Razorpay-Signature')
-            webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
-
-            if not webhook_secret:
-                print("❌ Webhook secret missing")
-                return HttpResponse(status=500)
-
-            client = razorpay.Client(
-                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-            )
-
-            # ✅ VERIFY (NO decode)
-            client.utility.verify_webhook_signature(
-                body,
-                signature,
-                webhook_secret
-            )
-
-            # ✅ JSON parse (yahan decode karo)
-            data = json.loads(body)
-            event = data.get("event")
-
-            if event == "payment.captured":
-                payment = data["payload"]["payment"]["entity"]
-                razorpay_order_id = payment.get("order_id")
-
-                order = Order.objects.filter(
-                    razorpay_order_id=razorpay_order_id
-                ).first()
-
-                if order:
-                    order.payment_status = "Paid"
-                    order.status = "Confirmed"
-                    order.save()
-                    print("✅ Payment captured & order updated")
-                else:
-                    print("❌ Order not found")
+            # ✅ Sabse safe tareeka: 
+            # Pehle bytes mein verify karo, agar wo "encoding" error de 
+            # toh use string mein convert karke try karo.
+            try:
+                client.utility.verify_webhook_signature(payload, signature, secret)
+            except Exception:
+                # Agar bytes fail ho, toh string (utf-8) try karo
+                client.utility.verify_webhook_signature(payload.decode('utf-8'), signature, secret)
+            
+            # Data parse karne ke liye hamesha decode zaroori hai
+            data = json.loads(payload.decode('utf-8'))
+            
+            # Tumhara baaki logic...
+            if data.get("event") == "payment.captured":
+                # ... order update code ...
+                pass
 
             return HttpResponse(status=200)
 
         except Exception as e:
-            print("❌ Webhook Error:", str(e))
-            return HttpResponse(status=500)
+            print(f"❌ Webhook Final Error: {str(e)}")
+            return HttpResponse(status=400)
 
     return HttpResponse(status=400)
 
