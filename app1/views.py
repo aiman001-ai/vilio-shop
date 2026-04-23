@@ -526,7 +526,6 @@ def place_order(request):
     if payment_method == "COD":
         order_data['payment_status'] = "Pending"
         order = Order.objects.create(**order_data)
-    elif payment_method == "ONLINE":
         order_data['payment_status'] = "Paid"
         order_data['razorpay_order_id'] = request.POST.get('razorpay_order_id')
         order_data['razorpay_payment_id'] = request.POST.get('razorpay_payment_id')
@@ -672,77 +671,6 @@ def cancel_order(request, order_id):
     
     return redirect('my_orders')
 
-@login_required
-def payment_success(request):
-    payment_id = request.GET.get('payment_id')
-    order_id = request.GET.get('order_id')
-    address_id = request.GET.get('address_id')
-
-    if not payment_id or not order_id or not address_id:
-        messages.error(request, "Payment details missing.")
-        return redirect('cart')
-
-    # 1. Address ki sahi fields fetch karna (first_name, last_name, mobile, address, etc.)
-    address = get_object_or_404(Address, id=address_id, user=request.user)
-    cart_obj = get_object_or_404(Cart, user=request.user)
-    cart_items = cart_obj.items.all()
-    
-    if not cart_items:
-        return redirect('cart')
-
-    total = sum(item.product.price * item.quantity for item in cart_items)
-
-    # Address string banana (Sahi model fields ke sath)
-    full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
-
-    # 2. Order Create karna
-    order = Order.objects.create(
-        user=request.user,
-        address=full_address,
-        total_amount=total,
-        status="Confirmed",
-        payment_method="ONLINE",
-        payment_status="Paid",
-        razorpay_order_id=order_id,
-        razorpay_payment_id=payment_id
-    )
-
-    # 3. Order Items Create & Stock Update (Logic as per your Models)
-    for item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            product=item.product,
-            color=item.color,
-            size=item.size,
-            quantity=item.quantity,
-            price=item.product.price
-        )
-
-        # --- Stock Update Logic ---
-        # Case A: Agar product ke color variants hain
-        if item.product.has_variants:
-            variant_color = ProductColor.objects.filter(product=item.product, color_name=item.color).first()
-            if variant_color:
-                stock_obj = ColorSizeStock.objects.filter(product_color=variant_color, size_name=item.size).first()
-                if stock_obj and stock_obj.stock >= item.quantity:
-                    stock_obj.stock -= item.quantity
-                    stock_obj.save()
-        
-        # Case B: Agar simple product hai (without colors)
-        else:
-            stock_obj = SimpleProductSizeStock.objects.filter(product=item.product, size_name=item.size).first()
-            if stock_obj and stock_obj.stock >= item.quantity:
-                stock_obj.stock -= item.quantity
-                stock_obj.save()
-            elif hasattr(item.product, 'simple_stock'): # Backup: agar direct simple_stock field ho
-                item.product.simple_stock -= item.quantity
-                item.product.save()
-
-    # 4. Cart khali karna
-    cart_items.delete()
-    
-    messages.success(request, "🎉 Payment Successful! Your order has been placed.")
-    return redirect('my_orders')
 
 
 def privacy_policy(request):
@@ -938,49 +866,95 @@ client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_S
 @csrf_exempt
 def create_razorpay_order(request):
     try:
-        cart = Cart.objects.get(user=request.user)
+        # 🔹 Cart fetch
+        cart = Cart.objects.filter(user=request.user).first()
+
+        if not cart or not cart.items.exists():
+            return JsonResponse({"error": "Cart is empty"}, status=400)
+
+        # 🔹 Total calculate
         total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
         amount_in_paise = int(total_amount * 100)
 
+        # 🔹 Razorpay Order create
         data = {
             "amount": amount_in_paise,
             "currency": "INR",
-            "receipt": f"receipt_{request.user.id}"
+            "receipt": f"receipt_user_{request.user.id}_{random.randint(1000,9999)}"
         }
+
         razorpay_order = client.order.create(data=data)
+
+        # 🔥 IMPORTANT: Order DB me pehle create karo (Pending state)
+        order = Order.objects.create(
+            user=request.user,
+            address="TEMP",  # baad me verify_payment me update hoga
+            total_amount=total_amount,
+            status="Pending",
+            payment_method="ONLINE",
+            payment_status="Pending",
+            razorpay_order_id=razorpay_order['id']
+        )
 
         return JsonResponse({
             "order_id": razorpay_order['id'],
             "amount": amount_in_paise,
             "key_id": settings.RAZORPAY_KEY_ID
         })
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
 def verify_payment(request):
     if request.method == "POST":
-        # Razorpay se jo 3 cheezein aayi hain unhe dictionary mein daalna
         params_dict = {
             'razorpay_order_id': request.POST.get('razorpay_order_id'),
             'razorpay_payment_id': request.POST.get('razorpay_payment_id'),
             'razorpay_signature': request.POST.get('razorpay_signature')
         }
 
+        address_id = request.POST.get('address_id')
+
         try:
-            # 1. Signature verify karna (Ye check karta hai ki payment asli hai ya nahi)
             client.utility.verify_payment_signature(params_dict)
-            
-            # 2. SUCCESS: Yahan apna order update karne ka logic likho
-            # Jaise: order = Order.objects.get(razorpay_order_id=params_dict['razorpay_order_id'])
-            # order.status = 'Paid'
-            # order.save()
-            
+
+            # 🔥 Order fetch karo
+            order = Order.objects.get(
+                razorpay_order_id=params_dict['razorpay_order_id']
+            )
+
+            # 🔥 Address update
+            address = Address.objects.get(id=address_id, user=order.user)
+
+            full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+
+            order.address = full_address
+            order.payment_status = "Paid"
+            order.razorpay_payment_id = params_dict['razorpay_payment_id']
+            order.status = "Confirmed"
+            order.save()
+
+            # 🔥 Cart items
+            cart = Cart.objects.get(user=order.user)
+            cart_items = cart.items.all()
+
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    color=item.color,
+                    size=item.size,
+                    quantity=item.quantity,
+                    price=item.product.price
+                )
+
+            cart_items.delete()
+
             return JsonResponse({"status": "Success"})
-            
+
         except Exception as e:
-            # 3. FAILURE: Agar signature match nahi hui
-            return JsonResponse({"status": "Failure", "error": str(e)}, status=400)
+            return JsonResponse({"status": "Failure", "error": str(e)})
 
 
 @login_required

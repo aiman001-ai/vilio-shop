@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <style>
-    /* ... (Tumhara purana CSS yahan rahega) ... */
     body { background: #f1f3f6; font-family: Arial, sans-serif; }
     .container { width: 90%; margin: 20px auto; display: flex; gap: 20px; }
     .left { width: 70%; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -21,12 +20,13 @@
 {% block content %}
 <div class="container">
     <div class="left">
-        <h2 class="section-title">Checkout</h2>
+        <h2>Checkout</h2>
+
         <h3>1. Review Your Items</h3>
         {% for c in cart_items %}
         <div class="cart-item">
-            <img src="{{ c.display_image }}" alt="{{ c.product.name }}">
-            <div class="cart-details">
+            <img src="{{ c.display_image }}">
+            <div>
                 <h4>{{ c.product.name }}</h4>
                 <p>Qty: {{ c.quantity }} | Size: {{ c.size }} | Color: {{ c.color }}</p>
                 <p class="price">₹{{ c.subtotal }}</p>
@@ -36,38 +36,37 @@
 
         <form method="post" action="{% url 'place_order' %}" id="checkout-form">
             {% csrf_token %}
-            
-            <h3 style="margin-top: 30px;">2. Select Payment Method</h3>
-            <div class="payment-methods">
-                <label class="payment-box">
-                    <input type="radio" name="payment_method" value="COD" checked>
-                    <strong>Cash on Delivery (COD)</strong>
-                </label>
-                <label class="payment-box">
-                    <input type="radio" name="payment_method" value="ONLINE">
-                    <strong>Online Payment (UPI / Cards / NetBanking)</strong>
-                </label>
-            </div>
 
-            <h3 style="margin-top: 30px;">3. Select Delivery Address</h3>
+            <h3>2. Payment Method</h3>
+            <label class="payment-box">
+                <input type="radio" name="payment_method" value="COD" checked>
+                Cash on Delivery
+            </label>
+
+            <label class="payment-box">
+                <input type="radio" name="payment_method" value="ONLINE">
+                Online Payment
+            </label>
+
+            <h3>3. Delivery Address</h3>
             {% for address in addresses %}
-                <label class="address-box">
-                    <input type="radio" name="address_id" value="{{ address.id }}" required>
-                    <strong>{{ address.first_name }} {{ address.last_name }}</strong> — {{ address.mobile }}<br>
-                    <span style="font-size: 14px; color: #444;">{{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}</span>
-                </label>
+            <label class="address-box">
+                <input type="radio" name="address_id" value="{{ address.id }}" required>
+                {{ address.first_name }} {{ address.last_name }} - {{ address.mobile }}<br>
+                {{ address.address }}, {{ address.city }}
+            </label>
             {% endfor %}
 
-            <button type="submit" class="place-btn" id="final-submit-btn">Place Your Order</button>
+            <button type="submit" class="place-btn" id="final-submit-btn">Place Order</button>
         </form>
     </div>
 
     <div class="right">
-        <h3>Order Summary</h3>
-        <div class="summary-row"><span>Items Total:</span><span>₹{{ total }}</span></div>
-        <div class="summary-row"><span>Delivery:</span><span style="color: green;">FREE</span></div>
-        <hr>
-        <div class="summary-row" style="font-size: 18px;"><strong>Total:</strong><strong class="price">₹{{ total }}</strong></div>
+        <h3>Summary</h3>
+        <div class="summary-row">
+            <span>Total:</span>
+            <span class="price">₹{{ total }}</span>
+        </div>
     </div>
 </div>
 
@@ -75,55 +74,89 @@
 
 <script>
 document.getElementById('checkout-form').onsubmit = function(e) {
+
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressId = document.querySelector('input[name="address_id"]:checked').value;
 
     if (paymentMethod === 'ONLINE') {
-        e.preventDefault(); // Form submit hone se roko
-        
-        // Button ko disable karke loading dikhao
+
+        e.preventDefault();
+
         const btn = document.getElementById('final-submit-btn');
         btn.disabled = true;
         btn.innerText = "Processing...";
 
-        // 1. Server se Razorpay Order ID maango
+        // 🔹 Step 1: Create Razorpay Order
         fetch("{% url 'create_razorpay_order' %}", {
             method: "POST",
-            headers: { "X-CSRFToken": "{{ csrf_token }}" }
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-            if(data.error) {
-                alert("Error: " + data.error);
+
+            if(data.error){
+                alert(data.error);
                 btn.disabled = false;
-                btn.innerText = "Place Your Order";
+                btn.innerText = "Place Order";
                 return;
             }
 
-            // 2. Razorpay Popup kholo
+            // 🔹 Step 2: Open Razorpay
             var options = {
                 "key": data.key_id,
                 "amount": data.amount,
                 "currency": "INR",
-                "name": "Vilio.shop",
+                "name": "Vilio",
                 "order_id": data.order_id,
+
+                // ✅ FIXED HANDLER
                 "handler": function (response) {
-                    // 3. Agar payment SUCCESS hui, toh success page par bhej do address_id ke saath
-                    window.location.href = `/payment-success/?payment_id=${response.razorpay_payment_id}&order_id=${response.razorpay_order_id}&address_id=${addressId}`;
+
+                    // 🔥 VERIFY PAYMENT (MOST IMPORTANT)
+                    fetch("/verify-payment/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: new URLSearchParams({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            address_id: addressId
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+
+                        if(data.status === "Success"){
+                            window.location.href = "/my-orders/";
+                        } else {
+                            alert("Payment verification failed");
+                            btn.disabled = false;
+                            btn.innerText = "Place Order";
+                        }
+
+                    });
+
                 },
+
                 "modal": {
                     "ondismiss": function() {
                         btn.disabled = false;
-                        btn.innerText = "Place Your Order";
+                        btn.innerText = "Place Order";
                     }
-                },
-                "theme": { "color": "#f08804" }
+                }
             };
-            var rzp1 = new Razorpay(options);
-            rzp1.open();
+
+            var rzp = new Razorpay(options);
+            rzp.open();
+
         });
+
     }
-    // Agar COD hai, toh form normal submit ho jayega `/place-order/` par
 };
 </script>
+
 {% endblock %}
