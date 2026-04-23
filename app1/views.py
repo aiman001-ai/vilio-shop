@@ -446,27 +446,24 @@ def product_detail(request, id):
 def checkout(request):
     cart_obj = Cart.objects.filter(user=request.user).first()
     
-    # Check agar cart khali hai
+    # 1. Basic Checks
     if not cart_obj or not cart_obj.items.exists():
         messages.error(request, "Your cart is empty")
         return redirect('cart')
 
-    # Check agar address nahi hai
     addresses = Address.objects.filter(user=request.user)
     if not addresses.exists():
         messages.info(request, "Please add a delivery address first.")
-        return redirect('add_address')
+        return redirect('/add-address/?next=checkout') # next parameter zaroori hai
 
     processed_cart_items = []
     total = 0
     
-    # Cart items par loop chala kar details nikalna
+    # 2. Cart items calculation
     for item in cart_obj.items.select_related('product'):
         subtotal = item.product.price * item.quantity
         total += subtotal
         
-        # --- UPDATE: Naya Variant Image Logic ---
-        # ProductVariant ki jagah ProductColor model se filter kar rahe hain
         color_var = ProductColor.objects.filter(
             product=item.product, 
             color_name__iexact=item.color
@@ -474,7 +471,7 @@ def checkout(request):
 
         if color_var and color_var.color_image:
             variant_image = color_var.color_image.url
-        elif item.product.image: # Apne main product image field ka naam yahan check karein
+        elif item.product.image:
             variant_image = item.product.image.url
         else:
             variant_image = "/static/images/no-image.png"
@@ -488,10 +485,27 @@ def checkout(request):
             'display_image': variant_image,
         })
 
+    # 3. Razorpay Order Create Karna (Crucial Step)
+    # Amount ko paise mein convert karne ke liye 100 se multiply karte hain
+    razorpay_order_id = None
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        razorpay_order = client.order.create({
+            "amount": int(total * 100),
+            "currency": "INR",
+            "payment_capture": "1"
+        })
+        razorpay_order_id = razorpay_order['id']
+    except Exception as e:
+        print(f"Razorpay Order Error: {e}")
+        # Agar Razorpay fail ho jaye toh bhi page load hone do, error handle baad mein hoga
+
     context = {
         'cart_items': processed_cart_items,
         'addresses': addresses,
-        'total': total
+        'total': total,
+        'razorpay_order_id': razorpay_order_id, # Template mein hidden field mein jayega
+        'razorpay_key': settings.RAZORPAY_KEY_ID  # Frontend script ke liye
     }
 
     return render(request, 'place_order.html', context)
@@ -502,7 +516,7 @@ def place_order(request):
     address_id = request.POST.get("address_id")
     payment_method = request.POST.get("payment_method")
     
-    # 1. Address aur Cart ka data nikalna
+    # 1. Basic Checks
     address = get_object_or_404(Address, id=address_id, user=request.user)
     cart_obj = get_object_or_404(Cart, user=request.user)
     cart_items = cart_obj.items.all()
@@ -513,30 +527,30 @@ def place_order(request):
 
     total = sum(item.product.price * item.quantity for item in cart_items)
     
-    # FIXED: address.name ki jagah first_name aur last_name use kiya hai
     full_name = f"{address.first_name} {address.last_name}".strip()
     full_address_string = f"{full_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
 
-    # --- Order Object Create Karna (Common for both COD/Online) ---
-    order_data = {
-        'user': request.user,
-        'address': full_address_string,
-        'total_amount': total,
-        'status': "Confirmed",
-        'payment_method': payment_method,
-    }
+    # --- ORDER CREATE LOGIC ---
+    order = Order.objects.create(
+        user=request.user,
+        address=full_address_string,
+        total_amount=total,
+        payment_method=payment_method,
+        status="Confirmed" # Initial Status
+    )
 
     if payment_method == "COD":
-        order_data['payment_status'] = "Pending"
-        order = Order.objects.create(**order_data)
-        order_data['payment_status'] = "Paid"
-        order_data['razorpay_order_id'] = request.POST.get('razorpay_order_id')
-        order_data['razorpay_payment_id'] = request.POST.get('razorpay_payment_id')
-        order = Order.objects.create(**order_data)
+        order.payment_status = "Pending"
     else:
-        return redirect('checkout')
+        # ONLINE PAYMENT: Idhar hum Razorpay se aayi IDs save karenge
+        order.payment_status = "Paid"
+        order.razorpay_order_id = request.POST.get('razorpay_order_id')
+        order.razorpay_payment_id = request.POST.get('razorpay_payment_id')
+        order.razorpay_signature = request.POST.get('razorpay_signature')
+    
+    order.save()
 
-    # --- UNIVERSAL STOCK UPDATE LOGIC ---
+    # --- UNIVERSAL STOCK UPDATE & ORDER ITEMS ---
     for item in cart_items:
         try:
             if item.product.has_variants:
@@ -551,7 +565,6 @@ def place_order(request):
         except Exception as e:
             print(f"Stock Update Error for {item.product.name}: {e}")
 
-        # OrderItem Create Karein
         OrderItem.objects.create(
             order=order,
             product=item.product,
@@ -561,14 +574,13 @@ def place_order(request):
             price=item.product.price
         )
     
-    # 4. Cart Saaf Karein
+    # Cart Saaf Karein
     cart_items.delete()
     
-    if payment_method == "COD":
-        messages.success(request, "🎉 Order placed successfully (COD)!")
-    else:
-        messages.success(request, "🎉 Online Payment Successful & Order Placed!")
-        
+    # Notification Email (Optional)
+    # send_admin_order_notification(order)
+    
+    messages.success(request, f"🎉 Order placed successfully via {payment_method}!")
     return redirect('my_orders')
 
 

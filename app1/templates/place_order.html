@@ -36,6 +36,8 @@
 
         <form method="post" action="{% url 'place_order' %}" id="checkout-form">
             {% csrf_token %}
+            
+            <input type="hidden" name="razorpay_order_id" id="hidden_razorpay_order_id" value="{{ razorpay_order_id }}">
 
             <h3>2. Payment Method</h3>
             <label class="payment-box">
@@ -51,7 +53,7 @@
             <h3>3. Delivery Address</h3>
             {% for address in addresses %}
             <label class="address-box">
-                <input type="radio" name="address_id" value="{{ address.id }}" required>
+                <input type="radio" name="address_id" value="{{ address.id }}" required {% if forloop.first %}checked{% endif %}>
                 {{ address.first_name }} {{ address.last_name }} - {{ address.mobile }}<br>
                 {{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
             </label>
@@ -74,19 +76,17 @@
 
 <script>
 document.getElementById('checkout-form').onsubmit = function(e) {
-
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressId = document.querySelector('input[name="address_id"]:checked').value;
 
     if (paymentMethod === 'ONLINE') {
-
         e.preventDefault();
 
         const btn = document.getElementById('final-submit-btn');
         btn.disabled = true;
         btn.innerText = "Processing...";
 
-        // 🔹 Step 1: Create Razorpay Order (WITH ADDRESS)
+        // 🔹 Step 1: Create Razorpay Order (Calls your create_razorpay_order view)
         fetch("{% url 'create_razorpay_order' %}", {
             method: "POST",
             headers: {
@@ -99,7 +99,6 @@ document.getElementById('checkout-form').onsubmit = function(e) {
         })
         .then(res => res.json())
         .then(data => {
-
             if(data.error){
                 alert(data.error);
                 btn.disabled = false;
@@ -107,17 +106,18 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 return;
             }
 
-            // 🔹 Step 2: Open Razorpay
+            // Update hidden field with the new Razorpay Order ID
+            document.getElementById('hidden_razorpay_order_id').value = data.order_id;
+
+            // 🔹 Step 2: Open Razorpay Popup
             var options = {
                 "key": data.key_id,
                 "amount": data.amount,
                 "currency": "INR",
                 "name": "Vilio",
                 "order_id": data.order_id,
-
-                // ✅ Payment Success Handler
                 "handler": function (response) {
-
+                    // 🔹 Step 3: Verify Payment (Calls your verify-payment view)
                     fetch("/verify-payment/", {
                         method: "POST",
                         headers: {
@@ -127,31 +127,27 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                         body: new URLSearchParams({
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature
+                            razorpay_signature: response.razorpay_signature,
+                            address_id: addressId // Address pass karna mat bhoolna
                         })
                     })
                     .then(res => res.json())
                     .then(data => {
-
                         if(data.status === "Success"){
                             window.location.href = "/my-orders/";
                         } else {
-                            alert("Payment verification failed");
+                            alert("Payment verification failed: " + data.message);
                             btn.disabled = false;
                             btn.innerText = "Place Order";
                         }
-
                     });
-
                 },
-
                 "modal": {
                     "ondismiss": function() {
                         btn.disabled = false;
                         btn.innerText = "Place Order";
                     }
                 },
-
                 "theme": {
                     "color": "#f08804"
                 }
@@ -159,11 +155,14 @@ document.getElementById('checkout-form').onsubmit = function(e) {
 
             var rzp = new Razorpay(options);
             rzp.open();
-
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            btn.disabled = false;
+            btn.innerText = "Place Order";
         });
-
     }
+    // COD ke liye form normally submit ho jayega {% url 'place_order' %} par
 };
 </script>
-
 {% endblock %}
