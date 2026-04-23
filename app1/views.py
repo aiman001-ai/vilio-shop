@@ -948,36 +948,43 @@ def create_razorpay_order(request):
 def razorpay_webhook(request):
     if request.method == "POST":
         try:
-            body = request.body
+            body = request.body  # ✅ KEEP AS BYTES (IMPORTANT)
             signature = request.headers.get('X-Razorpay-Signature')
+            webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
 
-            # 🔐 Verify webhook signature
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            if not webhook_secret:
+                print("❌ Webhook secret missing")
+                return HttpResponse(status=500)
 
+            client = razorpay.Client(
+                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+            )
+
+            # ✅ VERIFY (NO decode)
             client.utility.verify_webhook_signature(
                 body,
                 signature,
-                settings.RAZORPAY_WEBHOOK_SECRET
+                webhook_secret
             )
 
+            # ✅ JSON parse (yahan decode karo)
             data = json.loads(body.decode('utf-8'))
             event = data.get("event")
 
-            # 🔥 PAYMENT SUCCESS HANDLE
             if event == "payment.captured":
                 payment = data["payload"]["payment"]["entity"]
                 razorpay_order_id = payment.get("order_id")
 
-                try:
-                    order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+                order = Order.objects.filter(
+                    razorpay_order_id=razorpay_order_id
+                ).first()
 
+                if order:
                     order.payment_status = "Paid"
                     order.status = "Confirmed"
                     order.save()
-
                     print("✅ Payment captured & order updated")
-
-                except Order.DoesNotExist:
+                else:
                     print("❌ Order not found")
 
             return HttpResponse(status=200)
@@ -986,7 +993,7 @@ def razorpay_webhook(request):
             print("❌ Webhook Error:", str(e))
             return HttpResponse(status=500)
 
-    return HttpResponse(status=400) 
+    return HttpResponse(status=400)
 
 @csrf_exempt
 def verify_payment(request):
