@@ -5,7 +5,7 @@ from .views import (
     post_login_redirect, increase_quantity, decrease_quantity,
     checkout, place_order, my_orders, search, 
     category_default, category_products, # Category views
-    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order
+    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order, razorpay_webhook
 )
 
 urlpatterns = [
@@ -92,5 +92,7 @@ path('cancellation-returns/', return_policy, name='return_policy'),
 path('privacy-policy/', privacy_policy, name='privacy_policy'),
 
 path('verify-payment/', verify_payment, name='verify_payment'),
+
+path('razorpay/webhook/', razorpay_webhook, name='razorpay_webhook'),
 ]
 

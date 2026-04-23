@@ -53,7 +53,7 @@
             <label class="address-box">
                 <input type="radio" name="address_id" value="{{ address.id }}" required>
                 {{ address.first_name }} {{ address.last_name }} - {{ address.mobile }}<br>
-                {{ address.address }}, {{ address.city }}
+                {{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
             </label>
             {% endfor %}
 
@@ -86,12 +86,16 @@ document.getElementById('checkout-form').onsubmit = function(e) {
         btn.disabled = true;
         btn.innerText = "Processing...";
 
-        // 🔹 Step 1: Create Razorpay Order
+        // 🔹 Step 1: Create Razorpay Order (WITH ADDRESS)
         fetch("{% url 'create_razorpay_order' %}", {
             method: "POST",
             headers: {
+                "Content-Type": "application/json",
                 "X-CSRFToken": "{{ csrf_token }}"
-            }
+            },
+            body: JSON.stringify({
+                address_id: addressId
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -111,20 +115,19 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 "name": "Vilio",
                 "order_id": data.order_id,
 
-                // ✅ FIXED HANDLER
+                // ✅ Payment Success Handler
                 "handler": function (response) {
 
-                    // 🔥 VERIFY PAYMENT (MOST IMPORTANT)
                     fetch("/verify-payment/", {
                         method: "POST",
                         headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-CSRFToken": "{{ csrf_token }}"
                         },
                         body: new URLSearchParams({
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature,
-                            address_id: addressId
+                            razorpay_signature: response.razorpay_signature
                         })
                     })
                     .then(res => res.json())
@@ -147,6 +150,10 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                         btn.disabled = false;
                         btn.innerText = "Place Order";
                     }
+                },
+
+                "theme": {
+                    "color": "#f08804"
                 }
             };
 

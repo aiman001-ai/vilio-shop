@@ -1,4 +1,7 @@
 import random
+import json
+import hmac
+import hashlib
 import razorpay
 from django.core.mail import send_mail
 from django.conf import settings 
@@ -866,6 +869,22 @@ client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_S
 @csrf_exempt
 def create_razorpay_order(request):
     try:
+        if request.method != "POST":
+            return JsonResponse({"error": "Invalid request method"}, status=400)
+
+        # 🔹 JSON data parse (frontend se address_id aayega)
+        body = json.loads(request.body)
+        address_id = body.get("address_id")
+
+        if not address_id:
+            return JsonResponse({"error": "Address not selected"}, status=400)
+
+        # 🔹 Address fetch
+        try:
+            address_obj = Address.objects.get(id=address_id, user=request.user)
+        except Address.DoesNotExist:
+            return JsonResponse({"error": "Invalid address"}, status=404)
+
         # 🔹 Cart fetch
         cart = Cart.objects.filter(user=request.user).first()
 
@@ -876,6 +895,12 @@ def create_razorpay_order(request):
         total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
         amount_in_paise = int(total_amount * 100)
 
+        # 🔹 Duplicate pending order delete (important)
+        Order.objects.filter(
+            user=request.user,
+            payment_status="Pending"
+        ).delete()
+
         # 🔹 Razorpay Order create
         data = {
             "amount": amount_in_paise,
@@ -885,16 +910,30 @@ def create_razorpay_order(request):
 
         razorpay_order = client.order.create(data=data)
 
-        # 🔥 IMPORTANT: Order DB me pehle create karo (Pending state)
+        # 🔹 Address string format
+        full_address = f"{address_obj.first_name} {address_obj.last_name}, {address_obj.address}, {address_obj.city}, {address_obj.state} - {address_obj.pincode}, Ph: {address_obj.mobile}"
+
+        # 🔥 Order create (Pending)
         order = Order.objects.create(
             user=request.user,
-            address="TEMP",  # baad me verify_payment me update hoga
+            address=full_address,
             total_amount=total_amount,
             status="Pending",
             payment_method="ONLINE",
             payment_status="Pending",
             razorpay_order_id=razorpay_order['id']
         )
+
+        # 🔥 Cart snapshot → OrderItem
+        for item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                color=item.color,
+                size=item.size,
+                quantity=item.quantity,
+                price=item.product.price
+            )
 
         return JsonResponse({
             "order_id": razorpay_order['id'],
@@ -904,6 +943,44 @@ def create_razorpay_order(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+def razorpay_webhook(request):
+    payload = request.body
+    received_signature = request.headers.get('X-Razorpay-Signature')
+
+    secret = settings.RAZORPAY_WEBHOOK_SECRET
+
+    # 🔐 Signature verify
+    generated_signature = hmac.new(
+        key=bytes(secret, 'utf-8'),
+        msg=payload,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+
+    if generated_signature != received_signature:
+        return HttpResponse(status=400)
+
+    data = json.loads(payload)
+
+    # ✅ Event check
+    if data['event'] == 'payment.captured':
+        payment = data['payload']['payment']['entity']
+        razorpay_payment_id = payment['id']
+        razorpay_order_id = payment['order_id']
+
+        try:
+            order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+
+            order.payment_status = "Paid"
+            order.status = "Confirmed"
+            order.razorpay_payment_id = razorpay_payment_id
+            order.save()
+
+        except Order.DoesNotExist:
+            pass
+
+    return HttpResponse(status=200)        
 
 @csrf_exempt
 def verify_payment(request):
