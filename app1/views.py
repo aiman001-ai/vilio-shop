@@ -960,7 +960,7 @@ def razorpay_webhook(request):
                 settings.RAZORPAY_WEBHOOK_SECRET
             )
 
-            data = json.loads(body)
+            data = json.loads(body.decode('utf-8'))
             event = data.get("event")
 
             # 🔥 PAYMENT SUCCESS HANDLE
