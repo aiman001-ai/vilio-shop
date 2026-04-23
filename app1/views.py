@@ -11,7 +11,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-
+from django.http import HttpResponse
 # In dono lines ko dhyan se dekhein, ye alag-alag aayengi
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt  # Sahi import yahan hai
@@ -946,41 +946,47 @@ def create_razorpay_order(request):
 
 @csrf_exempt
 def razorpay_webhook(request):
-    payload = request.body
-    received_signature = request.headers.get('X-Razorpay-Signature')
-
-    secret = settings.RAZORPAY_WEBHOOK_SECRET
-
-    # 🔐 Signature verify
-    generated_signature = hmac.new(
-        key=bytes(secret, 'utf-8'),
-        msg=payload,
-        digestmod=hashlib.sha256
-    ).hexdigest()
-
-    if generated_signature != received_signature:
-        return HttpResponse(status=400)
-
-    data = json.loads(payload)
-
-    # ✅ Event check
-    if data['event'] == 'payment.captured':
-        payment = data['payload']['payment']['entity']
-        razorpay_payment_id = payment['id']
-        razorpay_order_id = payment['order_id']
-
+    if request.method == "POST":
         try:
-            order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+            body = request.body
+            signature = request.headers.get('X-Razorpay-Signature')
 
-            order.payment_status = "Paid"
-            order.status = "Confirmed"
-            order.razorpay_payment_id = razorpay_payment_id
-            order.save()
+            # 🔐 Verify webhook signature
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-        except Order.DoesNotExist:
-            pass
+            client.utility.verify_webhook_signature(
+                body,
+                signature,
+                settings.RAZORPAY_WEBHOOK_SECRET
+            )
 
-    return HttpResponse(status=200)        
+            data = json.loads(body)
+            event = data.get("event")
+
+            # 🔥 PAYMENT SUCCESS HANDLE
+            if event == "payment.captured":
+                payment = data["payload"]["payment"]["entity"]
+                razorpay_order_id = payment.get("order_id")
+
+                try:
+                    order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+
+                    order.payment_status = "Paid"
+                    order.status = "Confirmed"
+                    order.save()
+
+                    print("✅ Payment captured & order updated")
+
+                except Order.DoesNotExist:
+                    print("❌ Order not found")
+
+            return HttpResponse(status=200)
+
+        except Exception as e:
+            print("❌ Webhook Error:", str(e))
+            return HttpResponse(status=500)
+
+    return HttpResponse(status=400) 
 
 @csrf_exempt
 def verify_payment(request):
