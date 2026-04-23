@@ -980,7 +980,7 @@ def razorpay_webhook(request):
             )
 
             # ✅ JSON parse (yahan decode karo)
-            data = json.loads(body.decode('utf-8'))
+            data = json.loads(body)
             event = data.get("event")
 
             if event == "payment.captured":
