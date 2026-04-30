@@ -3,22 +3,90 @@
 
 {% block extra_css %}
 <style>
-    body { background: #f1f3f6; font-family: Arial, sans-serif; }
-    .container { width: 90%; margin: 20px auto; display: flex; gap: 20px; }
-    .left { width: 70%; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .right { width: 30%; background: #fff; padding: 20px; border-radius: 4px; height: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    body { background: #f1f3f6; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    
+    /* Responsive Container */
+    .container { 
+        width: 95%; 
+        max-width: 1200px; 
+        margin: 10px auto; 
+        display: flex; 
+        flex-direction: column; /* Mobile first: stack vertically */
+        gap: 15px; 
+    }
+
+    .left { 
+        width: 100%; 
+        background: #fff; 
+        padding: 15px; 
+        border-radius: 4px; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        box-sizing: border-box;
+    }
+
+    .right { 
+        width: 100%; 
+        background: #fff; 
+        padding: 15px; 
+        border-radius: 4px; 
+        height: fit-content; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        box-sizing: border-box;
+    }
+
+    /* Desktop View: Side by Side */
+    @media (min-width: 768px) {
+        .container { 
+            flex-direction: row; 
+            margin: 20px auto; 
+            gap: 20px;
+        }
+        .left { width: 65%; padding: 20px; }
+        .right { width: 35%; padding: 20px; position: sticky; top: 20px; }
+    }
+
     .price { color: #B12704; font-weight: bold; }
     .summary-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 15px; }
-    .address-box, .payment-box { border: 1px solid #ccc; padding: 15px; margin-bottom: 12px; border-radius: 6px; cursor: pointer; display: block; }
-    input[type="radio"] { margin-right: 10px; accent-color: #f08804; }
-    .place-btn { width: 100%; padding: 14px; background: #f08804; color: #fff; border: none; font-size: 16px; cursor: pointer; font-weight: bold; border-radius: 4px; }
-    .cart-item { display: flex; gap: 15px; border-bottom: 1px solid #eee; padding: 15px 0; }
-    .cart-item img { width: 80px; height: 80px; object-fit: cover; }
+    
+    .address-box, .payment-box { 
+        border: 1px solid #ccc; 
+        padding: 12px; 
+        margin-bottom: 12px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: flex-start; 
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    input[type="radio"] { margin-top: 4px; margin-right: 12px; min-width: 18px; accent-color: #f08804; }
+    
+    .place-btn { 
+        width: 100%; 
+        padding: 14px; 
+        background: #f08804; 
+        color: #fff; 
+        border: none; 
+        font-size: 16px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        border-radius: 4px; 
+        margin-top: 10px;
+    }
+
+    .cart-item { display: flex; gap: 12px; border-bottom: 1px solid #eee; padding: 12px 0; }
+    .cart-item img { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; }
+    .cart-item h4 { margin: 0 0 5px 0; font-size: 15px; }
+    .cart-item p { margin: 2px 0; font-size: 13px; color: #555; }
+
+    h2, h3 { font-size: 18px; margin-top: 0; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
+    <!-- Summary moved to top on Mobile for better UX (Optional, but usually Summary shows at bottom) -->
     <div class="left">
         <h2>Checkout</h2>
 
@@ -42,60 +110,61 @@
             <h3>2. Payment Method</h3>
             <label class="payment-box">
                 <input type="radio" name="payment_method" value="COD" checked>
-                Cash on Delivery
+                <span>Cash on Delivery</span>
             </label>
 
             <label class="payment-box">
                 <input type="radio" name="payment_method" value="ONLINE">
-                Online Payment
+                <span>Online Payment</span>
             </label>
 
             <h3>3. Delivery Address</h3>
             {% for address in addresses %}
             <label class="address-box">
                 <input type="radio" name="address_id" value="{{ address.id }}" required {% if forloop.first %}checked{% endif %}>
-                {{ address.first_name }} {{ address.last_name }} - {{ address.mobile }}<br>
-                {{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
+                <span>
+                    <strong>{{ address.first_name }} {{ address.last_name }}</strong> - {{ address.mobile }}<br>
+                    {{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
+                </span>
             </label>
             {% endfor %}
 
+            <!-- Desktop Button will show in 'right' div, but for mobile flow we keep it here or sync them -->
             <button type="submit" class="place-btn" id="final-submit-btn">Place Order</button>
         </form>
     </div>
 
     <div class="right">
-        <h3>Summary</h3>
+        <h3>Order Summary</h3>
         <div class="summary-row">
             <span>Total:</span>
             <span class="price">₹{{ total }}</span>
         </div>
+        <p style="font-size: 12px; color: #777;">By placing your order, you agree to Vilio's privacy notice and conditions of use.</p>
     </div>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
+// JavaScript same rahega, bas IDs ensure karna
 document.getElementById('checkout-form').onsubmit = function(e) {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressId = document.querySelector('input[name="address_id"]:checked').value;
 
     if (paymentMethod === 'ONLINE') {
         e.preventDefault();
-
         const btn = document.getElementById('final-submit-btn');
         btn.disabled = true;
         btn.innerText = "Processing...";
 
-        // 🔹 Step 1: Create Razorpay Order (Calls your create_razorpay_order view)
         fetch("{% url 'create_razorpay_order' %}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": "{{ csrf_token }}"
             },
-            body: JSON.stringify({
-                address_id: addressId
-            })
+            body: JSON.stringify({ address_id: addressId })
         })
         .then(res => res.json())
         .then(data => {
@@ -105,19 +174,15 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 btn.innerText = "Place Order";
                 return;
             }
-
-            // Update hidden field with the new Razorpay Order ID
             document.getElementById('hidden_razorpay_order_id').value = data.order_id;
 
-            // 🔹 Step 2: Open Razorpay Popup
             var options = {
                 "key": data.key_id,
                 "amount": data.amount,
                 "currency": "INR",
-                "name": "Vilio",
+                "name": "Vilio.shop",
                 "order_id": data.order_id,
                 "handler": function (response) {
-                    // 🔹 Step 3: Verify Payment (Calls your verify-payment view)
                     fetch("/verify-payment/", {
                         method: "POST",
                         headers: {
@@ -128,7 +193,7 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_signature: response.razorpay_signature,
-                            address_id: addressId // Address pass karna mat bhoolna
+                            address_id: addressId
                         })
                     })
                     .then(res => res.json())
@@ -136,33 +201,23 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                         if(data.status === "Success"){
                             window.location.href = "/my-orders/";
                         } else {
-                            alert("Payment verification failed: " + data.message);
+                            alert("Payment failed: " + data.message);
                             btn.disabled = false;
                             btn.innerText = "Place Order";
                         }
                     });
                 },
-                "modal": {
-                    "ondismiss": function() {
-                        btn.disabled = false;
-                        btn.innerText = "Place Order";
-                    }
-                },
-                "theme": {
-                    "color": "#f08804"
-                }
+                "modal": { "ondismiss": function() { btn.disabled = false; btn.innerText = "Place Order"; } },
+                "theme": { "color": "#f08804" }
             };
-
             var rzp = new Razorpay(options);
             rzp.open();
         })
         .catch(error => {
-            console.error('Error:', error);
             btn.disabled = false;
             btn.innerText = "Place Order";
         });
     }
-    // COD ke liye form normally submit ho jayega {% url 'place_order' %} par
 };
 </script>
 {% endblock %}

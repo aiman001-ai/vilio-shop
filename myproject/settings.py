@@ -24,7 +24,9 @@ ALLOWED_HOSTS = [
     'vilio.shop', 
     'www.vilio.shop',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '0.0.0.0',
+    '192.168.1.63',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
