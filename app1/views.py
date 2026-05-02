@@ -890,41 +890,58 @@ client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_S
 
 @login_required
 @csrf_exempt
+@transaction.atomic
 def create_razorpay_order(request):
     try:
         if request.method != "POST":
             return JsonResponse({"error": "Invalid request method"}, status=400)
 
-        # 🔹 JSON data parse (frontend se address_id aayega)
+        # 🔹 1. JSON data parse
         body = json.loads(request.body)
         address_id = body.get("address_id")
 
         if not address_id:
             return JsonResponse({"error": "Address not selected"}, status=400)
 
-        # 🔹 Address fetch
+        # 🔹 2. Address fetch
         try:
             address_obj = Address.objects.get(id=address_id, user=request.user)
         except Address.DoesNotExist:
             return JsonResponse({"error": "Invalid address"}, status=404)
 
-        # 🔹 Cart fetch
+        # 🔹 3. Cart fetch
         cart = Cart.objects.filter(user=request.user).first()
-
         if not cart or not cart.items.exists():
             return JsonResponse({"error": "Cart is empty"}, status=400)
 
-        # 🔹 Total calculate
+        # --- 🟢 CRITICAL CHANGE: STOCK VALIDATION BEFORE RAZORPAY ---
+        for item in cart.items.all():
+            try:
+                if item.product.has_variants:
+                    color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
+                    stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
+                else:
+                    stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
+                
+                if stock_obj.stock < item.quantity:
+                    return JsonResponse({
+                        "error": f"Sorry, {item.product.name} ({item.size}) abhi out of stock ho gaya hai!"
+                    }, status=400)
+            except Exception:
+                return JsonResponse({"error": f"Stock check failed for {item.product.name}"}, status=400)
+        # --- END OF STOCK VALIDATION ---
+
+        # 🔹 4. Total calculate
         total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
         amount_in_paise = int(total_amount * 100)
 
-        # 🔹 Duplicate pending order delete (important)
+        # 🔹 5. Duplicate pending order delete
         Order.objects.filter(
             user=request.user,
             payment_status="Pending"
         ).delete()
 
-        # 🔹 Razorpay Order create
+        # 🔹 6. Razorpay Order create
         data = {
             "amount": amount_in_paise,
             "currency": "INR",
@@ -933,10 +950,10 @@ def create_razorpay_order(request):
 
         razorpay_order = client.order.create(data=data)
 
-        # 🔹 Address string format
+        # 🔹 7. Address string format
         full_address = f"{address_obj.first_name} {address_obj.last_name}, {address_obj.address}, {address_obj.city}, {address_obj.state} - {address_obj.pincode}, Ph: {address_obj.mobile}"
 
-        # 🔥 Order create (Pending)
+        # 🔥 8. Order create (Pending)
         order = Order.objects.create(
             user=request.user,
             address=full_address,
@@ -947,7 +964,7 @@ def create_razorpay_order(request):
             razorpay_order_id=razorpay_order['id']
         )
 
-        # 🔥 Cart snapshot → OrderItem
+        # 🔥 9. Cart snapshot → OrderItem (Tumhare purane flow ke hisaab se)
         for item in cart.items.all():
             OrderItem.objects.create(
                 order=order,
@@ -1008,7 +1025,7 @@ def razorpay_webhook(request):
     return HttpResponse(status=400)
 
 @csrf_exempt
-@transaction.atomic  # Sabse zaroori: Taaki payment verify hone ke baad data sahi se save ho
+@transaction.atomic  # Sabse zaroori: Data consistency bani rahegi
 def verify_payment(request):
     if request.method == "POST":
         params_dict = {
@@ -1020,32 +1037,38 @@ def verify_payment(request):
         address_id = request.POST.get('address_id')
 
         try:
-            # 1. Signature Verify Karo
+            # 1. Signature Verify Karo (Security Check)
             client.utility.verify_payment_signature(params_dict)
 
-            # 2. Order aur Cart fetch karo
+            # 2. Order fetch karo
             order = Order.objects.get(razorpay_order_id=params_dict['razorpay_order_id'])
-            cart = Cart.objects.get(user=order.user)
-            cart_items = cart.items.all()
-
-            # --- 🟢 STEP 1: STOCK VALIDATION (Payment ke baad check) ---
+            
+            # --- 🟢 STEP 1: STOCK VALIDATION (Final Check before confirming) ---
+            # Hum OrderItems se check karenge jo create_razorpay_order ne banaye the
+            order_items = order.items.all()
             stock_to_update = []
-            for item in cart_items:
-                if item.product.has_variants:
-                    color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-                    stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
-                else:
-                    stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
-                
-                if stock_obj.stock < item.quantity:
-                    # Agar payment ho gayi par stock khatam ho gaya (Very rare case)
-                    # Yahan tum refund initiate kar sakte ho ya admin ko notify kar sakte ho
-                    return JsonResponse({
-                        "status": "Failure", 
-                        "error": f"Payment successful but {item.product.name} just went out of stock. Please contact support for refund."
-                    })
-                
-                stock_to_update.append((stock_obj, item))
+
+            for item in order_items:
+                try:
+                    if item.product.has_variants:
+                        color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
+                        stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
+                    else:
+                        stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
+                    
+                    if stock_obj.stock < item.quantity:
+                        # Rare case: Payment window ke beech stock khatam ho gaya
+                        order.status = "Failed"
+                        order.payment_status = "Refund Needed"
+                        order.save()
+                        return JsonResponse({
+                            "status": "Failure", 
+                            "error": f"Payment successful but {item.product.name} went out of stock. Contact support for refund."
+                        })
+                    
+                    stock_to_update.append((stock_obj, item.quantity))
+                except Exception:
+                    return JsonResponse({"status": "Failure", "error": "Stock check error during verification."})
 
             # --- 🟢 STEP 2: ORDER & ADDRESS UPDATE ---
             address = Address.objects.get(id=address_id, user=order.user)
@@ -1054,31 +1077,23 @@ def verify_payment(request):
             order.address = full_address
             order.payment_status = "Paid"
             order.razorpay_payment_id = params_dict['razorpay_payment_id']
+            order.razorpay_signature = params_dict['razorpay_signature']
             order.status = "Confirmed"
             order.save()
 
-            # --- 🟢 STEP 3: STOCK REDUCE & ORDER ITEMS CREATE ---
-            for stock_obj, item in stock_to_update:
-                # Stock minus karo (Pichle code mein ye missing tha!)
-                stock_obj.stock -= item.quantity
+            # --- 🟢 STEP 3: STOCK ACTUAL REDUCE ---
+            for stock_obj, quantity in stock_to_update:
+                stock_obj.stock -= quantity
                 stock_obj.save()
 
-                # Order item banao
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    color=item.color,
-                    size=item.size,
-                    quantity=item.quantity,
-                    price=item.product.price
-                )
-
-            # 4. Cart saaf karo
-            cart_items.delete()
+            # 4. Cart saaf karo (Kyunki order confirm ho gaya hai)
+            cart = Cart.objects.get(user=order.user)
+            cart.items.all().delete()
 
             return JsonResponse({"status": "Success"})
 
         except Exception as e:
+            # Agar signature mismatch ya koi aur technical error aaye
             return JsonResponse({"status": "Failure", "error": str(e)})
 
     return JsonResponse({"status": "Invalid Request"}, status=400)
