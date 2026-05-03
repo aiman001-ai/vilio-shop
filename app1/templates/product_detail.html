@@ -76,9 +76,7 @@
     {% endif %}
 </div>
 
-<p id="stock-info" style="font-size: 13px; margin: 5px 0 0 0; font-weight: 700; min-height: 18px;">
-    {% if not product.has_variants %} Select a size {% endif %}
-</p>
+
 
         <p class="description">{{ product.description }}</p>
 
@@ -579,7 +577,7 @@ function selectVariant(imgSrc, colorName, sizeDetails, totalStock, element) {
         sizeContainer.appendChild(btn);
     });
 
-    stockInfo.innerText = "Select a size";
+    
     stockInfo.style.color = "#282c3f";
 }
 
@@ -598,13 +596,7 @@ function setChosenSize(size, element) {
     document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
     element.classList.add('active');
 
-    // 4. स्टॉक की जानकारी अपडेट करें
-    let stock = element.getAttribute('data-stock');
-    let stockInfo = document.getElementById('stock-info');
-    if (stockInfo && stock !== null) {
-        stockInfo.innerText = "Stock: " + stock;
-        stockInfo.style.color = parseInt(stock) > 0 ? "#155724" : "red";
-    }
+    
 }
 
 function validateSelection() {

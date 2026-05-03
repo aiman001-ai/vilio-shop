@@ -10,6 +10,40 @@
         --bg-faded: #f5f5f6;
     }
 
+    /* --- NEW: Toast Notification Style --- */
+    #toast-container {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 10000;
+    }
+
+    .toast-item {
+        background: #282c3f;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-width: 300px;
+        margin-bottom: 10px;
+        border-left: 4px solid var(--success-green);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.5s ease-out;
+    }
+
+    .toast-icon { font-size: 20px; color: var(--success-green); }
+    .toast-title { font-weight: 700; font-size: 14px; margin: 0; text-transform: uppercase; }
+    .toast-msg { font-size: 12px; margin: 2px 0 0 0; color: #bfc0c6; }
+    .toast-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; margin-left: auto; }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    /* --- End Toast Style --- */
+
     .orders-container { 
         max-width: 800px; 
         margin: 40px auto; 
@@ -59,10 +93,7 @@
 
     .order-date { font-size: 12px; color: var(--text-light); margin-top: 5px; }
 
-    /* Product Section */
-    .order-items-list {
-        padding: 20px;
-    }
+    .order-items-list { padding: 20px; }
 
     .item-row {
         display: flex;
@@ -86,7 +117,6 @@
     .item-name { font-weight: 600; font-size: 14px; color: var(--text-dark); }
     .item-meta { font-size: 12px; color: var(--text-light); margin-top: 4px !important; }
 
-    /* Modern Status Badge */
     .status-container {
         padding: 0 20px 20px 20px;
         display: flex;
@@ -147,6 +177,34 @@
         color: #fff;
     }
 </style>
+
+{% if messages %}
+    <div id="toast-container">
+        {% for message in messages %}
+        <div class="toast-item shadow-sm">
+            <div class="toast-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="toast-text">
+                <p class="toast-title">Confirmation</p>
+                <p class="toast-msg">{{ message }}</p>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <script>
+        // 4 seconds baad toast apne aap gayab ho jayega
+        setTimeout(() => {
+            const toasts = document.querySelectorAll('.toast-item');
+            toasts.forEach(t => t.style.opacity = '0');
+            setTimeout(() => {
+                document.getElementById('toast-container')?.remove();
+            }, 500);
+        }, 4000);
+    </script>
+{% endif %}
 
 <div class="orders-container">
     <h3 class="page-title">My Orders</h3>

@@ -689,9 +689,9 @@ def cancel_order(request, order_id):
             # 3. Order Status Update
             order.status = 'Cancelled'
             order.save()
-            messages.success(request, "Order successfully cancelled and stock restored.")
+            messages.success(request, "Order successfully cancelled.")
         else:
-            messages.error(request, "Cancellation time expired (5-minute window).")
+            messages.error(request, "Cancellation time expired.")
     else:
         messages.error(request, "This order cannot be cancelled anymore.")
     
