@@ -1092,6 +1092,8 @@ def verify_payment(request):
 
             return JsonResponse({"status": "Success"})
 
+            messages.success(request, "Order placed successfully!")
+
         except Exception as e:
             # Agar signature mismatch ya koi aur technical error aaye
             return JsonResponse({"status": "Failure", "error": str(e)})
