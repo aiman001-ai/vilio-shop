@@ -111,10 +111,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
-        'USER': 'postgres.esqnwszpvbnozqtgckyj',  # Pooler me user is tarah badal jata hai
-        'PASSWORD': 'g9ML7v$-d.wX?8t',
-        'HOST': 'aws-0-ap-south-1.pooler.supabase.com', # Yeh automatic change ho jayega string ke hisab se
-        'PORT': '6543',  # Pooler port
+        'USER': 'postgres.esqnwszpvbnozqtgckyj',
+        'PASSWORD': 'g9ML7v$-d.wX?8t',  # Special characters bina kisi dikkat ke chalenge
+        'HOST': 'aws-1-ap-south-1.pooler.supabase.com',  # Naya validated host
+        'PORT': '6543',
         'OPTIONS': {
             'sslmode': 'require',
         },
