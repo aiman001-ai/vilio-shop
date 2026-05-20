@@ -108,11 +108,19 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # DATABASE - NEON POSTGRES
 # ==========================================
 DATABASES = {
-    'default': dj_database_url.parse('postgresql://neondb_owner:npg_ZQEYG95JagAo@ep-shy-sea-an7ibsfk-pooler.c-6.us-east-1.aws.neon.tech/neondb')
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',  # Pooler ke bina sirf 'postgres' rahega
+        'PASSWORD': 'g9ML7v$-d.wX?8t',
+        'HOST': 'db.esqnwszpvbnozqtgckyj.supabase.co',  # Aapka asli host
+        'PORT': '5432',  # Direct standard PostgreSQL port
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+        'CONN_MAX_AGE': 600,
+    }
 }
-DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
-DATABASES['default']['CONN_MAX_AGE'] = 600
 
 # =========================
 # STORAGE & MEDIA CONFIG

@@ -1090,9 +1090,9 @@ def verify_payment(request):
             cart = Cart.objects.get(user=order.user)
             cart.items.all().delete()
 
-            return JsonResponse({"status": "Success"})
-
             messages.success(request, "Order placed successfully!")
+
+            return JsonResponse({"status": "Success"})
 
         except Exception as e:
             # Agar signature mismatch ya koi aur technical error aaye
