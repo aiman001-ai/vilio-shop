@@ -20,6 +20,7 @@ SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+
 DEBUG = False
 
 ALLOWED_HOSTS = [
+    '*',
     'vilio-shop.onrender.com', 
     'vilio.shop', 
     'www.vilio.shop',
