@@ -376,70 +376,53 @@ def verify_otp(request):
 def product_detail(request, id):
     product = get_object_or_404(Product, id=id)
     
-    # 1. Color Variants (पुराना काम - छेड़छाड़ नहीं)
+    # 1. Color Variants (Purana Kaam - No Changes in Output structure)
     colors_qs = product.color_variants.all().prefetch_related('sizes')
     variants_data = []
     for c in colors_qs:
-        size_list = [f"{s.size_name}:{s.stock}" for s in c.sizes.all()] # साइज के साथ स्टॉक जोड़ा
+        size_list = [f"{s.size_name}:{s.stock}" for s in c.sizes.all()]  # Size ke sath stock mapping
         size_string = ",".join(size_list)
         total_stock = sum([s.stock for s in c.sizes.all()])
         
         variants_data.append({
             'color_name': c.color_name,
             'color_image': c.color_image,
-            'size_name': size_string,  # JS के लिए "S,M,L"
+            'size_name': size_string,  # JS handle karne ke liye "S:10,M:5" format
             'stock': total_stock
         })
 
-    # 2. Simple Product Sizes (नया काम)
+    # 2. Simple Product Sizes (Purana Kaam)
     simple_sizes_list = product.simple_size_stocks.all()
 
-    colors_qs = product.color_variants.all().prefetch_related('sizes')
-    variants_data = []
-    for c in colors_qs:
-        size_list = [f"{s.size_name}:{s.stock}" for s in c.sizes.all()]
-        variants_data.append({
-            'color_name': c.color_name,
-            'color_image': c.color_image,
-            'size_name': ",".join(size_list),
-            'stock': sum([s.stock for s in c.sizes.all()])
-        })
-
-    simple_sizes_list = product.simple_size_stocks.all()
-
-    # --- NEW: SMART SUGGESTIONS LOGIC ---
-    # 1. तय करें कि किस कैटेगरी के लिए क्या दिखाना है
-    target_category = None
-    current_cat_name = product.category.name.lower()
-    current_sub_name = product.sub_category.name.lower() if product.sub_category else ""
-
-    if 'shirt' in current_sub_name or 'top' in current_sub_name:
-        target_category = 'Jeans'  # शर्ट वालों को जींस दिखाओ
-    elif 'jeans' in current_sub_name or 'pant' in current_sub_name:
-        target_category = 'Shirt'  # पैंट वालों को शर्ट दिखाओ
+    # --- SMART SUGGESTIONS LOGIC (Strict Same-Type Product Matching) ---
+    # Sabhi random pools aur cross-selling filters ko hata kar strict category/sub-category filter lagaya hai.
     
-    # 2. Related Products निकालें
-    related_products = []
-    if target_category:
-        related_products = list(Product.objects.filter(
-            Q(sub_category__name__icontains=target_category) | 
-            Q(product_type__name__icontains=target_category),
+    all_suggestions = []
+    
+    if product.sub_category:
+        # Step 1: Sabse pehle koshish karenge ki strictly SAME sub-category (jaise Casual Shirt to Casual Shirt) ke items milein
+        all_suggestions = list(Product.objects.filter(
+            sub_category=product.sub_category,
             is_active=True
-        ).exclude(id=product.id)[:10]) # पहले 10 रिलेटेड आइटम
-
-    # 3. बाकी बचे हुए रैंडम प्रोडक्ट्स (ताकि स्लाइडर खाली न रहे)
-    other_products = list(Product.objects.filter(is_active=True).exclude(
-        id__in=[p.id for p in related_products] + [product.id]
-    ).order_by('?')[:15])
-
-    # दोनों को मिला दें (Related वाले पहले आएंगे)
-    all_suggestions = related_products + other_products
+        ).exclude(id=product.id)[:15])
+        
+    if len(all_suggestions) < 4 and product.category:
+        # Step 2: Agar sub-category khali hai ya usme kam products hain, toh main category (jaise Apparel/Shirts) se backup uthaenge
+        existing_ids = [p.id for p in all_suggestions] + [product.id]
+        extra_count = 15 - len(all_suggestions)
+        
+        backup_products = list(Product.objects.filter(
+            category=product.category,
+            is_active=True
+        ).exclude(id__in=existing_ids)[:extra_count])
+        
+        all_suggestions.extend(backup_products)
 
     return render(request, 'product_detail.html', {
         'product': product, 
         'variants': variants_data, 
         'simple_sizes_list': simple_sizes_list,
-        'suggestions': all_suggestions # इसे टेम्पलेट में भेजें
+        'suggestions': all_suggestions  # Loop template data rendering safely intact
     })
 
 # ================= CHECKOUT & ORDERS =================
