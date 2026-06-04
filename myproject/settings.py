@@ -109,10 +109,14 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # DATABASE - NEON POSTGRES
 # ==========================================
 import dj_database_url
+from urllib.parse import quote_plus
+
+# Aapka password safe tarike se encode ho jayega
+db_password = quote_plus("g9ML7v$-d.wX?8t")
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres.esqnwszpvbnozqtgckyj:g9ML7v$-d.wX?8t@aws-1-ap-south-1.pooler.supabase.com:6543/postgres',
+        default=f'postgresql://postgres.esqnwszpvbnozqtgckyj:{db_password}@aws-1-ap-south-1.pooler.supabase.com:6543/postgres',
         conn_max_age=600,
         ssl_require=True
     )
