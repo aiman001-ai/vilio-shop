@@ -111,10 +111,10 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.esqnwszpvbnozqtgckyj',
-        'PASSWORD': 'g9ML7v$-d.wX?8t',  # Special characters bina kisi dikkat ke chalenge
-        'HOST': 'aws-1-ap-south-1.pooler.supabase.com',  # Naya validated host
+        'NAME': 'esqnwszpvbnozqtgckyj',                   # unique string yahan aayegi (Project ID)
+        'USER': 'postgres',                               # User hamesha sirf postgres rahega
+        'PASSWORD': 'g9ML7v$-d.wX?8t', 
+        'HOST': 'aws-1-ap-south-1.pooler.supabase.com', 
         'PORT': '6543',
         'OPTIONS': {
             'sslmode': 'require',
