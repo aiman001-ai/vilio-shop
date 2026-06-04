@@ -47,17 +47,33 @@ def shop_now(request, product_id):
 
 # ================= LOGIN =================
 def login_page(request):
+    # Agar user pehle se logged in hai, toh use baar-baar login kyun dikhana?
+    if request.user.is_authenticated:
+        return redirect('home')
+
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
+        
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            merge_cart(request)
-            redirect_to = request.session.pop('after_login_redirect', None)
-            return redirect('cart' if redirect_to == 'cart' else 'home')
+            
+            # Safe execution for merge_cart (Aapke function parameters ke according call karein)
+            try:
+                merge_cart(request)
+            except Exception as e:
+                pass # Agar cart merge fail bhi ho toh login crash na ho
+                
+            # Smart Redirect: Pehle query parameter check karein, fir session, fir default 'home'
+            redirect_to = request.GET.get('next') or request.session.pop('after_login_redirect', None)
+            
+            if redirect_to:
+                return redirect(redirect_to)
+            return redirect('home')
         else:
             messages.error(request, "Invalid credentials")
+            
     return render(request, 'login.html')
 
 # ================= POST LOGIN REDIRECT =================
