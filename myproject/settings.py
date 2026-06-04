@@ -108,19 +108,14 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # ==========================================
 # DATABASE - NEON POSTGRES
 # ==========================================
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'esqnwszpvbnozqtgckyj',                   # unique string yahan aayegi (Project ID)
-        'USER': 'postgres',                               # User hamesha sirf postgres rahega
-        'PASSWORD': 'g9ML7v$-d.wX?8t', 
-        'HOST': 'aws-1-ap-south-1.pooler.supabase.com', 
-        'PORT': '6543',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-        'CONN_MAX_AGE': 600,
-    }
+    'default': dj_database_url.config(
+        default='postgresql://postgres.esqnwszpvbnozqtgckyj:g9ML7v$-d.wX?8t@aws-1-ap-south-1.pooler.supabase.com:6543/postgres',
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # =========================
