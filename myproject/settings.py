@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
 # DEBUG: Error check karne ke liye True rakha hai
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '*',
@@ -108,18 +108,19 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # ==========================================
 # DATABASE - NEON POSTGRES
 # ==========================================
-import dj_database_url
-from urllib.parse import quote_plus
-
-# Aapka password safe tarike se encode ho jayega
-db_password = quote_plus("g9ML7v$-d.wX?8t")
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f'postgresql://postgres.esqnwszpvbnozqtgckyj:{db_password}@aws-1-ap-south-1.pooler.supabase.com:6543/postgres',
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.esqnwszpvbnozqtgckyj',
+        'PASSWORD': 'g9ML7v$-d.wX?8t',  # Special characters bina kisi dikkat ke chalenge
+        'HOST': 'aws-1-ap-south-1.pooler.supabase.com',  # Naya validated host
+        'PORT': '6543',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+        'CONN_MAX_AGE': 600,
+    }
 }
 
 # =========================
