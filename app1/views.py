@@ -47,18 +47,39 @@ def shop_now(request, product_id):
 
 # ================= LOGIN =================
 def login_page(request):
+    if request.user.is_authenticated:
+        # Agar user pehle se login hai, toh jahan jana tha wahan bhejo, nahi toh home
+        next_url = request.GET.get('next') or request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('home')
+
+    # URL se '?next=' parameter pakdo (e.g., /login/?next=/shop-now/2/)
+    next_url = request.GET.get('next', '')
+
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
+        # Form submit hone ke baad hidden input se next_url uthao
+        next_url = request.POST.get('next', '')
+
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
             merge_cart(request)
+            
+            # 🚀 AGAR NEXT URL HAI TO WAHAN BHEJO, NAHI TOH CART/HOME PAR
+            if next_url:
+                return redirect(next_url)
+                
+            # Aapka purana session fallback logic (agar kahin session se redirect set ho)
             redirect_to = request.session.pop('after_login_redirect', None)
             return redirect('cart' if redirect_to == 'cart' else 'home')
         else:
             messages.error(request, "Invalid credentials")
-    return render(request, 'login.html')
+            
+    # Template me 'next' bhej rahe hain taaki hidden field me set ho sake
+    return render(request, 'login.html', {'next': next_url})
 
 # ================= POST LOGIN REDIRECT =================
 @login_required
