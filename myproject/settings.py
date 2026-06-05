@@ -185,6 +185,10 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 LOGIN_REDIRECT_URL = '/post-login/'
 LOGOUT_REDIRECT_URL = '/'
 
+# settings.py mein ye teen lines dhyan se update karo:
+
+LOGIN_REDIRECT_URL = '/post-login/' # Ye sahi hai
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False # 🚀 YE SABSE ZAROORI HAI. Isse Allauth next parameter ko bypass nahi karega.
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True

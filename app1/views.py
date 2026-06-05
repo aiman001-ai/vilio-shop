@@ -3,6 +3,7 @@ import json
 import hmac
 import hashlib
 import razorpay
+from urllib.parse import urlparse, parse_qs
 from django.core.mail import send_mail
 from django.conf import settings 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -84,40 +85,31 @@ def login_page(request):
 # ================= POST LOGIN REDIRECT =================
 @login_required
 def post_login_redirect(request):
-    # ==========================================================
-    # 🚀 APPROACH 1: Dynamic URL / ?next= Parameter (Google Auth ke liye)
-    # ==========================================================
+    # 1. URL se ?next= parameter check karo
     next_url = request.GET.get('next') or request.POST.get('next')
     
     if next_url:
-        # Agar next_url me poora path hai (e.g., '/shop-now/5/?color=Black&size=M')
         parsed_url = urlparse(next_url)
         path_parts = parsed_url.path.strip('/').split('/')
         
-        # Check karo ki kya ye shop-now wala URL hai
-        if 'shop-now' in path_parts and len(path_parts) >= 2:
+        # Agar shop-now wala URL hai (e.g. /shop-now/5/)
+        if 'shop-now' in path_parts:
             try:
-                # URL se product_id nikalo
-                product_id = int(path_parts[1])
+                # Path se ID nikalne ka behtar tarika
+                product_id = next(part for i, part in enumerate(path_parts) if path_parts[i-1] == 'shop-now')
                 
-                # Query parameters se color aur size nikalo
                 query_params = parse_qs(parsed_url.query)
                 color = query_params.get('color', ['Default'])[0]
                 size = query_params.get('size', ['S'])[0]
                 
-                # Product ko cart me add karo aur seedha cart page par bhejo
-                add_product_to_cart(request, product_id, color=color, size=size)
+                add_product_to_cart(request, int(product_id), color=color, size=size)
                 return redirect('cart')
-            except (ValueError, IndexError):
-                pass # Agar parsing me koi dikkat ho toh normal workflow par chalne do
+            except:
+                return redirect(next_url) # Kuch galat hua toh bas next_url pe bhej do
         
-        # Agar koi aur normal next URL hai toh wahan bhej do
         return redirect(next_url)
 
-    # ==========================================================
-    # 📦 APPROACH 2: Session Fallback (Agar purana data session me ho)
-    # ==========================================================
-    # 1. Buy Now wala pending check karein
+    # 2. SESSION FALLBACK (Jo aapne likha hai wo sahi hai)
     product_id = request.session.pop('buy_now_product', None)
     if product_id:
         color = request.session.pop('buy_now_color', 'Default')
@@ -125,17 +117,14 @@ def post_login_redirect(request):
         add_product_to_cart(request, product_id, color=color, size=size)
         return redirect('cart')
 
-    # 2. Add to Bag wala pending check karein
-    pending_product = request.session.pop('pending_cart_product', None)
-    if pending_product:
-        p_color = request.session.pop('pending_color', 'Default')
-        p_size = request.session.pop('pending_size', 'S')
-        add_product_to_cart(request, pending_product, color=p_color, size=p_size)
-        return redirect('cart')
-
-    # Default fallback
+    # Baki session checks... (pending_cart_product etc.)
+    
+    # 3. Agar kuch nahi mila toh CART par bhej do, Home par nahi
     redirect_to = request.session.pop('after_login_redirect', None)
-    return redirect('cart' if redirect_to == 'cart' else 'home')
+    if redirect_to == 'cart':
+        return redirect('cart')
+        
+    return redirect('cart') # Default mein bhi cart hi rakho, home nahi!
 # ================= MERGE SESSION CART TO DB =================
 def merge_cart(request):
     session_cart = request.session.get('cart', {})
