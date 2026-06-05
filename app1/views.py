@@ -84,16 +84,48 @@ def login_page(request):
 # ================= POST LOGIN REDIRECT =================
 @login_required
 def post_login_redirect(request):
-    # 1. Buy Now वाला पेंडिंग चेक करें
+    # ==========================================================
+    # 🚀 APPROACH 1: Dynamic URL / ?next= Parameter (Google Auth ke liye)
+    # ==========================================================
+    next_url = request.GET.get('next') or request.POST.get('next')
+    
+    if next_url:
+        # Agar next_url me poora path hai (e.g., '/shop-now/5/?color=Black&size=M')
+        parsed_url = urlparse(next_url)
+        path_parts = parsed_url.path.strip('/').split('/')
+        
+        # Check karo ki kya ye shop-now wala URL hai
+        if 'shop-now' in path_parts and len(path_parts) >= 2:
+            try:
+                # URL se product_id nikalo
+                product_id = int(path_parts[1])
+                
+                # Query parameters se color aur size nikalo
+                query_params = parse_qs(parsed_url.query)
+                color = query_params.get('color', ['Default'])[0]
+                size = query_params.get('size', ['S'])[0]
+                
+                # Product ko cart me add karo aur seedha cart page par bhejo
+                add_product_to_cart(request, product_id, color=color, size=size)
+                return redirect('cart')
+            except (ValueError, IndexError):
+                pass # Agar parsing me koi dikkat ho toh normal workflow par chalne do
+        
+        # Agar koi aur normal next URL hai toh wahan bhej do
+        return redirect(next_url)
+
+    # ==========================================================
+    # 📦 APPROACH 2: Session Fallback (Agar purana data session me ho)
+    # ==========================================================
+    # 1. Buy Now wala pending check karein
     product_id = request.session.pop('buy_now_product', None)
     if product_id:
         color = request.session.pop('buy_now_color', 'Default')
         size = request.session.pop('buy_now_size', 'S')
-        # यहाँ हमने कलर और साइज पास कर दिया ताकि स्टॉक सही मिले
         add_product_to_cart(request, product_id, color=color, size=size)
         return redirect('cart')
 
-    # 2. Add to Bag वाला पेंडिंग चेक करें
+    # 2. Add to Bag wala pending check karein
     pending_product = request.session.pop('pending_cart_product', None)
     if pending_product:
         p_color = request.session.pop('pending_color', 'Default')
@@ -101,6 +133,7 @@ def post_login_redirect(request):
         add_product_to_cart(request, pending_product, color=p_color, size=p_size)
         return redirect('cart')
 
+    # Default fallback
     redirect_to = request.session.pop('after_login_redirect', None)
     return redirect('cart' if redirect_to == 'cart' else 'home')
 # ================= MERGE SESSION CART TO DB =================
