@@ -3,7 +3,7 @@ import json
 import hmac
 import hashlib
 import razorpay
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 from django.core.mail import send_mail
 from django.conf import settings 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -185,7 +185,7 @@ def post_login_redirect(request):
         return redirect('cart')
         
     return redirect('cart')  # Kuch samajh na aaye toh login ke baad cart dikhao
-    
+
 def merge_cart(request):
     session_cart = request.session.get('cart', {})
     if session_cart and request.user.is_authenticated:
