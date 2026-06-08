@@ -52,7 +52,7 @@
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
-            padding-top: 105px;
+            padding-top: 90px;
             background-color: #ffffff;
         }
 
@@ -60,7 +60,7 @@
         header {
             background: #131313;
             color: #fff;
-            height: 60px;
+            height: 48px;
             padding: 0 30px;
             display: flex;
             align-items: center;
@@ -80,16 +80,26 @@
 
         /* Image_97919b.png ke mutabik elegant serif font aura premium layout */
         .text-logo {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 26px;
-            color: #ffffff;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-            display: inline-block;
-            transition: transform 0.2s;
-        }
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 22px;
+    color: #ffffff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 200;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.text-logo .shop-text {
+    font-family: 'Playwrite AT', 'Inter', sans-serif; /* Aap yahan apna pasandeda font font-family badal sakte hain */
+    font-size: 14px; /* VILIO se thoda chota rakha hai balance ke liye */
+    text-transform: lowercase; /* Isse '.shop' lowercase me elegant lagega */
+    letter-spacing: 0px;
+    font-weight: 200;
+    color: #e52e2e; /* Dot wala premium red color pooray '.shop' par apply ho jayega */
+    margin-left: -3px;
+}
 
         .text-logo span.dot {
             color: #e52e2e;
@@ -167,7 +177,7 @@
             display: none;
             position: absolute;
             right: -10px;
-            top: 130%;
+            top: 118%;
             background: #fff;
             min-width: 180px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -223,7 +233,7 @@
         /* ===== CATEGORY HEADER (UNCHANGED) ===== */
         #category-header {
             position: fixed;
-            top: 60px;
+            top: 48px;
             left: 0;
             width: 100%;
             background: #ffffff;
@@ -454,10 +464,10 @@
 
     <header>
         <div class="logo">
-            <a href="{% url 'home' %}" class="text-logo">
-                VILIO<span class="dot">.</span>
-            </a>
-        </div>
+    <a href="{% url 'home' %}" class="text-logo">
+        VILIO<span class="shop-text">.shop</span>
+    </a>
+</div>
 
         <!-- Right Side Utility Icons (Exactly as displayed on image_97919b.png) -->
         <div class="header-actions">

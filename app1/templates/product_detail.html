@@ -502,7 +502,7 @@ body, html {
     .gallery-section { 
         position: relative; 
         top: 0; 
-        margin-top: 60px !important;   
+        margin-top: 48px !important;   
         padding-top: 0 !important;  
         margin-bottom: 15px; 
         width: 100% !important;
@@ -780,6 +780,23 @@ body, html {
         margin-bottom: 0 !important;
         padding-bottom: 15px !important; /* Taki thoda sa clean look bana rahe */
     }
+
+    /* Snitch Style Shaking Alert */
+.validation-error {
+    border: 1.5px solid #ff3f6c !important; /* Branded Red/Pink Border */
+    box-shadow: 0 0 5px rgba(255, 63, 108, 0.3) !important;
+    border-radius: 6px;
+    padding: 6px;
+    animation: snitchShake 0.4s ease-in-out;
+}
+
+@keyframes snitchShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+
 </style>
 
 <script>
@@ -900,8 +917,9 @@ function validateSelection() {
 
 function validatedAddToCart(productId) {
     const selection = validateSelection();
-    if (!selection) return;
+    if (!selection) return; // Agar color/size select nahi hai toh yahi ruk jayega
     
+    // Aapka purana fetch logic bilkul pehle jaisa:
     const url = `/add-to-cart/${productId}/?color=${encodeURIComponent(selection.color)}&size=${encodeURIComponent(selection.size)}`;
     
     fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -919,8 +937,53 @@ function validatedAddToCart(productId) {
 
 function validatedBuyNow(productId) {
     const selection = validateSelection();
-    if (!selection) return;
+    if (!selection) return; // Agar color/size select nahi hai toh yahi ruk jayega
+    
+    // Aapka purana redirect logic:
     window.location.href = `/shop-now/${productId}/?color=${encodeURIComponent(selection.color)}&size=${encodeURIComponent(selection.size)}`;
+}
+
+// --- NAYA VALIDATION HELPER FUNCTION (SNITCH STYLE) ---
+function validateSelection() {
+    // Hidden inputs ya select elements se values nikaalna
+    const colorInput = document.getElementById('selectedColor');
+    const sizeInput = document.getElementById('selectedSize');
+    
+    const colorValue = colorInput ? colorInput.value.trim() : '';
+    const sizeValue = sizeInput ? sizeInput.value.trim() : '';
+    
+    // HTML Elements jinko error ke waqt shake aur red karna hai
+    const colorBox = document.querySelector('.selection-box') || document.getElementById('color-container');
+    const sizeBox = document.getElementById('size-container');
+
+    // Pehle se lagi hui kisi bhi error class ko saaf karein
+    if (colorBox) colorBox.classList.remove('validation-error');
+    if (sizeBox) sizeBox.classList.remove('validation-error');
+
+    // 1. Color check aur smooth scroll
+    if (colorBox && !colorValue) {
+        colorBox.classList.add('validation-error');
+        colorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // 3 second baad border normal kar dein
+        setTimeout(() => colorBox.classList.remove('validation-error'), 3000);
+        return null; 
+    }
+
+    // 2. Size check aur smooth scroll
+    if (!sizeValue) {
+        if (sizeBox) {
+            sizeBox.classList.add('validation-error');
+            sizeBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 3 second baad border normal kar dein
+            setTimeout(() => sizeBox.classList.remove('validation-error'), 3000);
+        }
+        return null;
+    }
+
+    // Agar sab kuch sahi select hai, toh dono values return karo taaki URL sahi bane
+    return { color: colorValue, size: sizeValue };
 }
 
 function showPopup(msg) {
