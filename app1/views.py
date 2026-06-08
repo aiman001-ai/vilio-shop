@@ -85,17 +85,85 @@ def login_page(request):
 # ================= POST LOGIN REDIRECT =================
 @login_required
 def post_login_redirect(request):
-    # 1. URL se ?next= parameter check karo
+    # ==========================================================
+    # 📦 LAYER 1: PURE SESSION CHECK (Sabse safe aur tez)
+    # ==========================================================
+    # Google login ke baad agar session intact hai, toh pehle yahan se uthao
+    product_id = request.session.pop('buy_now_product', None)
+    if product_id:
+        color = request.session.pop('buy_now_color', 'Default')
+        size = request.session.pop('buy_now_size', 'S')
+        add_product_to_cart(request, product_id, color=color, size=size)
+        return redirect('cart')
+
+    # Add to Bag wala pending check bhi session se pehle kar lo
+    pending_product = request.session.pop('pending_cart_product', None)
+    if pending_product:
+        p_color = request.session.pop('pending_color', 'Default')
+        p_size = request.session.pop('pending_size', 'S')
+        add_product_to_cart(request, pending_product, color=p_color, size=p_size)
+        return redirect('cart')
+
+    # ==========================================================
+    # 🚀 LAYER 2: DOUBLE-DECODING RAW URL TEXT SCANNING (Google Auth ke liye)
+    # ==========================================================
+    # Agar Allauth ne URL ko ghumaya hai, toh full path ko decode karke check karo
+    full_path = request.get_full_path()
+    
+    # Do baar unquote chalayenge taaki %252F ya %2F fully decode hokar "/" aur "?" ban jayein
+    decoded_path = unquote(unquote(full_path))
+
+    # Tarika A: Agar URL string me 'buy_now_product' param dikha
+    if 'buy_now_product=' in decoded_path:
+        try:
+            parts = decoded_path.split('buy_now_product=')
+            p_id = int(parts[1].split('&')[0].split('?')[0].split('/')[0])
+            
+            color = 'Default'
+            if 'color=' in decoded_path:
+                color = decoded_path.split('color=')[1].split('&')[0]
+                
+            size = 'S'
+            if 'size=' in decoded_path:
+                size = decoded_path.split('size=')[1].split('&')[0]
+
+            add_product_to_cart(request, p_id, color=color, size=size)
+            return redirect('cart')
+        except:
+            pass
+
+    # Tarika B: Agar aapka purana '/shop-now/5/' format string me dikha
+    if 'shop-now' in decoded_path:
+        try:
+            parts = decoded_path.split('shop-now/')
+            p_id = int(parts[1].split('/')[0].split('?')[0].split('&')[0])
+            
+            color = 'Default'
+            if 'color=' in decoded_path:
+                color = decoded_path.split('color=')[1].split('&')[0]
+                
+            size = 'S'
+            if 'size=' in decoded_path:
+                size = decoded_path.split('size=')[1].split('&')[0]
+
+            add_product_to_cart(request, p_id, color=color, size=size)
+            return redirect('cart')
+        except:
+            pass
+
+    # ==========================================================
+    # 🔍 LAYER 3: AAPKA PURANA URL PARSING LOGIC (Slightly Improved)
+    # ==========================================================
     next_url = request.GET.get('next') or request.POST.get('next')
     
     if next_url:
-        parsed_url = urlparse(next_url)
+        # Puraani parsing ko safely decode karke chalao
+        decoded_next = unquote(unquote(next_url))
+        parsed_url = urlparse(decoded_next)
         path_parts = parsed_url.path.strip('/').split('/')
         
-        # Agar shop-now wala URL hai (e.g. /shop-now/5/)
         if 'shop-now' in path_parts:
             try:
-                # Path se ID nikalne ka behtar tarika
                 product_id = next(part for i, part in enumerate(path_parts) if path_parts[i-1] == 'shop-now')
                 
                 query_params = parse_qs(parsed_url.query)
@@ -105,27 +173,19 @@ def post_login_redirect(request):
                 add_product_to_cart(request, int(product_id), color=color, size=size)
                 return redirect('cart')
             except:
-                return redirect(next_url) # Kuch galat hua toh bas next_url pe bhej do
+                return redirect(next_url)
         
         return redirect(next_url)
 
-    # 2. SESSION FALLBACK (Jo aapne likha hai wo sahi hai)
-    product_id = request.session.pop('buy_now_product', None)
-    if product_id:
-        color = request.session.pop('buy_now_color', 'Default')
-        size = request.session.pop('buy_now_size', 'S')
-        add_product_to_cart(request, product_id, color=color, size=size)
-        return redirect('cart')
-
-    # Baki session checks... (pending_cart_product etc.)
-    
-    # 3. Agar kuch nahi mila toh CART par bhej do, Home par nahi
+    # ==========================================================
+    # 🛡️ DEFAULT FALLBACK
+    # ==========================================================
     redirect_to = request.session.pop('after_login_redirect', None)
     if redirect_to == 'cart':
         return redirect('cart')
         
-    return redirect('cart') # Default mein bhi cart hi rakho, home nahi!
-# ================= MERGE SESSION CART TO DB =================
+    return redirect('cart')  # Kuch samajh na aaye toh login ke baad cart dikhao
+    
 def merge_cart(request):
     session_cart = request.session.get('cart', {})
     if session_cart and request.user.is_authenticated:
