@@ -649,14 +649,19 @@ def place_order(request):
             return redirect('cart')
 
     # --- 🟢 STEP 2: ORDER CREATE LOGIC ---
-    total = sum(item.product.price * item.quantity for item in cart_items)
+    base_total = sum(item.product.price * item.quantity for item in cart_items)
+    
+    # 🚀 FIX: Agar payment method COD hai toh ₹60 jod kar final total banega, online me free
+    shipping_charges = 60 if payment_method == "COD" else 0
+    final_total = base_total + shipping_charges
+
     full_name = f"{address.first_name} {address.last_name}".strip()
     full_address_string = f"{full_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
 
     order = Order.objects.create(
         user=request.user,
         address=full_address_string,
-        total_amount=total,
+        total_amount=final_total,  # <-- Isme updated final price chali gayi
         payment_method=payment_method,
         status="Confirmed"
     )
@@ -677,7 +682,7 @@ def place_order(request):
         stock_obj.stock -= item.quantity
         stock_obj.save()
 
-        # Order Item banao
+        # Order Item banao (Yeh item ke base price par hi banega, extra fee pure order par jukti h)
         OrderItem.objects.create(
             order=order,
             product=item.product,
@@ -690,7 +695,9 @@ def place_order(request):
     # 4. Cart Saaf Karein
     cart_items.delete()
     
-    messages.success(request, f"🎉 Order placed successfully via {payment_method}!")
+    # Message me clear dikhega agar COD charge lga h
+    msg_addon = " (including ₹60 COD Fee)" if payment_method == "COD" else ""
+    messages.success(request, f"🎉 Order placed successfully via {payment_method}{msg_addon}!")
     return redirect('my_orders')
 
 

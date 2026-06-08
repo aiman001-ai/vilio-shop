@@ -86,7 +86,6 @@
 
 {% block content %}
 <div class="container">
-    <!-- Summary moved to top on Mobile for better UX (Optional, but usually Summary shows at bottom) -->
     <div class="left">
         <h2>Checkout</h2>
 
@@ -129,7 +128,6 @@
             </label>
             {% endfor %}
 
-            <!-- Desktop Button will show in 'right' div, but for mobile flow we keep it here or sync them -->
             <button type="submit" class="place-btn" id="final-submit-btn">Place Order</button>
         </form>
     </div>
@@ -137,9 +135,22 @@
     <div class="right">
         <h3>Order Summary</h3>
         <div class="summary-row">
-            <span>Total:</span>
-            <span class="price">₹{{ total }}</span>
+            <span>Items Total:</span>
+            <span>₹{{ total }}</span>
         </div>
+
+        <div class="summary-row" id="shipping-row">
+            <span>Shipping/COD Fee:</span>
+            <span id="shipping-amount" style="color: green; font-weight: bold;">FREE</span>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
+
+        <div class="summary-row" style="font-size: 18px; font-weight: bold;">
+            <span>Order Total:</span>
+            <span class="price" id="grand-total" data-base-total="{{ total }}">₹{{ total }}</span>
+        </div>
+        
         <p style="font-size: 12px; color: #777;">By placing your order, you agree to Vilio's privacy notice and conditions of use.</p>
     </div>
 </div>
@@ -147,7 +158,37 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-// JavaScript same rahega, bas IDs ensure karna
+// ==========================================================
+// 🚀 DYNAMIC CALCULATION FOR COD VS ONLINE
+// ==========================================================
+document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        const baseTotal = parseFloat(document.getElementById('grand-total').getAttribute('data-base-total'));
+        const shippingAmountEl = document.getElementById('shipping-amount');
+        const grandTotalEl = document.getElementById('grand-total');
+
+        if (this.value === 'COD') {
+            const finalTotal = baseTotal + 60;
+            shippingAmountEl.innerText = "₹60";
+            shippingAmountEl.style.color = "#B12704";
+            grandTotalEl.innerText = "₹" + finalTotal.toFixed(2);
+        } else {
+            shippingAmountEl.innerText = "FREE";
+            shippingAmountEl.style.color = "green";
+            grandTotalEl.innerText = "₹" + baseTotal.toFixed(2);
+        }
+    });
+});
+
+// Run calculation state once on page refresh/render
+document.addEventListener("DOMContentLoaded", function() {
+    const activePayment = document.querySelector('input[name="payment_method"]:checked');
+    if (activePayment) {
+        activePayment.dispatchEvent(new Event('change'));
+    }
+});
+
+// Razorpay submission block
 document.getElementById('checkout-form').onsubmit = function(e) {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressId = document.querySelector('input[name="address_id"]:checked').value;
