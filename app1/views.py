@@ -207,25 +207,40 @@ def logout_page(request):
 
 # ================= ADD TO CART (AJAX & NORMAL) =================
 def add_to_cart(request, product_id):
+    # ==========================================================
+    # 🚀 FIX: LOGIN SE PEHLE USER KI CHOICE SESSION MEIN SAVE KARO
+    # ==========================================================
     if not request.user.is_authenticated:
-        return JsonResponse({'login_required': True, 'login_url': '/login/'})
+        # Frontend se data nikal lo (GET ya POST dono ke liye fail-safe)
+        color = request.GET.get('color') or request.POST.get('color') or 'Default'
+        size = request.GET.get('size') or request.POST.get('size') or 'S'
+        
+        # Session mein data save karo taaki login ke baad mil sake
+        request.session['pending_cart_product'] = product_id
+        request.session['pending_color'] = color
+        request.session['pending_size'] = size
+        request.session['after_login_redirect'] = 'cart'
+        request.session.modified = True  # Django ko bolo session save kare
+        
+        # Frontend ko bolo login page par bheje, next parameter ke sath
+        return JsonResponse({'login_required': True, 'login_url': '/login/?next=/post-login/'})
 
+    # ==========================================================
+    # 🛡️ TERA ORIGINAL CODE (100% UNTOUCHED & SAFE)
+    # ==========================================================
     product = get_object_or_404(Product, id=product_id)
-    color = request.GET.get('color', 'Default') # अगर बिना कलर वाला है तो 'Default'
+    color = request.GET.get('color', 'Default') 
     size = request.GET.get('size')
     
     available_stock = 0
 
     # --- TYPE 1: WITHOUT COLOR ---
     if not product.has_variants:
-        # यहाँ बदलाव है: हम उस साइज का स्टॉक निकाल रहे हैं जो यूजर ने चुना है
-        # 'simple_size_stocks' वही related_name है जो आपने template में use किया है
         size_obj = product.simple_size_stocks.filter(size_name=size).first()
         
         if size_obj:
             available_stock = size_obj.stock
         else:
-            # अगर साइज नहीं मिला, तो बैकअप के तौर पर simple_stock (अगर use करते हो)
             available_stock = product.simple_stock if product.simple_stock else 0
             
         final_color = "Default"
@@ -233,9 +248,7 @@ def add_to_cart(request, product_id):
     # --- TYPE 2: WITH COLOR ---
     else:
         try:
-            # पहले कलर वेरिएंट ढूंढो
             color_obj = ProductColor.objects.get(product=product, color_name=color)
-            # फिर उस कलर का साइज और स्टॉक ढूंढो
             size_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=size)
             available_stock = size_obj.stock
             final_color = color
