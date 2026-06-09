@@ -12,21 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Playwrite+AT:ital,wght=1,100..400&display=swap" rel="stylesheet">
 
     <style>
-        @media (max-width: 768px) {
-            .nested-item:hover > .deep-menu {
-                display: none; 
-            }
-
-            .deep-menu.is-open {
-                display: block !important;
-                position: static;
-                width: 100%;
-                box-shadow: none;
-                border: none;
-                padding-left: 20px;
-            }
-        }
-
         /* ===== 1. FONTS & GLOBAL ===== */
         @font-face {
             font-family: 'Squeaky';
@@ -52,11 +37,11 @@
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
-            padding-top: 90px;
+            padding-top: 93px; /* Header heights ke collapse issue ko rokne ke liye absolute padding */
             background-color: #ffffff;
         }
 
-        /* ===== 2. PRIMARY HEADER (BLACK & MINIMALIST AS PER IMAGE) ===== */
+        /* ===== 2. PRIMARY HEADER (BLACK & MINIMALIST) ===== */
         header {
             background: #131313;
             color: #fff;
@@ -78,32 +63,34 @@
             align-items: center;
         }
 
-        /* Image_97919b.png ke mutabik elegant serif font aura premium layout */
         .text-logo {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 22px;
+    font-family: 'Inter', sans-serif; /* Clean, high-end look */
+    font-size: 24px;
     color: #ffffff;
     text-decoration: none;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-weight: 200;
-    display: inline-block;
-    transition: transform 0.2s;
+    letter-spacing: 2px; /* Premium spacing jo luxury brands use karte hain */
+    font-weight: 500; /* Bold and impactful profile */
+    display: inline-flex;
+    align-items: baseline;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+        .text-logo:hover {
+    opacity: 0.9;
+    transform: scale(1.02); /* Subtle interactive feel */
 }
 
 .text-logo .shop-text {
-    font-family: 'Playwrite AT', 'Inter', sans-serif; /* Aap yahan apna pasandeda font font-family badal sakte hain */
-    font-size: 14px; /* VILIO se thoda chota rakha hai balance ke liye */
-    text-transform: lowercase; /* Isse '.shop' lowercase me elegant lagega */
-    letter-spacing: 0px;
-    font-weight: 200;
-    color: #e52e2e; /* Dot wala premium red color pooray '.shop' par apply ho jayega */
-    margin-left: -3px;
+    font-family: 'Inter', sans-serif; /* Script font hatakar uniform modern font */
+    font-size: 11px; /* Subtle sub-text branding */
+    text-transform: uppercase; /* Lowercase se uppercase kiya structural symmetry ke liye */
+    letter-spacing: 1px;
+    font-weight: 400;
+    color: #ff3f6c; /* Bright neon red/pink tone (Myntra/Modern premium fashion vibe) */
+    margin-left: -2px;
+    opacity: 0.85;
 }
-
-        .text-logo span.dot {
-            color: #e52e2e;
-        }
 
         /* ===== 3. RIGHT NAV & UTILITY ICONS ===== */
         .header-actions {
@@ -112,61 +99,62 @@
             gap: 22px;
         }
 
-        /* Search Form/Icon matching image styling */
-        .search-trigger {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            transition: opacity 0.2s;
-        }
+        .nav-svg-icon {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.2; /* Isko 1.0 se 1.4 ke beech rakhna, line ekdum patli aur premium dikhegi */
+    color: #ffffff;
+    display: block;
+}
+
+.search-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
 
         .search-trigger:hover, .profile-link:hover, .cart-icon:hover {
             opacity: 0.8;
         }
 
         .profile-link {
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
 
         .profile-icon {
-            width: 22px;
-            height: 22px;
-        }
+    width: 24px;
+    height: 22px;
+    stroke-width: 2.2; /* Default 1.5 se badha kar 2.2 kiya taaki logo ke sath match kare */
+}
 
         .cart-icon {
-            position: relative;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-        }
+    position: relative;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
 
-        /* Rounded badge with flat color as shown in image_97919b.png */
         .cart-count {
-            position: absolute;
-            top: -6px;
-            right: -8px;
-            background: #e52e2e;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-        }
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    background: #ff3f6c;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 600;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+}
 
         .account-dropdown {
             position: relative;
@@ -230,7 +218,147 @@
             display: block;
         }
 
-        /* ===== CATEGORY HEADER (UNCHANGED) ===== */
+        /* ===== 4. PREMIUM EXPANDABLE SEARCH BAR ===== */
+        .search-overlay-bar {
+    position: fixed;
+    top: -70px; /* Hidden initially slightly higher to clear shadows */
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+        .search-overlay-bar.active {
+            top: 0;
+        }
+
+        .search-inner-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Input aur Close button ke beech gap */
+    position: relative;
+}
+
+        .search-inner-container form {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-inner-container i.search-icon-inside {
+    position: absolute;
+    left: 15px;
+    color: #777;
+    font-size: 15px;
+    z-index: 2;
+}
+
+        .search-inner-container input {
+    width: 100%;
+    padding: 10px 15px 10px 42px;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    background: #f7f7f7;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+        .search-inner-container input:focus {
+    border-color: #131313;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(19, 19, 19, 0.05);
+}
+
+        .close-search-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Button squeeze nahi hoga */
+}
+
+.close-search-btn:hover {
+    color: #e52e2e;
+}
+
+/* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
+@media (max-width: 768px) {
+    body {
+        padding-top: 93px;
+    }
+
+    header {
+        padding: 0 15px;
+    }
+
+    .text-logo {
+        font-size: 18px; /* Mobile par logo thoda set kiya */
+    }
+
+    .header-actions {
+        gap: 14px;
+    }
+
+    /* Mobile Search Layout Fix */
+    .search-overlay-bar {
+        padding: 0 12px;
+        height: 55px;
+    }
+
+    .search-inner-container input {
+        font-size: 13px;
+        padding: 8px 15px 8px 38px; /* Tighter padding for mobile */
+    }
+
+    .search-inner-container i.search-icon-inside {
+        left: 12px;
+        font-size: 14px;
+    }
+
+    .close-search-btn {
+        font-size: 18px;
+        padding: 4px;
+    }
+
+    #category-header {
+        gap: 15px;
+    }
+
+    /* Mobile Dropdown Logic Fixes */
+    .nested-item:hover > .deep-menu {
+        display: none; 
+    }
+
+    .deep-menu.is-open {
+        display: block !important;
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding-left: 20px;
+        box-sizing: border-box;
+    }
+
+        /* ===== 5. CATEGORY HEADER ===== */
         #category-header {
             position: fixed;
             top: 48px;
@@ -244,7 +372,7 @@
             gap: 60px;
             border-bottom: 1px solid #eee;
             z-index: 998;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, top 0.3s ease;
         }
 
         .cat-item {
@@ -341,6 +469,7 @@
             margin-left: 15px;
         }
 
+        /* ===== 6. FOOTER STYLING ===== */
         .main-footer {
             background: #bae4f5;
             padding: 50px 0 0 0;
@@ -415,7 +544,7 @@
             background: #131313;
             text-align: center;
             margin-top: 50px;
-            padding: 5px 0;
+            padding: 15px 0;
             border-top: 1px solid #f50707;
             color: #94969f;
             font-size: 12px;
@@ -424,16 +553,21 @@
         .footer-bottom p {
             margin: 0;
             padding: 2px 0;
-            line-height: 1;
+            line-height: 1.4;
         }
 
+        /* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
         @media (max-width: 768px) {
+            body {
+                padding-top: 93px;
+            }
+
             header {
                 padding: 0 15px;
             }
 
             .text-logo {
-                font-size: 22px;
+                font-size: 20px;
             }
 
             .header-actions {
@@ -446,6 +580,21 @@
 
             .footer-container {
                 grid-template-columns: 1fr 1fr;
+            }
+
+            /* Mobile Dropdown Logic Fixes */
+            .nested-item:hover > .deep-menu {
+                display: none; 
+            }
+
+            .deep-menu.is-open {
+                display: block !important;
+                position: static;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                padding-left: 20px;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -462,66 +611,71 @@
     </div>
     {% endif %}
 
-    <header>
-        <div class="logo">
-    <a href="{% url 'home' %}" class="text-logo">
-        VILIO<span class="shop-text">.shop</span>
-    </a>
+    <!-- PREMIUM SLIDE-DOWN SEARCH BAR -->
+<div id="search-overlay" class="search-overlay-bar">
+    <div class="search-inner-container">
+        <form action="{% url 'search' %}" method="get">
+            <i class="fa-solid fa-magnifying-glass search-icon-inside"></i>
+            <input type="text" name="q" id="search-input-field" placeholder="Search brands, products..." autocomplete="off">
+        </form>
+        <button class="close-search-btn" onclick="closeSearchBar()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
 </div>
 
-        <!-- Right Side Utility Icons (Exactly as displayed on image_97919b.png) -->
-        <div class="header-actions">
-            <!-- Minimal Search Trigger Icon -->
-            <button class="search-trigger" onclick="toggleSearchForm()">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-
-            <!-- Profile Menu Dropdown -->
-            <div class="account-dropdown">
-                <a href="#" class="profile-link">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                    </svg>
-                </a>
-                <div class="account-menu">
-                    {% if user.is_authenticated %}
-                        <p class="user">
-                            <span class="custom-username">{{ user.username }}</span>
-                        </p>
-                        <a href="{% url 'cart' %}">
-                            <span>Cart (<span id="cart-count">{{ cart_count }}</span>)</span>
-                        </a>
-                        <a href="{% url 'my_orders' %}"><span>My Orders</span></a>
-                        <div class="address-item">
-                            <a href="#"><span>My Address</span></a>
-                            <div class="address-submenu">
-                                <a href="{% url 'add_address' %}"><span>Add New Address</span></a>
-                                <a href="{% url 'my_addresses' %}"><span>My Addresses</span></a>
-                            </div>
-                        </div>
-                        <a href="{% url 'account_logout' %}?next=/"><span>Logout</span></a>
-                    {% else %}
-                        <a href="{% url 'login' %}">🔐 Login / Signup</a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Cart Trigger Icon with Premium Red Flat Badge -->
-            <a href="{% url 'cart' %}" class="cart-icon">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <span id="cart-count-badge" class="cart-count" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
-                    {{ global_cart_count }}
-                </span>
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}" class="text-logo">
+                VILIO<span class="shop-text">.shop</span>
             </a>
         </div>
+
+        <!-- Right Side Utility Icons -->
+        <div class="header-actions">
+    <button class="search-trigger" onclick="openSearchBar()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+    </button>
+
+    <div class="account-dropdown">
+        <a href="#" class="profile-link">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+        </a>
+        <div class="account-menu">
+            {% if user.is_authenticated %}
+                <p class="user"><span class="custom-username">{{ user.username }}</span></p>
+                <a href="{% url 'cart' %}"><span>Cart (<span id="cart-count">{{ cart_count }}</span>)</span></a>
+                <a href="{% url 'my_orders' %}"><span>My Orders</span></a>
+                <div class="address-item">
+                    <a href="#"><span>My Address</span></a>
+                    <div class="address-submenu">
+                        <a href="{% url 'add_address' %}"><span>Add New Address</span></a>
+                        <a href="{% url 'my_addresses' %}"><span>My Addresses</span></a>
+                    </div>
+                </div>
+                <a href="{% url 'account_logout' %}?next=/"><span>Logout</span></a>
+            {% else %}
+                <a href="{% url 'login' %}">🔐 Login / Signup</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'cart' %}" class="cart-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        </svg>
+        <span id="cart-count-badge" class="cart-count" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
+            {{ global_cart_count }}
+        </span>
+    </a>
+</div>
     </header>
 
-    <!-- Hidden Search Form for action processing -->
-    <form id="hidden-search-form" action="{% url 'search' %}" method="get" style="display: none;">
-        <input type="text" name="q" id="hidden-search-input">
-    </form>
-
-    <!-- CATEGORIES SECTION (LEFT COMPLETELY UNCHANGED) -->
+    <!-- CATEGORIES SECTION -->
     <div id="category-header">
         <div class="cat-item">
             <span>Men</span>
@@ -667,31 +821,58 @@
         </div>
     </footer>
 
+    <!-- SCROLL SCRIPT -->
     <script>
         let lastScrollTop = 0;
         const categoryHeader = document.getElementById("category-header");
+        const searchOverlay = document.getElementById("search-overlay");
 
         window.addEventListener("scroll", function () {
             let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            if (scrollTop > lastScrollTop) {
-                categoryHeader.style.transform = "translateY(-100%)";
-            } else {
-                categoryHeader.style.transform = "translateY(0)";
+            
+            // Agar search bar active nahi hai tabhi headers hide/show honge
+            if (!searchOverlay.classList.contains('active')) {
+                if (scrollTop > lastScrollTop && scrollTop > 50) {
+                    categoryHeader.style.transform = "translateY(-100%)";
+                } else {
+                    categoryHeader.style.transform = "translateY(0)";
+                }
             }
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         });
     </script>
 
+    <!-- SEARCH & MOBILE DROPDOWN INTERACTION SCRIPT -->
     <script>
-        // Minimalist Search toggle function
-        function toggleSearchForm() {
-            let query = prompt("What are you looking for?");
-            if (query != null && query.trim() !== "") {
-                document.getElementById("hidden-search-input").value = query;
-                document.getElementById("hidden-search-form").submit();
-            }
+        function openSearchBar() {
+            const searchOverlay = document.getElementById("search-overlay");
+            const categoryHeader = document.getElementById("category-header");
+            
+            searchOverlay.classList.add("active");
+            // Search bar open hote hi category header thoda neeche shift hoga taaki design overlap na kare
+            categoryHeader.style.top = "55px"; 
+            
+            setTimeout(() => {
+                document.getElementById("search-input-field").focus();
+            }, 300);
         }
 
+        function closeSearchBar() {
+            const searchOverlay = document.getElementById("search-overlay");
+            const categoryHeader = document.getElementById("category-header");
+            
+            searchOverlay.classList.remove("active");
+            categoryHeader.style.top = "48px";
+        }
+
+        // ESC key dabane par search close ho jaye
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeSearchBar();
+            }
+        });
+
+        // Mobile submenu click behavior
         document.querySelectorAll('.submenu-toggle').forEach(item => {
             item.addEventListener('click', function (e) {
                 if (window.innerWidth <= 768) {
