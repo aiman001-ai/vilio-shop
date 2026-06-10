@@ -3,6 +3,7 @@ import json
 import hmac
 import hashlib
 import razorpay
+from django.core.cache import cache
 from urllib.parse import urlparse, parse_qs, unquote
 from django.core.mail import send_mail
 from django.conf import settings 
@@ -28,9 +29,15 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # .select_related() aur .prefetch_related() lagaya taaki saara data ek query me aaye
-    # Note: Agar order_by('?') zaruri hai toh thik hai, varna kisi field (jaise '-id') se order karna fast hota hai.
-    products = Product.objects.filter(is_active=True).select_related('category', 'sub_category').order_by('?')
+    # Check karo kya products pehle se cache mein hain
+    products = cache.get('home_products')
+    
+    if not products:
+        # Agar nahi hain, toh Supabase se nikalo (Optimized query)
+        products = Product.objects.filter(is_active=True).select_related('category', 'sub_category').order_by('?')
+        # Aur 15 minutes (900 seconds) ke liye cache mein save kar do
+        cache.set('home_products', products, 900)
+        
     return render(request, 'home.html', {'products': products})
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):

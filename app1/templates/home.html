@@ -295,11 +295,11 @@ body{
                     </div>
 
                     <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}" 
-                         class="active slider-img">
+     class="active slider-img" loading="lazy">
 
                     {% for extra in product.images.all %}
-                        <img src="{{ extra.image.url }}" class="slider-img">
-                    {% endfor %}
+    <img src="{{ extra.image.url }}" class="slider-img" loading="lazy">
+{% endfor %}
                 </div>
 
                 <div class="product-info">
