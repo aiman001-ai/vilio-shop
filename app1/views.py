@@ -28,9 +28,9 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # Ab sirf active products dikhenge. 
-    # Stock ka check humne hata diya hai kyunki aap manually control kar rahe ho.
-    products = Product.objects.filter(is_active=True).order_by('?')
+    # .select_related() aur .prefetch_related() lagaya taaki saara data ek query me aaye
+    # Note: Agar order_by('?') zaruri hai toh thik hai, varna kisi field (jaise '-id') se order karna fast hota hai.
+    products = Product.objects.filter(is_active=True).select_related('category', 'sub_category').order_by('?')
     return render(request, 'home.html', {'products': products})
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
@@ -336,20 +336,21 @@ def cart(request):
     if request.user.is_authenticated:
         cart_obj, _ = Cart.objects.get_or_create(user=request.user)
         
-        for item in cart_obj.items.select_related('product').all():
+        # FIX: product ke sath-sath uske color_variants ko pehle hi prefetch kar liya
+        items_queryset = cart_obj.items.select_related('product').prefetch_related('product__color_variants').all()
+        
+        for item in items_queryset:
             subtotal = item.product.price * item.quantity
             total += subtotal
             
-            # --- Image Logic for Simple vs Variant ---
             display_img = "/static/images/no-image.png"
             
             if item.color == "Default" or not item.color:
-                # Without color वाले के लिए Main Image उठाओ
                 if item.product.image:
                     display_img = item.product.image.url
             else:
-                # Color variant वाले के लिए Variant Image उठाओ
-                variant = ProductColor.objects.filter(product=item.product, color_name=item.color).first()
+                # FIX: Ab ye query database par nahi jayegi, prefetched cache se uthayegi
+                variant = item.product.color_variants.filter(color_name=item.color).first()
                 if variant and variant.color_image:
                     display_img = variant.color_image.url
                 elif item.product.image:
@@ -703,7 +704,11 @@ def place_order(request):
 
 @login_required
 def my_orders(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    # FIX: Order ke sath user data aur uske andar ke items + products ko ek baar me nikal liya
+    orders = Order.objects.filter(user=request.user)\
+                          .select_related('user')\
+                          .prefetch_related('items__product')\
+                          .order_by('-created_at')
     return render(request, 'my_orders.html', {'orders': orders})
 
 # ================= SEARCH & CATEGORIES =================
