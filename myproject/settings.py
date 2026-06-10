@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
 # DEBUG: Error check karne ke liye True rakha hai
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '*',
@@ -217,3 +217,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'aiman7417@gmail.com'
 EMAIL_HOST_PASSWORD = 'rhun pqyy uqwd onzq'
 DEFAULT_FROM_EMAIL = f"Vilio Store <{EMAIL_HOST_USER}>"
+
+
+# settings.py ke bilkul last mein paste karein
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'vilio-local-cache',
+    }
+}
