@@ -292,6 +292,9 @@ body, html {
     display: flex; 
     overflow: hidden;
     margin: 0 auto; 
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;scroll-snap-type: x mandatory;
+    scroll-snap-stop: always;
 }
 
 .main-img-card img { 
@@ -446,7 +449,7 @@ body, html {
 /* Slider Suggestion Logic */
 .suggestions-wrapper { max-width: 100%; margin: 50px auto; padding: 0 20px; overflow: hidden; }
 .slider-container { position: relative; width: 100%; }
-.suggestion-slider { display: flex; gap: 15px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
+.suggestion-slider { display: flex; gap: 1px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
 .suggestion-slider::-webkit-scrollbar { display: none; }
 .suggestion-card { flex: 0 0 210px; background: #fff; border: 1px solid #f9f9f9; }
 .suggestion-card a { text-decoration: none; color: inherit; }
@@ -461,8 +464,46 @@ body, html {
 .slide-btn.prev { left: -20px; }
 .slide-btn.next { right: -20px; }
 
-.rating-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(255, 255, 255, 0.85); padding: 3px 6px; border-radius: 2px; display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; color: #282c3f; }
-.star-svg { width: 10px; height: 10px; fill: #14958f; }
+.rating-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 50;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+
+    background: rgba(255,255,255,0.35) !important;
+
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 2px;
+
+    font-size: 11px;
+    font-weight: 700;
+    color: #282c3f;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.star-svg {
+    width: 10px;
+    height: 10px;
+    fill: #ff9f00;
+}
+.separator {
+    color: rgba(40,44,63,0.3);
+    font-weight: 400;
+    margin: 0 1px;
+}
+.user-count {
+    font-size: 10px;
+    color: #3e4152;
+    font-weight: 600;
+}
 .product-ribbon { position: absolute; top: 10px; left: 0; font-size: 9px; font-weight: 700; color: #fff; padding: 2px 6px; display: none; }
 
 .brand-service-section { background: #f9f9f9; padding: 40px 0; margin-top: 50px; }
@@ -534,6 +575,7 @@ body, html {
     display:flex;
     align-items:center;
     justify-content:center;
+    display: none !important;
 }
 
 
@@ -627,7 +669,7 @@ body, html {
         justify-content: center; 
         gap: 6px; 
         position: absolute; 
-        bottom: 15px; 
+        bottom: 30px; 
         width: 100%; 
         z-index: 5; 
     }
@@ -784,8 +826,8 @@ body, html {
     .trust-badges { gap: 10px !important; font-size: 11px !important; margin-top: 20px !important; padding-top: 15px !important; }
     .service-container { grid-template-columns: 1fr !important; gap: 15px !important; }
     .slide-btn { display: none !important; }
-    .suggestion-card { flex: 0 0 160px !important; }
-    .suggest-img-box { height: 210px !important; }
+    .suggestion-card { flex: 0 0 170px !important; }
+    .suggest-img-box { height: 220px !important; }
 }
 /* =======================================================
        MOBILE: BRAND SERVICE BOX HEIGHT REDUCTION (SLIM LOOK)
@@ -1093,54 +1135,86 @@ function scrollSlider(direction) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+
     const firstVariant = document.querySelector('.color-item-wrapper.first-variant');
     if (firstVariant) firstVariant.click();
 
+    // Rating Badge
     document.querySelectorAll(".rating-badge").forEach(function(badge) {
-        const productId = badge.getAttribute("data-product-id");
-        if (productId) {
-            const numId = parseInt(productId.replace(/[^0-9]/g, '')) || 1;
-            const rating = (4.1 + (numId % 9) * 0.1).toFixed(1);
-            let countStr = (100 + (numId % 400)).toString();
-            badge.querySelector(".rating-value").innerText = rating;
-            badge.querySelector(".user-count").innerText = countStr;
+
+        const prodId = parseInt(badge.getAttribute("data-product-id")) || 1;
+
+        let ratingSeed = (prodId * 7) % 9;
+        let ratingVal = 4.1 + (ratingSeed / 10);
+
+        let countSeed = (prodId * 13) % 50;
+        let finalCountText = "";
+
+        if (countSeed % 3 === 0) {
+            let kValue = (1.1 + (countSeed / 15)).toFixed(1);
+            finalCountText = kValue + "k";
+        } else if (countSeed % 2 === 0) {
+            finalCountText = (400 + (countSeed * 10));
+        } else {
+            finalCountText = (1000 + (countSeed * 25));
         }
-        // Full Screen Image Viewer
 
-document.querySelectorAll('.slide-img').forEach(img => {
+        badge.querySelector(".rating-value").innerText =
+            ratingVal.toFixed(1);
 
-    img.style.cursor = "zoom-in";
+        badge.querySelector(".user-count").innerText =
+            finalCountText;
+    });
+
+    // Product Ribbon
+    document.querySelectorAll(".product-ribbon").forEach(function(ribbon) {
+        const discount = parseInt(ribbon.getAttribute("data-discount")) || 0;
+
+        if (discount >= 50) {
+            ribbon.innerText = "TRENDING";
+            ribbon.style.display = "block";
+            ribbon.style.background = "#ff3f6c";
+        } else if (discount >= 30) {
+            ribbon.innerText = "BESTSELLER";
+            ribbon.style.display = "block";
+            ribbon.style.background = "#14958f";
+        }
+    });
+
+    // Full Screen Image Viewer
+    document.querySelectorAll('.slide-img').forEach(img => {
+        img.style.cursor = "zoom-in";
+    });
+
+});
 
     let startX = 0;
 let startY = 0;
 
-img.addEventListener('touchstart', function(e){
+document.querySelectorAll('.slide-img').forEach(img => {
 
-    startX = e.changedTouches[0].clientX;
-    startY = e.changedTouches[0].clientY;
+    img.addEventListener('touchstart', function(e){
+        startX = e.changedTouches[0].clientX;
+        startY = e.changedTouches[0].clientY;
+    });
 
-});
+    img.addEventListener('touchend', function(e){
 
-img.addEventListener('touchend', function(e){
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
 
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
+        const moveX = Math.abs(endX - startX);
+        const moveY = Math.abs(endY - startY);
 
-    const moveX = Math.abs(endX - startX);
-    const moveY = Math.abs(endY - startY);
+        if(moveX > 15 || moveY > 15){
+            return;
+        }
 
-    // Swipe ya scroll hua hai
-    if(moveX > 15 || moveY > 15){
-        return;
-    }
+        openImageViewer(this.src);
+    });
 
-    openImageViewer(this.src);
+    img.addEventListener('click', function(){
 
-});
-
-    img.addEventListener('click', function(e){
-
-        // Mobile par click event duplicate trigger na ho
         if(window.innerWidth <= 768){
             return;
         }
@@ -1148,14 +1222,6 @@ img.addEventListener('touchend', function(e){
         openImageViewer(this.src);
     });
 
-});
-    });
-
-    document.querySelectorAll(".product-ribbon").forEach(function(ribbon) {
-        const discount = parseInt(ribbon.getAttribute("data-discount")) || 0;
-        if (discount >= 50) { ribbon.innerText = "TRENDING"; ribbon.style.display = "block"; ribbon.style.background = "#ff3f6c"; }
-        else if (discount >= 30) { ribbon.innerText = "BESTSELLER"; ribbon.style.display = "block"; ribbon.style.background = "#14958f"; }
-    });
 });
 
 function openSizeChart() { document.getElementById('sizeChartModal').style.display = "block"; document.body.style.overflow = "hidden"; }

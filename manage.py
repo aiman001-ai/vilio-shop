@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
+import platform
 import sys
+
+# Fake values taaki Cloudinary/Platform bina crash hue pass ho jaye
+os.environ['PROCESSOR_IDENTIFIER'] = 'Intel64 Family 6 Model 158 Stepping 10, GenuineIntel'
+os.environ['PROCESSOR_ARCHITECTURE'] = 'AMD64'
 
 
 def main():
