@@ -223,6 +223,17 @@
     </div>
 </div>
 
+<!-- Image Viewer Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="image-close" onclick="closeImageModal()">&times;</span>
+
+    <a id="downloadImageBtn" class="download-btn">
+    <i class="fa-solid fa-download"></i>
+</a>
+
+    <div id="modalSlider" class="modal-slider"></div>
+</div>
+
 <div id="sizeChartModal" class="modal-overlay">
     <div class="modal-content">
         <span class="close-modal" onclick="closeSizeChart()">&times;</span>
@@ -461,6 +472,82 @@ body, html {
 .service-text h4 { margin: 0; font-size: 13px; color: #282c3f; }
 .service-text p { margin: 2px 0 0 0; font-size: 11px; color: #7e818c; }
 
+/* Full Screen Image Viewer */
+
+.image-modal{
+    display:none;
+    position:fixed;
+    z-index:100000;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.95);
+    justify-content:center;
+    align-items:center;
+}
+
+.image-modal-content{
+    max-width:95%;
+    max-height:90%;
+    object-fit:contain;
+}
+
+.modal-slider{
+    width:100%;
+    height:100%;
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;
+}
+
+.modal-slider::-webkit-scrollbar{
+    display:none;
+}
+
+.modal-slide{
+    min-width:100%;
+    height:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    scroll-snap-align:start;
+}
+
+.modal-slide img{
+    max-width:95%;
+    max-height:90%;
+    object-fit:contain;
+}
+
+.download-btn{
+    position:absolute;
+    top:29px;
+    right:65px; /* Cross ke just left */
+    background:transparent;
+    color:#fff;
+    border:none;
+    padding:0;
+    cursor:pointer;
+    font-size:17px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+
+.image-close{
+    position:absolute;
+    top:20px;
+    right:30px;
+    color:#fff;
+    font-size:32px;
+    font-weight:300;
+    line-height:1;
+    cursor:pointer;
+}
+
 /* Modals */
 .modal-overlay { display: none; position: fixed; z-index: 10002; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
 .modal-content { background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
@@ -530,6 +617,8 @@ body, html {
         scroll-snap-align: start !important;
         flex-shrink: 0 !important;
         margin: 0 !important;
+        cursor: zoom-in;
+        touch-action: pan-x pan-y;
     }
     
     .thumbnail-row { display: none !important; }
@@ -1016,6 +1105,50 @@ document.addEventListener("DOMContentLoaded", function() {
             badge.querySelector(".rating-value").innerText = rating;
             badge.querySelector(".user-count").innerText = countStr;
         }
+        // Full Screen Image Viewer
+
+document.querySelectorAll('.slide-img').forEach(img => {
+
+    img.style.cursor = "zoom-in";
+
+    let startX = 0;
+let startY = 0;
+
+img.addEventListener('touchstart', function(e){
+
+    startX = e.changedTouches[0].clientX;
+    startY = e.changedTouches[0].clientY;
+
+});
+
+img.addEventListener('touchend', function(e){
+
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+
+    const moveX = Math.abs(endX - startX);
+    const moveY = Math.abs(endY - startY);
+
+    // Swipe ya scroll hua hai
+    if(moveX > 15 || moveY > 15){
+        return;
+    }
+
+    openImageViewer(this.src);
+
+});
+
+    img.addEventListener('click', function(e){
+
+        // Mobile par click event duplicate trigger na ho
+        if(window.innerWidth <= 768){
+            return;
+        }
+
+        openImageViewer(this.src);
+    });
+
+});
     });
 
     document.querySelectorAll(".product-ribbon").forEach(function(ribbon) {
@@ -1028,5 +1161,57 @@ document.addEventListener("DOMContentLoaded", function() {
 function openSizeChart() { document.getElementById('sizeChartModal').style.display = "block"; document.body.style.overflow = "hidden"; }
 function closeSizeChart() { document.getElementById('sizeChartModal').style.display = "none"; document.body.style.overflow = "auto"; }
 window.onclick = function(e) { if (e.target == document.getElementById('sizeChartModal')) closeSizeChart(); }
+
+
+
+function closeImageModal(){
+
+    document.getElementById('imageModal').style.display = 'none';
+
+    document.body.style.overflow = 'auto';
+}
+
+document.getElementById('imageModal').addEventListener('click', function(e){
+
+    if(e.target === this){
+        closeImageModal();
+    }
+
+});
+
+function openImageViewer(clickedSrc){
+
+    const modal = document.getElementById('imageModal');
+    const modalSlider = document.getElementById('modalSlider');
+
+    modalSlider.innerHTML = '';
+
+    const images = document.querySelectorAll('#imageSlider .slide-img');
+
+    let activeIndex = 0;
+
+    images.forEach((img,index)=>{
+
+        if(img.src === clickedSrc){
+            activeIndex = index;
+        }
+
+        modalSlider.innerHTML += `
+            <div class="modal-slide">
+                <img src="${img.src}">
+            </div>
+        `;
+    });
+
+    modal.style.display='flex';
+
+    document.body.style.overflow='hidden';
+
+    setTimeout(()=>{
+        modalSlider.scrollLeft =
+            activeIndex * modalSlider.clientWidth;
+    },100);
+}
+
 </script>
 {% endblock %}
