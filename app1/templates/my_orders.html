@@ -147,6 +147,7 @@
         text-decoration: none; 
         font-size: 12px; 
         text-transform: uppercase;
+        display: none !important;
     }
 
     .order-footer {
@@ -170,6 +171,7 @@
         border-radius: 4px;
         cursor: pointer;
         transition: 0.3s;
+        display: none !important;
     }
 
     .btn-cancel:hover {
@@ -237,7 +239,12 @@
                 {% endif %}
                 <div class="item-info">
                     <p class="item-name">{{ item.product.name }}</p>
-                    <p class="item-meta">Size: {{ item.size }} | Qty: {{ item.quantity }}</p>
+                    <p class="item-meta">
+    {% if item.color %}
+        Color: {{ item.color }} |
+    {% endif %}
+    Size: {{ item.size }} | Qty: {{ item.quantity }}
+</p>
                     <p class="item-meta">₹{{ item.price }}</p>
                 </div>
             </div>
