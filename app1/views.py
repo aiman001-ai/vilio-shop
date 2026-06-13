@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 from django.core.mail import send_mail
 from django.conf import settings 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -498,57 +499,100 @@ def verify_otp(request):
 
 # ================= PRODUCT DETAIL =================
 def product_detail(request, id):
-    product = get_object_or_404(Product, id=id)
-    
-    # 1. Color Variants (Purana Kaam - No Changes in Output structure)
-    colors_qs = product.color_variants.all().prefetch_related('sizes')
-    variants_data = []
-    for c in colors_qs:
-        size_list = [f"{s.size_name}:{s.stock}" for s in c.sizes.all()]  # Size ke sath stock mapping
-        size_string = ",".join(size_list)
-        total_stock = sum([s.stock for s in c.sizes.all()])
-        
-        variants_data.append({
-            'color_name': c.color_name,
-            'color_image': c.color_image,
-            'size_name': size_string,  # JS handle karne ke liye "S:10,M:5" format
-            'stock': total_stock
-        })
+    # 1. Jo product user ne click kiya hai
+    current_product = get_object_or_404(Product, id=id)
 
-    # 2. Simple Product Sizes (Purana Kaam)
-    simple_sizes_list = product.simple_size_stocks.all()
+    # 2. Same Name aur Same Brand ke saare products nikalo
+    sibling_products = Product.objects.filter(
+        name=current_product.name,
+        brand=current_product.brand,
+        is_active=True
+    ).prefetch_related('color_variants__sizes')
 
-    # --- SMART SUGGESTIONS LOGIC (Strict Same-Type Product Matching) ---
-    # Sabhi random pools aur cross-selling filters ko hata kar strict category/sub-category filter lagaya hai.
-    
+    # DEBUG
+    print("Current Product:", current_product.name)
+    print("Has Variants:", current_product.has_variants)
+    print("Sibling Count:", sibling_products.count())
+
+    for p in sibling_products:
+        print("Sibling:", p.id, p.name)
+        print("Colors:", p.color_variants.count())
+
+    # 3. JavaScript ke liye JSON data
+    variants_json_data = {}
+
+    for prod in sibling_products:
+        color_var = prod.color_variants.first()
+
+        if color_var:
+            size_list = []
+            total_stock = 0
+
+            for s in color_var.sizes.all():
+                size_list.append({
+                    'size_name': s.size_name,
+                    'stock': s.stock
+                })
+                total_stock += s.stock
+
+            variants_json_data[str(prod.id)] = {
+                'color_name': color_var.color_name,
+                'color_image': color_var.color_image.url if color_var.color_image else prod.image.url,
+                'price': prod.price,
+                'original_price': prod.original_price,
+                'discount': prod.discount_percentage,
+                'sizes': size_list,
+                'total_stock': total_stock
+            }
+
+    # 4. Suggestions
     all_suggestions = []
-    
-    if product.sub_category:
-        # Step 1: Sabse pehle koshish karenge ki strictly SAME sub-category (jaise Casual Shirt to Casual Shirt) ke items milein
-        all_suggestions = list(Product.objects.filter(
-            sub_category=product.sub_category,
-            is_active=True
-        ).exclude(id=product.id)[:15])
-        
-    if len(all_suggestions) < 4 and product.category:
-        # Step 2: Agar sub-category khali hai ya usme kam products hain, toh main category (jaise Apparel/Shirts) se backup uthaenge
-        existing_ids = [p.id for p in all_suggestions] + [product.id]
+
+    if current_product.sub_category:
+        all_suggestions = list(
+            Product.objects.filter(
+                sub_category=current_product.sub_category,
+                is_active=True
+            ).exclude(name=current_product.name)[:15]
+        )
+
+    if len(all_suggestions) < 4 and current_product.category:
+        existing_ids = [p.id for p in all_suggestions] + [current_product.id]
         extra_count = 15 - len(all_suggestions)
-        
-        backup_products = list(Product.objects.filter(
-            category=product.category,
-            is_active=True
-        ).exclude(id__in=existing_ids)[:extra_count])
-        
+
+        backup_products = list(
+            Product.objects.filter(
+                category=current_product.category,
+                is_active=True
+            ).exclude(id__in=existing_ids)[:extra_count]
+        )
+
         all_suggestions.extend(backup_products)
 
-    return render(request, 'product_detail.html', {
-        'product': product, 
-        'variants': variants_data, 
-        'simple_sizes_list': simple_sizes_list,
-        'suggestions': all_suggestions  # Loop template data rendering safely intact
-    })
+    # 5. Variants data for template
+    variants = []
+    simple_sizes_list = []
 
+    if current_product.has_variants:
+        for color in current_product.color_variants.all():
+            for size in color.sizes.all():
+                variants.append({
+                    "color_name": color.color_name,
+                    "color_image": color.color_image,
+                    "size_name": size.size_name,
+                    "stock": size.stock
+                })
+    else:
+        simple_sizes_list = current_product.simple_size_stocks.all()
+
+    return render(request, 'product_detail.html', {
+        'product': current_product,
+        'sibling_products': sibling_products,
+        'variants': variants,
+        'simple_sizes_list': simple_sizes_list,
+        'variants_json': variants_json_data,
+        'suggestions': all_suggestions
+    })
 # ================= CHECKOUT & ORDERS =================
 @login_required
 def checkout(request):
@@ -753,6 +797,48 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
         'type_name': type_slug
     }
     return render(request, 'category_products.html', context)
+
+def get_product_data(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+
+        color_variant = product.color_variants.first()
+
+        sizes = []
+
+        if color_variant:
+            for s in color_variant.sizes.all():
+                sizes.append({
+                    "size_name": s.size_name,
+                    "stock": s.stock
+                })
+
+        print("PRODUCT:", product.id)
+
+        for s in sizes:
+            print("SIZE:", s)
+
+        return JsonResponse({
+            "success": True,
+            "product_id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "original_price": product.original_price,
+            "discount": product.discount_percentage,
+            "color_name": color_variant.color_name if color_variant else "",
+            "image": (
+                color_variant.color_image.url
+                if color_variant and color_variant.color_image
+                else product.image.url
+            ),
+            "sizes": sizes,
+        })
+
+    except Product.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "Product not found"
+        }, status=404)
 
 def category_default(request, category_slug):
     # 1. पहले चेक करें कि क्या यह कैटेगरी डेटाबेस में है? 

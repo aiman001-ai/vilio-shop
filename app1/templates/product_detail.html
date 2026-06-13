@@ -50,14 +50,20 @@
         <div class="selection-box">
             <h4 class="section-title">SELECT COLOR</h4>
             <div class="color-options">
-                {% for variant in variants %}
-    <div class="color-item-wrapper {% if forloop.first %}first-variant{% endif %}" 
-         onclick="selectVariant('{{ variant.color_image.url }}', '{{ variant.color_name }}', '{{ variant.size_name }}', {{ variant.stock }}, this)">
-        <div class="color-item" title="{{ variant.color_name }}">
-            <img src="{{ variant.color_image.url }}">
-        </div>
-    </div>
-{% endfor %}
+                {% for prod in sibling_products %}
+                    {% with col=prod.color_variants.first %}
+                        {% if col %}
+                        <div class="color-item-wrapper {% if prod.id == product.id %}active{% endif %} swap-color-btn" 
+                             data-product-id="{{ prod.id }}"
+                             onclick="handleColorChange('{{ prod.id }}', this)"
+                             style="cursor: pointer;">
+                            <div class="color-item" title="{{ col.color_name }}">
+                                <img src="{{ col.color_image.url }}">
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
             </div>
         </div>
         {% endif %}
@@ -80,7 +86,17 @@
                     </button>
                 {% endfor %}
             {% else %}
-                <p id="color-msg" style="color: #94969f; font-size: 13px; margin: 0;">Please select a color first.</p>
+                {% for v in variants %}
+                    <button type="button" 
+                            class="size-btn variant-size-btn {% if v.stock <= 0 %}out-of-stock{% endif %}"
+                            data-color="{{ v.color_name }}"
+                            {% if v.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ v.size_name }}', this)"{% endif %}
+                            data-stock="{{ v.stock }}">
+                        {{ v.size_name }}
+                    </button>
+                {% endfor %}
+                
+                <p id="color-msg" style="color: #94969f; font-size: 13px; margin: 0; display: none;">Please select a color first.</p>
             {% endif %}
         </div>
 
@@ -91,18 +107,21 @@
         <p class="description">{{ product.description }}</p>
 
 
-        <input type="hidden" id="selectedColor" value="">
-        <input type="hidden" id="selectedSize" value="">
+        <input type="hidden" id="selectedColor" value="{% if product.color_variants.first %}{{ product.color_variants.first.color_name }}{% endif %}">
+<input type="hidden" id="selectedSize" value="">
+<input type="hidden" id="current-active-id" value="{{ product.id }}">
+
+{{ variants_json|json_script:"variants-data-json" }}
 
         <div class="sticky-btn-placeholder">
             <div class="action-btns">
-                <button id="cartBtn" onclick="validatedAddToCart('{{ product.id }}')" class="btn-cart">
-                    <i class="fa-solid fa-cart-shopping"></i> ADD TO BAG
-                </button>
-                <button id="buyBtn" onclick="validatedBuyNow('{{ product.id }}')" class="btn-buy">
-                    <i class="fa-solid fa-bolt"></i> BUY NOW
-                </button>
-            </div>
+    <button id="cartBtn" onclick="validatedAddToCart(document.getElementById('current-active-id').value)" class="btn-cart">
+        <i class="fa-solid fa-cart-shopping"></i> ADD TO BAG
+    </button>
+    <button id="buyBtn" onclick="validatedBuyNow(document.getElementById('current-active-id').value)" class="btn-buy">
+        <i class="fa-solid fa-bolt"></i> BUY NOW
+    </button>
+</div>
         </div>
         
         <div class="trust-badges">
@@ -933,19 +952,30 @@ body, html {
 <script>
 // --- Slider Carousel Logic ---
 document.addEventListener("DOMContentLoaded", function() {
+    initImageSlider();
+});
+
+function initImageSlider() {
     const slider = document.getElementById('imageSlider');
     const dotsContainer = document.getElementById('sliderDots');
+    if (!slider || !dotsContainer) return;
+
     const slides = slider.querySelectorAll('.slide-img');
+    dotsContainer.innerHTML = ''; // Fresh render
     
     slides.forEach((_, idx) => {
         const dot = document.createElement('div');
         dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+        dot.setAttribute('onclick', `goToSlide(${idx})`);
         dotsContainer.appendChild(dot);
     });
 
     const dots = dotsContainer.querySelectorAll('.dot');
 
-    slider.addEventListener('scroll', function() {
+    slider.removeEventListener('scroll', handleSliderScroll); // Removals prevent duplication
+    slider.addEventListener('scroll', handleSliderScroll);
+
+    function handleSliderScroll() {
         const width = slider.clientWidth;
         const activeIndex = Math.round(slider.scrollLeft / width);
         
@@ -959,98 +989,165 @@ document.addEventListener("DOMContentLoaded", function() {
             desktopThumbs.forEach(t => t.classList.remove('active'));
             desktopThumbs[activeIndex].classList.add('active');
         }
-    });
-});
+    }
+
+    // Touch setup for dynamic images
+    setupImageInteractions();
+}
 
 function goToSlide(index) {
     const slider = document.getElementById('imageSlider');
-    const width = slider.clientWidth;
-    slider.scrollTo({ left: width * index, behavior: 'smooth' });
+    if (slider) {
+        const width = slider.clientWidth;
+        slider.scrollTo({ left: width * index, behavior: 'smooth' });
+    }
 }
 
-function selectVariant(imgSrc, colorName, sizeDetails, totalStock, element) {
-    document.getElementById('selectedColor').value = colorName;
-    document.getElementById('selectedSize').value = ""; 
+// --- AJX VARIANT PICKER CONTROLLER ---
+// Aliasing handleColorChange to map safely to your HTML onclick structure
+function handleColorChange(productId, element) {
+    selectVariant(productId, element);
+}
+
+function selectVariant(productId, element) {
+    if (!element) return;
     
     document.querySelectorAll('.color-item-wrapper').forEach(i => i.classList.remove('active'));
-    element.closest('.color-item-wrapper').classList.add('active');
+    element.classList.add('active');
 
-    const slider = document.getElementById('imageSlider');
-    const slides = slider.querySelectorAll('.slide-img');
-    let matchIndex = 0;
-    
-    slides.forEach((slide, idx) => {
-        if(slide.getAttribute('src') === imgSrc || slide.getAttribute('data-color') === colorName) {
-            matchIndex = idx;
-        }
-    });
-    goToSlide(matchIndex);
+    const activeIdInput = document.getElementById('current-active-id');
+    if (activeIdInput) activeIdInput.value = productId;
 
+    // Loader State
     const sizeContainer = document.getElementById('size-container');
-    sizeContainer.innerHTML = ''; 
-    const sizesArray = sizeDetails.split(',');
+    if (sizeContainer) sizeContainer.innerHTML = '<span style="font-size:12px; color:#696e79;">Updating options...</span>';
 
-    sizesArray.forEach((item) => {
-        if (!item) return;
-        const parts = item.split(':');
-        const sizeName = parts[0];
-        const stock = parseInt(parts[1] || 0);
+    fetch(`/get-product-data/${productId}/`)
+    .then(response => {
+        if (!response.ok) throw new Error('Network response error');
+        return response.json();
+    })
+    .then(data => {
+        // Elements updates
+        const slider = document.getElementById('imageSlider');
+
+if (slider && data.image) {
+    slider.innerHTML = `
+        <img class="slide-img" src="${data.image}">
+    `;
+
+    initImageSlider();
+}
+
+const priceBox = document.querySelector('.price-box');
+
+if (priceBox) {
+    priceBox.innerHTML = `
+        <span class="discount-price">₹${data.price}</span>
+        <span class="original-price">₹${data.original_price}</span>
+        <span class="discount-percentage">(${data.discount}% OFF)</span>
+    `;
+}
+
+if (sizeContainer && data.sizes) {
+
+    let html = '';
+
+    data.sizes.forEach(size => {
+
+        html += `
+            <button
+                type="button"
+                class="size-btn ${size.stock <= 0 ? 'out-of-stock' : ''}"
+                data-stock="${size.stock}"
+                ${size.stock <= 0 ? 'disabled' : ''}
+                onclick="setChosenSize('${size.size_name}', this)"
+            >
+                ${size.size_name}
+            </button>
+        `;
+    });
+
+    sizeContainer.innerHTML = html;
+}
         
-        const btn = document.createElement('button');
-        btn.type = "button";
-        btn.innerText = sizeName;
-        btn.setAttribute('data-stock', stock);
-
-        if (stock <= 0) {
-            btn.className = 'size-btn out-of-stock';
-            btn.disabled = true;
-        } else {
-            btn.className = 'size-btn';
-            btn.onclick = function() { setChosenSize(sizeName, btn); };
-        }
-        sizeContainer.appendChild(btn);
+        const colorInput = document.getElementById('selectedColor');
+        if (colorInput) colorInput.value = data.color_name || "Default";
+        
+        const sizeInput = document.getElementById('selectedSize');
+        if (sizeInput) sizeInput.value = ""; 
+    })
+    .catch(err => {
+        console.error("Variant fetch failed:", err);
+        showPopup("❌ Error loading variant options!");
     });
 }
 
 function selectVariantViaThumb(imgSrc, colorName, sizeDetails, totalStock, element) {
     const matchingColorItem = Array.from(document.querySelectorAll('.color-item-wrapper')).find(el => {
-        return el.querySelector('img').getAttribute('src') === imgSrc;
+        const img = el.querySelector('img');
+        return img && img.getAttribute('src') === imgSrc;
     });
     if (matchingColorItem) {
-        selectVariant(imgSrc, colorName, sizeDetails, totalStock, matchingColorItem);
+        const prodId = matchingColorItem.getAttribute('data-product-id');
+        if (prodId) selectVariant(prodId, matchingColorItem);
     }
 }
 
 function setChosenSize(size, element) {
-    document.getElementById('selectedSize').value = size;
-    if ("{{ product.has_variants }}" !== "True") {
-        document.getElementById('selectedColor').value = "Default";
+    const sizeInput = document.getElementById('selectedSize');
+    if (sizeInput) sizeInput.value = size;
+    
+    // Safety handling for non-variant base structures
+    const colorInput = document.getElementById('selectedColor');
+    if (colorInput && (!colorInput.value || colorInput.value === "")) {
+        colorInput.value = "Default";
     }
+    
     document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
     element.classList.add('active');
 }
 
+// --- SNITCH STYLE VALIDATION ENGINE ---
 function validateSelection() {
-    const color = document.getElementById('selectedColor').value;
-    const size = document.getElementById('selectedSize').value;
-    const hasVariants = "{{ product.has_variants }}" === "True";
+    const colorInput = document.getElementById('selectedColor');
+    const sizeInput = document.getElementById('selectedSize');
+    
+    const colorValue = colorInput ? colorInput.value.trim() : '';
+    const sizeValue = sizeInput ? sizeInput.value.trim() : '';
+    
+    const colorBox = document.querySelector('.selection-box') || document.getElementById('color-container');
+    const sizeBox = document.getElementById('size-container');
 
-    if (hasVariants && !color) {
-        showPopup("⚠️ Please select a Color!");
-        return false;
+    if (colorBox) colorBox.classList.remove('validation-error');
+    if (sizeBox) sizeBox.classList.remove('validation-error');
+
+    // Safe fallbacks to prevent undefined breaks
+    const hasVariants = document.querySelectorAll('.color-item-wrapper').length > 0;
+
+    if (hasVariants && colorBox && !colorValue) {
+        colorBox.classList.add('validation-error');
+        colorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => colorBox.classList.remove('validation-error'), 3000);
+        return null; 
     }
-    if (!size) {
-        showPopup("⚠️ Please select a Size!");
-        return false;
+
+    if (!sizeValue) {
+        if (sizeBox) {
+            sizeBox.classList.add('validation-error');
+            sizeBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => sizeBox.classList.remove('validation-error'), 3000);
+        }
+        return null;
     }
-    return { color: hasVariants ? color : "Default", size: size };
+
+    return { color: colorValue || "Default", size: sizeValue };
 }
 
 function validatedAddToCart(productId) {
     const selection = validateSelection();
-    if (!selection) return; // Agar color/size select nahi hai toh yahi ruk jayega
+    if (!selection) return; 
     
-    // Aapka purana fetch logic bilkul pehle jaisa:
     const url = `/add-to-cart/${productId}/?color=${encodeURIComponent(selection.color)}&size=${encodeURIComponent(selection.size)}`;
     
     fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -1060,7 +1157,10 @@ function validatedAddToCart(productId) {
         else if (data.success) {
             showPopup("Added to bag! ✅");
             const badge = document.getElementById('cart-count-badge');
-            if (badge) { badge.innerText = data.global_cart_count; badge.style.display = "block"; }
+            if (badge) { 
+                badge.innerText = data.global_cart_count; 
+                badge.style.display = "block"; 
+            }
         } else { showPopup("❌ " + data.message); }
     })
     .catch(err => { showPopup("❌ Something went wrong!"); });
@@ -1068,53 +1168,9 @@ function validatedAddToCart(productId) {
 
 function validatedBuyNow(productId) {
     const selection = validateSelection();
-    if (!selection) return; // Agar color/size select nahi hai toh yahi ruk jayega
+    if (!selection) return; 
     
-    // Aapka purana redirect logic:
     window.location.href = `/shop-now/${productId}/?color=${encodeURIComponent(selection.color)}&size=${encodeURIComponent(selection.size)}`;
-}
-
-// --- NAYA VALIDATION HELPER FUNCTION (SNITCH STYLE) ---
-function validateSelection() {
-    // Hidden inputs ya select elements se values nikaalna
-    const colorInput = document.getElementById('selectedColor');
-    const sizeInput = document.getElementById('selectedSize');
-    
-    const colorValue = colorInput ? colorInput.value.trim() : '';
-    const sizeValue = sizeInput ? sizeInput.value.trim() : '';
-    
-    // HTML Elements jinko error ke waqt shake aur red karna hai
-    const colorBox = document.querySelector('.selection-box') || document.getElementById('color-container');
-    const sizeBox = document.getElementById('size-container');
-
-    // Pehle se lagi hui kisi bhi error class ko saaf karein
-    if (colorBox) colorBox.classList.remove('validation-error');
-    if (sizeBox) sizeBox.classList.remove('validation-error');
-
-    // 1. Color check aur smooth scroll
-    if (colorBox && !colorValue) {
-        colorBox.classList.add('validation-error');
-        colorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // 3 second baad border normal kar dein
-        setTimeout(() => colorBox.classList.remove('validation-error'), 3000);
-        return null; 
-    }
-
-    // 2. Size check aur smooth scroll
-    if (!sizeValue) {
-        if (sizeBox) {
-            sizeBox.classList.add('validation-error');
-            sizeBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // 3 second baad border normal kar dein
-            setTimeout(() => sizeBox.classList.remove('validation-error'), 3000);
-        }
-        return null;
-    }
-
-    // Agar sab kuch sahi select hai, toh dono values return karo taaki URL sahi bane
-    return { color: colorValue, size: sizeValue };
 }
 
 function showPopup(msg) {
@@ -1130,23 +1186,56 @@ function showPopup(msg) {
 
 function scrollSlider(direction) {
     const slider = document.getElementById('suggestionSlider');
-    const scrollAmount = 230 * 2; 
-    slider.scrollBy({ left: direction === 1 ? scrollAmount : -scrollAmount, behavior: 'smooth' });
+    if (slider) {
+        const scrollAmount = 230 * 2; 
+        slider.scrollBy({ left: direction === 1 ? scrollAmount : -scrollAmount, behavior: 'smooth' });
+    }
+}
+
+function setupImageInteractions() {
+    let startX = 0;
+    let startY = 0;
+
+    document.querySelectorAll('.slide-img').forEach(img => {
+        img.style.cursor = "zoom-in";
+        img.replaceWith(img.cloneNode(true)); // Flushes old bounds
+    });
+
+    document.querySelectorAll('.slide-img').forEach(img => {
+        img.addEventListener('touchstart', function(e){
+            startX = e.changedTouches[0].clientX;
+            startY = e.changedTouches[0].clientY;
+        }, { passive: true });
+
+        img.addEventListener('touchend', function(e){
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            if(Math.abs(endX - startX) > 15 || Math.abs(endY - startY) > 15) return;
+            openImageViewer(this.src);
+        });
+
+        img.addEventListener('click', function(){
+            if(window.innerWidth <= 768) return;
+            openImageViewer(this.src);
+        });
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Fallback selection trigger if first-variant class wasn't manually set
+    const colorItems = document.querySelectorAll('.color-item-wrapper');
+    if (colorItems.length > 0) {
+        const firstVariant = document.querySelector('.color-item-wrapper.first-variant') || colorItems[0];
+        if(firstVariant && !firstVariant.classList.contains('active')) {
+            firstVariant.click();
+        }
+    }
 
-    const firstVariant = document.querySelector('.color-item-wrapper.first-variant');
-    if (firstVariant) firstVariant.click();
-
-    // Rating Badge
+    // Rating Badge Generator Logic
     document.querySelectorAll(".rating-badge").forEach(function(badge) {
-
         const prodId = parseInt(badge.getAttribute("data-product-id")) || 1;
-
         let ratingSeed = (prodId * 7) % 9;
         let ratingVal = 4.1 + (ratingSeed / 10);
-
         let countSeed = (prodId * 13) % 50;
         let finalCountText = "";
 
@@ -1159,17 +1248,15 @@ document.addEventListener("DOMContentLoaded", function() {
             finalCountText = (1000 + (countSeed * 25));
         }
 
-        badge.querySelector(".rating-value").innerText =
-            ratingVal.toFixed(1);
-
-        badge.querySelector(".user-count").innerText =
-            finalCountText;
+        const rValEl = badge.querySelector(".rating-value");
+        const uCntEl = badge.querySelector(".user-count");
+        if(rValEl) rValEl.innerText = ratingVal.toFixed(1);
+        if(uCntEl) uCntEl.innerText = finalCountText;
     });
 
-    // Product Ribbon
+    // Product Ribbon Config
     document.querySelectorAll(".product-ribbon").forEach(function(ribbon) {
         const discount = parseInt(ribbon.getAttribute("data-discount")) || 0;
-
         if (discount >= 50) {
             ribbon.innerText = "TRENDING";
             ribbon.style.display = "block";
@@ -1180,104 +1267,59 @@ document.addEventListener("DOMContentLoaded", function() {
             ribbon.style.background = "#14958f";
         }
     });
-
-    // Full Screen Image Viewer
-    document.querySelectorAll('.slide-img').forEach(img => {
-        img.style.cursor = "zoom-in";
-    });
-
 });
 
-    let startX = 0;
-let startY = 0;
-
-document.querySelectorAll('.slide-img').forEach(img => {
-
-    img.addEventListener('touchstart', function(e){
-        startX = e.changedTouches[0].clientX;
-        startY = e.changedTouches[0].clientY;
-    });
-
-    img.addEventListener('touchend', function(e){
-
-        const endX = e.changedTouches[0].clientX;
-        const endY = e.changedTouches[0].clientY;
-
-        const moveX = Math.abs(endX - startX);
-        const moveY = Math.abs(endY - startY);
-
-        if(moveX > 15 || moveY > 15){
-            return;
-        }
-
-        openImageViewer(this.src);
-    });
-
-    img.addEventListener('click', function(){
-
-        if(window.innerWidth <= 768){
-            return;
-        }
-
-        openImageViewer(this.src);
-    });
-
+function openSizeChart() { 
+    const scModal = document.getElementById('sizeChartModal');
+    if(scModal) { scModal.style.display = "block"; document.body.style.overflow = "hidden"; }
+}
+function closeSizeChart() { 
+    const scModal = document.getElementById('sizeChartModal');
+    if(scModal) { scModal.style.display = "none"; document.body.style.overflow = "auto"; }
+}
+window.addEventListener('click', function(e) { 
+    const scModal = document.getElementById('sizeChartModal');
+    if (e.target == scModal) closeSizeChart(); 
 });
-
-function openSizeChart() { document.getElementById('sizeChartModal').style.display = "block"; document.body.style.overflow = "hidden"; }
-function closeSizeChart() { document.getElementById('sizeChartModal').style.display = "none"; document.body.style.overflow = "auto"; }
-window.onclick = function(e) { if (e.target == document.getElementById('sizeChartModal')) closeSizeChart(); }
-
-
 
 function closeImageModal(){
-
-    document.getElementById('imageModal').style.display = 'none';
-
-    document.body.style.overflow = 'auto';
+    const imgModal = document.getElementById('imageModal');
+    if(imgModal) { imgModal.style.display = 'none'; document.body.style.overflow = 'auto'; }
 }
 
-document.getElementById('imageModal').addEventListener('click', function(e){
-
-    if(e.target === this){
-        closeImageModal();
+document.addEventListener('DOMContentLoaded', function() {
+    const imgModalEl = document.getElementById('imageModal');
+    if(imgModalEl) {
+        imgModalEl.addEventListener('click', function(e){
+            if(e.target === this) closeImageModal();
+        });
     }
-
 });
 
 function openImageViewer(clickedSrc){
-
     const modal = document.getElementById('imageModal');
     const modalSlider = document.getElementById('modalSlider');
+    if(!modal || !modalSlider) return;
 
     modalSlider.innerHTML = '';
-
     const images = document.querySelectorAll('#imageSlider .slide-img');
-
     let activeIndex = 0;
 
-    images.forEach((img,index)=>{
-
-        if(img.src === clickedSrc){
-            activeIndex = index;
-        }
-
+    images.forEach((img, index) => {
+        if(img.src === clickedSrc) activeIndex = index;
         modalSlider.innerHTML += `
             <div class="modal-slide">
-                <img src="${img.src}">
+                <img src="${img.src}" alt="Preview">
             </div>
         `;
     });
 
-    modal.style.display='flex';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 
-    document.body.style.overflow='hidden';
-
-    setTimeout(()=>{
-        modalSlider.scrollLeft =
-            activeIndex * modalSlider.clientWidth;
-    },100);
+    setTimeout(() => {
+        modalSlider.scrollLeft = activeIndex * modalSlider.clientWidth;
+    }, 100);
 }
-
 </script>
 {% endblock %}

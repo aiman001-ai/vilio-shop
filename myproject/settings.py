@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
 # DEBUG: Error check karne ke liye True rakha hai
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '*',
@@ -33,7 +33,10 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://vilio-shop.onrender.com',
     'https://vilio.shop',
-    'https://www.vilio.shop'
+    'https://www.vilio.shop',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://192.168.1.134:8000',
 ]
 
 # Security Settings
