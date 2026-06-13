@@ -99,15 +99,24 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Information", {
-            'fields': (
-                'brand', 'name', 'description', 
-                'price', 'original_price', 'image', 'size_chart',
-                'category', 
-                'sub_category', 
-                'product_type', 
-                'is_active'
-            )
-        }),
+    'fields': (
+        'brand',
+        'name',
+        'description',
+        'price',
+        'original_price',
+        'image',
+        'size_chart',
+
+        'category',
+        'sub_category',
+        'product_type',
+
+        'color_family',   # <-- ye nayi line
+
+        'is_active'
+    )
+}),
         # --- NAYA SECTION YAHAN ADD KIYA HAI ---
         ("Product Specifications (Admin Only)", {
             'description': "Yahan Product ki Fabric, Fit aur washing instructions bharein.",

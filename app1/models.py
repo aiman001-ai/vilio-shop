@@ -46,6 +46,13 @@ class Product(models.Model):
     fit = models.CharField(max_length=100, blank=True, null=True, help_text="Example: Slim Fit")
     care_instructions = models.TextField(blank=True, null=True, help_text="Wash care details")
     additional_info = models.TextField(blank=True, null=True, help_text="Product ki extra khasiyat")
+
+    color_family = models.CharField(
+    max_length=100,
+    blank=True,
+    null=True,
+    help_text="Same product ke sabhi colors ke liye same value rakho"
+)
     
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
     sub_category = models.ForeignKey('SubCategory', on_delete=models.CASCADE)
