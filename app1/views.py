@@ -518,12 +518,6 @@ def product_detail(request, id):
     # 2. Simple Product Sizes (Purana Kaam)
     simple_sizes_list = product.simple_size_stocks.all()
 
-    # Same Color Family Products
-    same_family_products = Product.objects.filter(
-    color_family=product.color_family,
-    is_active=True
-).exclude(id=product.id)
-
     # --- SMART SUGGESTIONS LOGIC (Strict Same-Type Product Matching) ---
     # Sabhi random pools aur cross-selling filters ko hata kar strict category/sub-category filter lagaya hai.
     
@@ -549,12 +543,11 @@ def product_detail(request, id):
         all_suggestions.extend(backup_products)
 
     return render(request, 'product_detail.html', {
-    'product': product,
-    'variants': variants_data,
-    'simple_sizes_list': simple_sizes_list,
-    'suggestions': all_suggestions,
-    'same_family_products': same_family_products,
-})
+        'product': product, 
+        'variants': variants_data, 
+        'simple_sizes_list': simple_sizes_list,
+        'suggestions': all_suggestions  # Loop template data rendering safely intact
+    })
 
 # ================= CHECKOUT & ORDERS =================
 @login_required

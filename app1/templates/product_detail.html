@@ -46,35 +46,21 @@
             {% endif %}
         </div>
 
-        {% if product.color_family %}
-<div class="selection-box">
-    <h4 class="section-title">SELECT COLOR</h4>
-
-    <div class="color-options">
-
-        <!-- Current Product -->
-        <div class="color-item-wrapper active">
-            <a href="{% url 'product_detail' product.id %}">
-                <div class="color-item">
-                    <img src="{{ product.image.url }}">
-                </div>
-            </a>
+        {% if product.has_variants and variants %}
+        <div class="selection-box">
+            <h4 class="section-title">SELECT COLOR</h4>
+            <div class="color-options">
+                {% for variant in variants %}
+    <div class="color-item-wrapper {% if forloop.first %}first-variant{% endif %}" 
+         onclick="selectVariant('{{ variant.color_image.url }}', '{{ variant.color_name }}', '{{ variant.size_name }}', {{ variant.stock }}, this)">
+        <div class="color-item" title="{{ variant.color_name }}">
+            <img src="{{ variant.color_image.url }}">
         </div>
-
-        <!-- Same Color Family Products -->
-        {% for item in same_family_products %}
-        <div class="color-item-wrapper">
-            <a href="{% url 'product_detail' item.id %}">
-                <div class="color-item">
-                    <img src="{{ item.image.url }}">
-                </div>
-            </a>
-        </div>
-        {% endfor %}
-
     </div>
-</div>
-{% endif %}
+{% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <div class="size-header-row">
             <h4 class="section-title" style="margin: 0;">SELECT SIZE</h4>
