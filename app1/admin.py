@@ -10,49 +10,52 @@ from .models import (
     Cart, CartItem, Order, OrderItem, Address, Profile
 )
 
-# --- 1. SubCategory Management ---
+# --- Autocomplete Mandatory Registration Engine ---
+# In teeno models me search_fields hona compulsory hai kyunki ProductAdmin me autocomplete_fields use ho rha hai
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ('name',)
+
 @admin.register(SubCategory)
 class SubCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'category') 
     list_filter = ('category',)
     search_fields = ('name',)
 
-# --- 2. Product Type Management ---
 @admin.register(ProductType)
 class ProductTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'sub_category')
     list_filter = ('sub_category',)
     search_fields = ('name',)
 
-# --- 3. Product Gallery Images Inline ---
+
+# --- Product Inlines Setup ---
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
 
-# --- 4. NEW: Simple Product Size & Stock Inline (एक ही रो में) ---
 class SimpleProductSizeStockInline(admin.TabularInline):
     model = SimpleProductSizeStock
     extra = 1
-    fields = ('size_name', 'stock') # ये दोनों को एक ही लाइन में लाएगा
+    fields = ('size_name', 'stock') # Dono ek hi row me render honge
 
-# --- 5. Size aur Stock rows (ProductColor ke andar) ---
 class ColorSizeStockInline(admin.TabularInline):
     model = ColorSizeStock
     extra = 1
     fields = ('size_name', 'stock')
 
-# --- 6. Product page par Colors section ---
+
+# --- Product Colors Section Control ---
 class ProductColorInline(admin.StackedInline):
     model = ProductColor
     extra = 1
-    # 'manage_sizes_link' को fields में जोड़ें
     fields = ('color_name', 'color_image', 'manage_sizes_link')
     readonly_fields = ('manage_sizes_link',)
     show_change_link = True 
 
     def manage_sizes_link(self, obj):
         if obj.id:
-            # यह URL उस पर्टिकुलर कलर के एडिट पेज पर ले जाएगा
             url = reverse('admin:app1_productcolor_change', args=[obj.id])
             return format_html(
                 '<a href="{}" target="_blank" style="'
@@ -72,36 +75,34 @@ class ProductColorInline(admin.StackedInline):
 
     manage_sizes_link.short_description = 'Sizes Control'
 
-# --- 7. Product Color Admin ---
+
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
     list_display = ['color_name', 'product']
+    search_fields = ['color_name', 'product__name'] # Search capacity enhanced
     inlines = [ColorSizeStockInline]
 
-# --- 8. Main Product Admin ---
+
+# --- Main Product Core Admin (RAM Optimized Layout) ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    # 1. List view configuration
+    # 1. List View Tweaks
     list_display = ['name', 'brand', 'price', 'get_full_category', 'has_variants', 'is_active']
-    
-    # Filters se category aur sub_category hatayi taaki side-panel collapse na ho aur memory na bhare
     list_filter = ['is_active', 'has_variants', 'brand']
     
-    # Autocomplete lagayi taaki dropdowns load hone me heavy queries na chalein
+    # Autocomplete config mapping smoothly now
     autocomplete_fields = ['category', 'sub_category', 'product_type']
     search_fields = ['name', 'brand']
-    list_per_page = 20  # Strict pagination taaki live server crash na ho
+    list_per_page = 20  # RAM saturation security boundaries
     
-    # Inlines configuration
     inlines = [ProductImageInline, SimpleProductSizeStockInline, ProductColorInline]
 
-    # 2. Database optimization for get_full_category and list views
+    # 2. SQL N+1 Query Optimization
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        # select_related integration - isse sabhi related models single query me load ho jayenge
         return queryset.select_related('category', 'sub_category', 'product_type')
 
-    # 3. Dynamic category path generation (No extra database hits now!)
+    # 3. Dynamic Path Loader (No Database Overhead)
     def get_full_category(self, obj):
         path = f"{obj.category.name}" if obj.category else "No Category"
         if obj.sub_category:
@@ -111,7 +112,7 @@ class ProductAdmin(admin.ModelAdmin):
         return path
     get_full_category.short_description = 'Full Category Path'
 
-    # 4. Form structure layout
+    # 4. Detailed Sections Fieldsets
     fieldsets = (
         ("Basic Information", {
             'fields': (
@@ -135,22 +136,23 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
 
-    # 5. Assets Injection
     class Media:
         js = ('admin/js/vendor/jquery/jquery.js', 'js/admin_custom.js',)
 
-# --- 9. Orders & Cart Management ---
+
+# --- Orders & Cart Engine Context ---
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
     readonly_fields = ('product', 'color', 'size', 'quantity', 'price')
 
+
+# --- Shiprocket Core CSV Generator Action ---
 def export_to_csv(modeladmin, request, queryset):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="shiprocket_final_ready.csv"'
     writer = csv.writer(response)
     
-    # 🚀 UPDATE: Header mein Product_Name, Size, aur Color ke columns add kar diye hain
     writer.writerow([
         'Order_ID', 'Product_ID', 'Product_Name', 'Size', 'Color', 'Quantity', 
         'Customer_Name', 'Customer_Email', 'Customer_Phone',
@@ -160,12 +162,11 @@ def export_to_csv(modeladmin, request, queryset):
     ])
     
     for obj in queryset:
-        # 1. Base Data
         user = obj.user
-        addr_obj = obj.address  # Linked Address Model
+        addr_obj = obj.address 
         address_text = str(addr_obj) if addr_obj else ""
 
-        # 3. SUPER DYNAMIC PHONE (100% UNTOUCHED)
+        # Phone extraction configuration
         phone = getattr(addr_obj, 'mobile', '') or getattr(addr_obj, 'phone', '')
         if not phone:
             profile = Profile.objects.filter(user=user).first()
@@ -176,13 +177,13 @@ def export_to_csv(modeladmin, request, queryset):
         
         formatted_phone = f"'{phone}" if phone else "'9999999999"
 
-        # 4. SUPER DYNAMIC PINCODE (100% UNTOUCHED)
+        # Pincode parsing rules
         pincode = getattr(addr_obj, 'pincode', '')
         if not pincode:
             match = re.search(r'\b\d{6}\b', address_text)
             pincode = match.group(0) if match else ""
 
-        # 5. DYNAMIC CITY & STATE (100% UNTOUCHED)
+        # City / State extraction arrays
         city = getattr(addr_obj, 'city', '')
         state = getattr(addr_obj, 'state', '')
 
@@ -192,11 +193,9 @@ def export_to_csv(modeladmin, request, queryset):
                 if not city: city = parts[-2]
                 if not state: state = re.sub(r'\d+', '', parts[-1]).strip()
 
-        # 6. Payment Method Fix (100% UNTOUCHED)
         pay_method = str(obj.payment_method).upper()
         final_pay = "Prepaid" if any(x in pay_method for x in ["ONLINE", "RAZORPAY", "PREPAID"]) else "COD"
 
-        # 🚀 STEP 7: ORDER ITEMS LOOP (Har item ka Size, Color aur Qty nikalne ke liye)
         order_items = obj.items.all()
         
         if order_items.exists():
@@ -208,64 +207,45 @@ def export_to_csv(modeladmin, request, queryset):
                 item_qty = item.quantity if hasattr(item, 'quantity') else 1
 
                 writer.writerow([
-                    obj.id,
-                    product_id,
-                    product_name,      # Naya Column 🚀
-                    item_size,         # Naya Column 🚀
-                    item_color,        # Naya Column 🚀
-                    item_qty,          # Naya Column 🚀
+                    obj.id, product_id, product_name, item_size, item_color, item_qty,
                     user.get_full_name() or user.username,
                     user.email or f"{user.username}@gmail.com",
-                    formatted_phone, 
-                    address_text,
-                    "", 
-                    city or "Update City",
-                    pincode or "000000",
-                    state or "Update State",
-                    "India",
-                    obj.status,
-                    obj.total_amount,
-                    final_pay,
+                    formatted_phone, address_text, "", 
+                    city or "Update City", pincode or "000000", state or "Update State",
+                    "India", obj.status, obj.total_amount, final_pay,
                     obj.created_at.strftime("%d-%m-%Y %H:%M")
                 ])
         else:
-            # Fallback: Agar kisi wajah se order me koi item na mile, toh row fir bhi generate ho taaki record miss na ho
             writer.writerow([
-                obj.id,
-                "N/A", "No Items", "N/A", "N/A", 0,
+                obj.id, "N/A", "No Items", "N/A", "N/A", 0,
                 user.get_full_name() or user.username,
                 user.email or f"{user.username}@gmail.com",
-                formatted_phone, 
-                address_text,
-                "", 
-                city or "Update City",
-                pincode or "000000",
-                state or "Update State",
-                "India",
-                obj.status,
-                obj.total_amount,
-                final_pay,
+                formatted_phone, address_text, "", 
+                city or "Update City", pincode or "000000", state or "Update State",
+                "India", obj.status, obj.total_amount, final_pay,
                 obj.created_at.strftime("%d-%m-%Y %H:%M")
             ])
             
     return response
 
 export_to_csv.short_description = "Shiprocket Perfect Export"
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'total_amount', 'status', 'payment_method', 'created_at')
     list_filter = ('status', 'payment_method', 'created_at')
     inlines = [OrderItemInline]
-    actions = [export_to_csv]  # Yahan action add ho gaya
+    actions = [export_to_csv]
+
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ('cart', 'product', 'color', 'size', 'quantity')
 
 
-
-# --- Models Registration ---
-admin.site.register(Category)
+# --- Remaining Standard Model Registrations ---
+# (Note: Category registration removed from here and decorated at the top class level successfully)
 admin.site.register(Cart)
 admin.site.register(Address)
 admin.site.register(Profile)
