@@ -813,10 +813,21 @@ def get_product_data(request, product_id):
                     "stock": s.stock
                 })
 
-        print("PRODUCT:", product.id)
+        # Gallery Images
+        gallery_images = []
 
-        for s in sizes:
-            print("SIZE:", s)
+        # Current color image first
+        if color_variant and color_variant.color_image:
+            gallery_images.append(color_variant.color_image.url)
+
+        # Main product image
+        if product.image:
+            gallery_images.append(product.image.url)
+
+        # Additional gallery images
+        for img in product.images.all():
+            if img.image:
+                gallery_images.append(img.image.url)
 
         return JsonResponse({
             "success": True,
@@ -826,11 +837,15 @@ def get_product_data(request, product_id):
             "original_price": product.original_price,
             "discount": product.discount_percentage,
             "color_name": color_variant.color_name if color_variant else "",
+
             "image": (
                 color_variant.color_image.url
                 if color_variant and color_variant.color_image
-                else product.image.url
+                else product.image.url if product.image else ""
             ),
+
+            "gallery_images": gallery_images,
+
             "sizes": sizes,
         })
 

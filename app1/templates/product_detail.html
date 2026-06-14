@@ -1031,10 +1031,17 @@ function selectVariant(productId, element) {
         // Elements updates
         const slider = document.getElementById('imageSlider');
 
-if (slider && data.image) {
-    slider.innerHTML = `
-        <img class="slide-img" src="${data.image}">
-    `;
+if (slider && data.gallery_images) {
+
+    let imagesHTML = '';
+
+    data.gallery_images.forEach(img => {
+        imagesHTML += `
+            <img class="slide-img" src="${img}">
+        `;
+    });
+
+    slider.innerHTML = imagesHTML;
 
     initImageSlider();
 }
@@ -1223,8 +1230,8 @@ function setupImageInteractions() {
 
 document.addEventListener("DOMContentLoaded", function() {
     // Fallback selection trigger if first-variant class wasn't manually set
-    const colorItems = document.querySelectorAll('.color-item-wrapper');
-    if (colorItems.length > 0) {
+    const activeColor = document.querySelector('.color-item-wrapper.active');
+    if (activeColor) {
         const firstVariant = document.querySelector('.color-item-wrapper.first-variant') || colorItems[0];
         if(firstVariant && !firstVariant.classList.contains('active')) {
             firstVariant.click();
