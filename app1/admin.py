@@ -81,15 +81,29 @@ class ProductColorAdmin(admin.ModelAdmin):
 # --- 8. Main Product Admin ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    # 1. List view configuration
     list_display = ['name', 'brand', 'price', 'get_full_category', 'has_variants', 'is_active']
-    list_filter = ['category', 'sub_category', 'product_type', 'brand', 'is_active', 'has_variants']
-    search_fields = ['name', 'brand']
     
-    # यहाँ SimpleProductSizeStockInline को भी शामिल कर लिया है
+    # Filters se category aur sub_category hatayi taaki side-panel collapse na ho aur memory na bhare
+    list_filter = ['is_active', 'has_variants', 'brand']
+    
+    # Autocomplete lagayi taaki dropdowns load hone me heavy queries na chalein
+    autocomplete_fields = ['category', 'sub_category', 'product_type']
+    search_fields = ['name', 'brand']
+    list_per_page = 20  # Strict pagination taaki live server crash na ho
+    
+    # Inlines configuration
     inlines = [ProductImageInline, SimpleProductSizeStockInline, ProductColorInline]
 
+    # 2. Database optimization for get_full_category and list views
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        # select_related integration - isse sabhi related models single query me load ho jayenge
+        return queryset.select_related('category', 'sub_category', 'product_type')
+
+    # 3. Dynamic category path generation (No extra database hits now!)
     def get_full_category(self, obj):
-        path = f"{obj.category.name}"
+        path = f"{obj.category.name}" if obj.category else "No Category"
         if obj.sub_category:
             path += f" -> {obj.sub_category.name}"
         if obj.product_type:
@@ -97,6 +111,7 @@ class ProductAdmin(admin.ModelAdmin):
         return path
     get_full_category.short_description = 'Full Category Path'
 
+    # 4. Form structure layout
     fieldsets = (
         ("Basic Information", {
             'fields': (
@@ -108,7 +123,6 @@ class ProductAdmin(admin.ModelAdmin):
                 'is_active'
             )
         }),
-        # --- NAYA SECTION YAHAN ADD KIYA HAI ---
         ("Product Specifications (Admin Only)", {
             'description': "Yahan Product ki Fabric, Fit aur washing instructions bharein.",
             'fields': (
@@ -121,6 +135,7 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
 
+    # 5. Assets Injection
     class Media:
         js = ('admin/js/vendor/jquery/jquery.js', 'js/admin_custom.js',)
 
