@@ -30,25 +30,21 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # 1. Check karo kya actual list pehle se cache mein hai
-    products_list = cache.get('home_products_list')
+    # 1. Check karo kya processed aur ready products pehle se cache mein hain
+    display_products = cache.get('home_display_products')
     
-    if not products_list:
+    if not display_products:
         # 2. Database se bina random sort ke fast fetch karo (select_related fully optimized)
-        # order_by('-id') lagane se naye products sabse pehle dikhenge, database fast chalega
+        # order_by('-id') se naye products sabse pehle aayenge aur index fast chalega
         queryset = Product.objects.filter(is_active=True).select_related('category', 'sub_category', 'product_type').order_by('-id')
         
-        # 3. CRITICAL FIX: list() lagane se Django database se data pull karke actual RAM memory me save kar lega.
-        # Pehle sirf query save ho rahi thi, data nahi!
-        products_list = list(queryset)
+        # 3. List me convert karke data RAM me lock karo
+        display_products = list(queryset)
         
-        # 4. 15 minutes ke liye actual data python list ko cache me daal do
-        cache.set('home_products_list', products_list, 900)
+        # 4. Pure 15 minutes (900 seconds) ke liye is poori list ko cache me save kar do
+        # Ab na loop chalega, na random ka load padega. Seedha ready data return hoga!
+        cache.set('home_display_products', display_products, 900)
         
-    # 5. Python Level Randomization (Database par 0% load!)
-    # CHANGED: Ab yahan se 24 ki limit hata kar len(products_list) kar diya hai, taaki saare 60+ products show hon
-    display_products = random.sample(products_list, len(products_list)) 
-
     return render(request, 'home.html', {'products': display_products})
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
