@@ -75,6 +75,12 @@
         margin-top: 10px;
     }
 
+    /* Disabled state visual improvement */
+    .place-btn:disabled {
+        background: #ffc473 !important;
+        cursor: not-allowed !important;
+    }
+
     .cart-item { display: flex; gap: 12px; border-bottom: 1px solid #eee; padding: 12px 0; }
     .cart-item img { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; }
     .cart-item h4 { margin: 0 0 5px 0; font-size: 15px; }
@@ -188,16 +194,21 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// Razorpay submission block
+// ==========================================================
+// 🛡️ SECURE SUBMISSION BLOCK (FIXES DOUBLE-CLICK & OVERLAPS)
+// ==========================================================
 document.getElementById('checkout-form').onsubmit = function(e) {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressId = document.querySelector('input[name="address_id"]:checked').value;
+    const btn = document.getElementById('final-submit-btn');
+
+    // 🟢 Sabse pehle button ko disable karke text badlo taaki double submission ruk sake
+    btn.disabled = true;
+    btn.innerText = "Processing...";
 
     if (paymentMethod === 'ONLINE') {
+        // Online form ka default HTML submit rokenge kyunki pehle Razorpay chalega
         e.preventDefault();
-        const btn = document.getElementById('final-submit-btn');
-        btn.disabled = true;
-        btn.innerText = "Processing...";
 
         fetch("{% url 'create_razorpay_order' %}", {
             method: "POST",
@@ -224,6 +235,7 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 "name": "Vilio.shop",
                 "order_id": data.order_id,
                 "handler": function (response) {
+                    // Payment success ke baad verify endpoint par bhejenge
                     fetch("/verify-payment/", {
                         method: "POST",
                         headers: {
@@ -248,7 +260,13 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                         }
                     });
                 },
-                "modal": { "ondismiss": function() { btn.disabled = false; btn.innerText = "Place Order"; } },
+                "modal": { 
+                    "ondismiss": function() { 
+                        // Agar user gateway cancel karega toh button wapas active ho jayega
+                        btn.disabled = false; 
+                        btn.innerText = "Place Order"; 
+                    } 
+                },
                 "theme": { "color": "#f08804" }
             };
             var rzp = new Razorpay(options);
@@ -258,6 +276,10 @@ document.getElementById('checkout-form').onsubmit = function(e) {
             btn.disabled = false;
             btn.innerText = "Place Order";
         });
+    } else {
+        // 🟢 COD Case: Yahan form submit ko prevent nahi karna hai.
+        // Kyunki button upar hi disable ho chuka hai, toh naya click lock rahega aur form safely submit ho jayega.
+        console.log("Processing COD order submission...");
     }
 };
 </script>
