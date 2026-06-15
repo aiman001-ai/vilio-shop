@@ -30,27 +30,16 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # 1. Check karo kya actual list pehle se cache mein hai
-    products_list = cache.get('home_products_list')
+    # Check karo kya products pehle se cache mein hain
+    products = cache.get('home_products')
     
-    if not products_list:
-        # 2. Database se bina random sort ke fast fetch karo (select_related fully optimized)
-        # order_by('-id') lagane se naye products sabse pehle dikhenge, database fast chalega
-        queryset = Product.objects.filter(is_active=True).select_related('category', 'sub_category', 'product_type').order_by('-id')
+    if not products:
+        # Agar nahi hain, toh Supabase se nikalo (Optimized query)
+        products = Product.objects.filter(is_active=True).select_related('category', 'sub_category').order_by('?')
+        # Aur 15 minutes (900 seconds) ke liye cache mein save kar do
+        cache.set('home_products', products, 900)
         
-        # 3. CRITICAL FIX: list() lagane se Django database se data pull karke actual RAM memory me save kar lega.
-        # Pehle sirf query save ho rahi thi, data nahi!
-        products_list = list(queryset)
-        
-        # 4. 15 minutes ke liye actual data python list ko cache me daal do
-        cache.set('home_products_list', products_list, 900)
-        
-    # 5. Python Level Randomization (Database par 0% load!)
-    # Agar aapko har baar homepage par different items dikhane hain, toh cache se aayi list ko Python me shuffle karo
-    # Note: random.sample memory block nahi karta aur instantly results deta hai.
-    display_products = random.sample(products_list, min(len(products_list), 24)) # Ek baar me max 24 products hi dikhao frontend par
-
-    return render(request, 'home.html', {'products': display_products})
+    return render(request, 'home.html', {'products': products})
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
     if not request.user.is_authenticated:
@@ -510,17 +499,8 @@ def verify_otp(request):
 
 # ================= PRODUCT DETAIL =================
 def product_detail(request, id):
-    # 1. Jo product user ne click kiya hai - Saare relations pehle se prefetch kar liye
-    # select_related foreign keys ke liye aur prefetch_related reverse/m2m relations ke liye.
-    current_product = get_object_or_404(
-        Product.objects.select_related('category', 'sub_category', 'product_type')
-        .prefetch_related(
-            'images', 
-            'color_variants__sizes', 
-            'simple_size_stocks'  # Bina color wale (simple products) ke sizes ke liye safely prefetch
-        ), 
-        id=id
-    )
+    # 1. Jo product user ne click kiya hai
+    current_product = get_object_or_404(Product, id=id)
 
     # 2. Same Name aur Same Brand ke saare products nikalo
     sibling_products = Product.objects.filter(
@@ -529,7 +509,7 @@ def product_detail(request, id):
         is_active=True
     ).prefetch_related('color_variants__sizes')
 
-    # DEBUG (Aapka original debug code)
+    # DEBUG
     print("Current Product:", current_product.name)
     print("Has Variants:", current_product.has_variants)
     print("Sibling Count:", sibling_products.count())
@@ -542,7 +522,6 @@ def product_detail(request, id):
     variants_json_data = {}
 
     for prod in sibling_products:
-        # Aapka original .first() logic bina SQL hit ke memory se chalega
         color_var = prod.color_variants.first()
 
         if color_var:
@@ -559,14 +538,14 @@ def product_detail(request, id):
             variants_json_data[str(prod.id)] = {
                 'color_name': color_var.color_name,
                 'color_image': color_var.color_image.url if color_var.color_image else prod.image.url,
-                'price': float(prod.price),  # Float conversion safe rendering ke liye
-                'original_price': float(prod.original_price) if prod.original_price else float(prod.price),
-                'discount': getattr(prod, 'discount_percentage', 0),
+                'price': prod.price,
+                'original_price': prod.original_price,
+                'discount': prod.discount_percentage,
                 'sizes': size_list,
                 'total_stock': total_stock
             }
 
-    # 4. Suggestions Engine (Aapka exact original conditional data loader)
+    # 4. Suggestions
     all_suggestions = []
 
     if current_product.sub_category:
@@ -590,7 +569,7 @@ def product_detail(request, id):
 
         all_suggestions.extend(backup_products)
 
-    # 5. Variants data for template (Aapka original logic intact)
+    # 5. Variants data for template
     variants = []
     simple_sizes_list = []
 
@@ -604,7 +583,6 @@ def product_detail(request, id):
                     "stock": size.stock
                 })
     else:
-        # Agar has_variants nahi hai, toh ye query upar prefetch_related ki wajah se memory se chalegi
         simple_sizes_list = current_product.simple_size_stocks.all()
 
     return render(request, 'product_detail.html', {
