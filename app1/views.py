@@ -511,14 +511,13 @@ def verify_otp(request):
 
 # ================= PRODUCT DETAIL =================
 def product_detail(request, id):
-    # 1. Jo product user ne click kiya hai - Saare relations pehle se prefetch kar liye
-    # select_related foreign keys ke liye aur prefetch_related reverse/m2m relations ke liye.
+    # 1. Jo product user ne click kiya hai (Fully Optimized & Prefetched)
     current_product = get_object_or_404(
         Product.objects.select_related('category', 'sub_category', 'product_type')
         .prefetch_related(
             'images', 
             'color_variants__sizes', 
-            'simple_size_stocks'  # Bina color wale (simple products) ke sizes ke liye safely prefetch
+            'simple_size_stocks'
         ), 
         id=id
     )
@@ -530,21 +529,26 @@ def product_detail(request, id):
         is_active=True
     ).prefetch_related('color_variants__sizes')
 
-    # DEBUG (Aapka original debug code)
+    # FIX 1: DEBUG logic ko optimized kiya taaki loop ke andar DB hit na ho
     print("Current Product:", current_product.name)
     print("Has Variants:", current_product.has_variants)
-    print("Sibling Count:", sibling_products.count())
+    
+    # Sibling count ko evaluation se bachaane ke liye list count use kar sakte hain ya pre-evaluated cache
+    siblings_list = list(sibling_products)
+    print("Sibling Count:", len(siblings_list))
 
-    for p in sibling_products:
+    for p in siblings_list:
         print("Sibling:", p.id, p.name)
-        print("Colors:", p.color_variants.count())
+        # len() use karne se prefetch data use hota hai, database hit ZERO ho jata hai
+        print("Colors:", len(p.color_variants.all()))
 
     # 3. JavaScript ke liye JSON data
     variants_json_data = {}
 
-    for prod in sibling_products:
-        # Aapka original .first() logic bina SQL hit ke memory se chalega
-        color_var = prod.color_variants.first()
+    for prod in siblings_list:
+        # FIX 2: .first() hatakar memory cache se pehla element nikala (0 SQL Hits!)
+        colors_cache = prod.color_variants.all()
+        color_var = colors_cache[0] if colors_cache else None
 
         if color_var:
             size_list = []
@@ -560,22 +564,24 @@ def product_detail(request, id):
             variants_json_data[str(prod.id)] = {
                 'color_name': color_var.color_name,
                 'color_image': color_var.color_image.url if color_var.color_image else prod.image.url,
-                'price': float(prod.price),  # Float conversion safe rendering ke liye
+                'price': float(prod.price),  
                 'original_price': float(prod.original_price) if prod.original_price else float(prod.price),
                 'discount': getattr(prod, 'discount_percentage', 0),
                 'sizes': size_list,
                 'total_stock': total_stock
             }
 
-    # 4. Suggestions Engine (Aapka exact original conditional data loader)
+    # 4. Suggestions Engine (Optimized with only necessary fields to reduce database load)
     all_suggestions = []
+    suggestion_fields = ['id', 'name', 'brand', 'price', 'original_price', 'image']
 
     if current_product.sub_category:
         all_suggestions = list(
             Product.objects.filter(
                 sub_category=current_product.sub_category,
                 is_active=True
-            ).exclude(name=current_product.name)[:15]
+            ).exclude(name=current_product.name)
+            .only(*suggestion_fields)[:15]
         )
 
     if len(all_suggestions) < 4 and current_product.category:
@@ -586,12 +592,13 @@ def product_detail(request, id):
             Product.objects.filter(
                 category=current_product.category,
                 is_active=True
-            ).exclude(id__in=existing_ids)[:extra_count]
+            ).exclude(id__in=existing_ids)
+            .only(*suggestion_fields)[:extra_count]
         )
 
         all_suggestions.extend(backup_products)
 
-    # 5. Variants data for template (Aapka original logic intact)
+    # 5. Variants data for template (Purely runs from RAM memory)
     variants = []
     simple_sizes_list = []
 
@@ -605,12 +612,11 @@ def product_detail(request, id):
                     "stock": size.stock
                 })
     else:
-        # Agar has_variants nahi hai, toh ye query upar prefetch_related ki wajah se memory se chalegi
         simple_sizes_list = current_product.simple_size_stocks.all()
 
     return render(request, 'product_detail.html', {
         'product': current_product,
-        'sibling_products': sibling_products,
+        'sibling_products': siblings_list,
         'variants': variants,
         'simple_sizes_list': simple_sizes_list,
         'variants_json': variants_json_data,
