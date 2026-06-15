@@ -46,9 +46,8 @@ def home(request):
         cache.set('home_products_list', products_list, 900)
         
     # 5. Python Level Randomization (Database par 0% load!)
-    # Agar aapko har baar homepage par different items dikhane hain, toh cache se aayi list ko Python me shuffle karo
-    # Note: random.sample memory block nahi karta aur instantly results deta hai.
-    display_products = random.sample(products_list, min(len(products_list), 24)) # Ek baar me max 24 products hi dikhao frontend par
+    # CHANGED: Ab yahan se 24 ki limit hata kar len(products_list) kar diya hai, taaki saare 60+ products show hon
+    display_products = random.sample(products_list, len(products_list)) 
 
     return render(request, 'home.html', {'products': display_products})
 # ================= SHOP NOW (BUY NOW) =================
