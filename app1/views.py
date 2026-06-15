@@ -30,20 +30,26 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # 1. Check karo kya processed aur ready products pehle se cache mein hain
-    display_products = cache.get('home_display_products')
+    # 1. Pehle check karo kya processed products cache mein hain
+    display_products = cache.get('home_display_products_v2')
     
     if not display_products:
-        # 2. Database se bina random sort ke fast fetch karo (select_related fully optimized)
-        # order_by('-id') se naye products sabse pehle aayenge aur index fast chalega
-        queryset = Product.objects.filter(is_active=True).select_related('category', 'sub_category', 'product_type').order_by('-id')
+        # 2. ULTRA OPTIMIZATION: select_related aur prefetch_related ek sath lagaya
+        # Taaki template me jab product.image ya variant call ho, toh extra query na chale
+        queryset = Product.objects.filter(is_active=True).select_related(
+            'category', 
+            'sub_category', 
+            'product_type'
+        ).prefetch_related(
+            'images',          # Agar aap home page par multiple images/sliders dikha rahe hain
+            'color_variants'   # Agar home page par color dots/variants dikha rahe hain
+        ).order_by('-id')
         
-        # 3. List me convert karke data RAM me lock karo
+        # 3. Data ko RAM me lock kiya
         display_products = list(queryset)
         
-        # 4. Pure 15 minutes (900 seconds) ke liye is poori list ko cache me save kar do
-        # Ab na loop chalega, na random ka load padega. Seedha ready data return hoga!
-        cache.set('home_display_products', display_products, 900)
+        # 4. Cache me save kiya
+        cache.set('home_display_products_v2', display_products, 900)
         
     return render(request, 'home.html', {'products': display_products})
 # ================= SHOP NOW (BUY NOW) =================
