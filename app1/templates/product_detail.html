@@ -7,20 +7,24 @@
 <div class="product-container">
     <div class="gallery-section">
         <div class="main-img-card" id="imageSlider">
-            {% if product.image %}
-                <img class="slide-img" src="{{ product.image.url }}" alt="{{ product.name }}">
-            {% else %}
-                <img class="slide-img" src="{% static 'images/no-image.png' %}" alt="No Image">
-            {% endif %}
-            
-            {% for variant in variants %}
-                <img class="slide-img variant-slide" src="{{ variant.color_image.url }}" data-color="{{ variant.color_name }}">
-            {% endfor %}
 
-            {% for img in product.images.all %}
-                <img class="slide-img" src="{{ img.image.url }}">
-            {% endfor %}
-        </div>
+    {% if product.image %}
+        <img class="slide-img" src="{{ product.image.url }}" alt="{{ product.name }}">
+    {% endif %}
+
+    {% with first_variant=product.color_variants.first %}
+        {% if first_variant and first_variant.color_image and first_variant.color_image.url != product.image.url %}
+            <img class="slide-img"
+                 src="{{ first_variant.color_image.url }}"
+                 alt="{{ first_variant.color_name }}">
+        {% endif %}
+    {% endwith %}
+
+    {% for img in product.images.all %}
+        <img class="slide-img" src="{{ img.image.url }}">
+    {% endfor %}
+
+</div>
         
         <div class="slider-dots" id="sliderDots"></div>
         
@@ -312,8 +316,10 @@ body, html {
     overflow: hidden;
     margin: 0 auto; 
     scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;scroll-snap-type: x mandatory;
+    scroll-snap-type: x mandatory;
     scroll-snap-stop: always;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .main-img-card img { 
@@ -668,6 +674,7 @@ body, html {
         justify-content: flex-start !important;
         margin: 0 !important;      
         padding: 0 !important;     
+        
     }
     .main-img-card::-webkit-scrollbar { display: none; } 
     
@@ -675,7 +682,8 @@ body, html {
         width: 100vw !important; 
         height: 520px !important; 
         object-fit: cover !important; 
-        scroll-snap-align: start !important;
+        scroll-snap-align: start;
+    scroll-snap-stop: always;
         flex-shrink: 0 !important;
         margin: 0 !important;
         cursor: zoom-in;
@@ -993,6 +1001,30 @@ function initImageSlider() {
 
     // Touch setup for dynamic images
     setupImageInteractions();
+
+    let isScrolling;
+
+slider.addEventListener('scroll', () => {
+    clearTimeout(isScrolling);
+
+    isScrolling = setTimeout(() => {
+        const slideWidth = slider.clientWidth;
+
+        let index = Math.round(slider.scrollLeft / slideWidth);
+
+        // bounds protection
+        index = Math.max(
+            0,
+            Math.min(index, slides.length - 1)
+        );
+
+        slider.scrollTo({
+            left: index * slideWidth,
+            behavior: "auto"
+        });
+
+    }, 150);
+});
 }
 
 function goToSlide(index) {
@@ -1035,7 +1067,9 @@ if (slider && data.gallery_images) {
 
     let imagesHTML = '';
 
-    data.gallery_images.forEach(img => {
+    const uniqueImages = [...new Set(data.gallery_images)];
+
+    uniqueImages.forEach(img => {
         imagesHTML += `
             <img class="slide-img" src="${img}">
         `;
