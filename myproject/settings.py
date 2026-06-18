@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     # Development tool
+    'django.contrib.sitemaps',
     
 ]
 
