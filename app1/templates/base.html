@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Vilio{% endblock %}</title>
 
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playwrite+AT:ital,wght=1,100..400&display=swap" rel="stylesheet">
@@ -300,65 +302,7 @@
     color: #e52e2e;
 }
 
-/* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
-@media (max-width: 768px) {
-    body {
-        padding-top: 93px;
-    }
-
-    header {
-        padding: 0 15px;
-    }
-
-    .text-logo {
-        font-size: 18px; /* Mobile par logo thoda set kiya */
-    }
-
-    .header-actions {
-        gap: 14px;
-    }
-
-    /* Mobile Search Layout Fix */
-    .search-overlay-bar {
-        padding: 0 12px;
-        height: 55px;
-    }
-
-    .search-inner-container input {
-        font-size: 13px;
-        padding: 8px 15px 8px 38px; /* Tighter padding for mobile */
-    }
-
-    .search-inner-container i.search-icon-inside {
-        left: 12px;
-        font-size: 14px;
-    }
-
-    .close-search-btn {
-        font-size: 18px;
-        padding: 4px;
-    }
-
-    #category-header {
-        gap: 15px;
-    }
-
-    /* Mobile Dropdown Logic Fixes */
-    .nested-item:hover > .deep-menu {
-        display: none; 
-    }
-
-    .deep-menu.is-open {
-        display: block !important;
-        position: static;
-        width: 100%;
-        box-shadow: none;
-        border: none;
-        padding-left: 20px;
-        box-sizing: border-box;
-    }
-
-        /* ===== 5. CATEGORY HEADER ===== */
+/* ===== 5. CATEGORY HEADER ===== */
         #category-header {
             position: fixed;
             top: 48px;
@@ -555,6 +499,66 @@
             padding: 2px 0;
             line-height: 1.4;
         }
+
+/* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
+@media (max-width: 768px) {
+    body {
+        padding-top: 93px;
+    }
+
+    header {
+        padding: 0 15px;
+    }
+
+    .text-logo {
+        font-size: 18px; /* Mobile par logo thoda set kiya */
+    }
+
+    .header-actions {
+        gap: 14px;
+    }
+
+    /* Mobile Search Layout Fix */
+    .search-overlay-bar {
+        padding: 0 12px;
+        height: 55px;
+    }
+
+    .search-inner-container input {
+        font-size: 13px;
+        padding: 8px 15px 8px 38px; /* Tighter padding for mobile */
+    }
+
+    .search-inner-container i.search-icon-inside {
+        left: 12px;
+        font-size: 14px;
+    }
+
+    .close-search-btn {
+        font-size: 18px;
+        padding: 4px;
+    }
+
+    #category-header {
+        gap: 15px;
+    }
+
+    /* Mobile Dropdown Logic Fixes */
+    .nested-item:hover > .deep-menu {
+        display: none; 
+    }
+
+    .deep-menu.is-open {
+        display: block !important;
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding-left: 20px;
+        box-sizing: border-box;
+    }
+
+        
 
         /* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
         @media (max-width: 768px) {
