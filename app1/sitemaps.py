@@ -9,6 +9,9 @@ class StaticViewSitemap(Sitemap):
     priority = 0.8
     changefreq = 'weekly'
 
+    def get_domain(self, site=None):
+        return 'vilio.shop'
+
     def items(self):
         # Aapke urls.py ke name attributes ki list
         return [
