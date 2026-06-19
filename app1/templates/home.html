@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load cloudinary %}
 
 {% block title %}Home | Vilio{% endblock %}
 
@@ -22,6 +23,9 @@ body{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
     gap: 6px; 
+}
+.hidden-product{
+    display:none;
 }
 .product-item{
     width:100%;
@@ -300,11 +304,14 @@ body{
                         <span class="user-count"><!-- Filled via JS (Random range up to 5k+) --></span>
                     </div>
 
-                    <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}" 
-     class="active slider-img" loading="lazy">
+                    {% if product.image %}
+{% cloudinary product.image width=500 quality="auto" fetch_format="auto" crop="fill" class="active slider-img" loading="lazy" %}
+{% else %}
+<img src="{% static 'images/no-image.png' %}" class="active slider-img" loading="lazy">
+{% endif %}
 
                     {% for extra in product.images.all %}
-    <img src="{{ extra.image.url }}" class="slider-img" loading="lazy">
+    {% cloudinary extra.image width=500 quality="auto" fetch_format="auto" crop="fill" class="slider-img" loading="lazy" %}
 {% endfor %}
                 </div>
 

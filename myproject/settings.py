@@ -135,6 +135,9 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'drda3jvoc',
     'API_KEY': '743562395273835',
     'API_SECRET': '4u7e4Qc9AzyeeQDFwANbuF2F0bU',
+
+    'QUALITY': 'auto:good',
+    'FETCH_FORMAT': 'auto',
 }
 
 cloudinary.config(

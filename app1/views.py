@@ -842,22 +842,48 @@ def get_product_data(request, product_id):
                     "stock": s.stock
                 })
 
-        # Gallery Images
+        # Gallery Images arrays definition
         gallery_images = []
+        seen_images = set()
 
         # Current color image first
         if color_variant and color_variant.color_image:
-            gallery_images.append(color_variant.color_image.url)
+            img_url = color_variant.color_image.build_url(
+                quality="auto",
+                fetch_format="auto",
+                width=800,
+                crop="limit"
+            )
+            if img_url not in seen_images:
+                gallery_images.append(img_url)
+                seen_images.add(img_url)
 
         # Main product image
         if product.image:
-            gallery_images.append(product.image.url)
+            img_url = product.image.build_url(
+                quality="auto",
+                fetch_format="auto",
+                width=800,
+                crop="limit"
+            )
+            if img_url not in seen_images:
+                gallery_images.append(img_url)
+                seen_images.add(img_url)
 
         # Additional gallery images
         for img in product.images.all():
             if img.image:
-                gallery_images.append(img.image.url)
+                img_url = img.image.build_url(
+                    quality="auto",
+                    fetch_format="auto",
+                    width=800,
+                    crop="limit"
+                )
+                if img_url not in seen_images:
+                    gallery_images.append(img_url)
+                    seen_images.add(img_url)
 
+        # Sahi indentation par JsonResponse (Loops aur Conditions se bilkul baahar)
         return JsonResponse({
             "success": True,
             "product_id": product.id,
@@ -868,13 +894,22 @@ def get_product_data(request, product_id):
             "color_name": color_variant.color_name if color_variant else "",
 
             "image": (
-                color_variant.color_image.url
+                color_variant.color_image.build_url(
+                    quality="auto",
+                    fetch_format="auto",
+                    width=800,
+                    crop="limit"
+                )
                 if color_variant and color_variant.color_image
-                else product.image.url if product.image else ""
+                else product.image.build_url(
+                    quality="auto",
+                    fetch_format="auto",
+                    width=800,
+                    crop="limit"
+                ) if product.image else ""
             ),
 
             "gallery_images": gallery_images,
-
             "sizes": sizes,
         })
 
@@ -883,7 +918,7 @@ def get_product_data(request, product_id):
             "success": False,
             "message": "Product not found"
         }, status=404)
-
+        
 def category_default(request, category_slug):
     # 1. पहले चेक करें कि क्या यह कैटेगरी डेटाबेस में है? 
     # अगर नहीं होगी, तो यह 404 दिखा देगा, 500 (सर्वर क्रैश) नहीं।
