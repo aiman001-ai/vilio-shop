@@ -23,6 +23,10 @@ body{
     grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
     gap: 6px; 
 }
+.product-item{
+    width:100%;
+    min-width:0;
+}
 
 /* Card */
 .card{
@@ -269,8 +273,9 @@ body{
         </div>
     </div>
 
-    <div class="products">
+    <div class="products" id="productsGrid">
         {% for product in products %}
+<div class="product-item {% if forloop.counter > 6 %}hidden-product{% endif %}">
         <div class="card" onmouseenter="startSlider(this)" onmouseleave="stopSlider(this)">
             <a href="{% url 'product_detail' product.id %}" style="text-decoration:none; color:inherit; display:block;">
 
@@ -316,8 +321,9 @@ body{
                 </div>
 
             </a>
-        </div>
-        {% endfor %}
+</div>
+</div>
+{% endfor %}
     </div>
 </section>
 
@@ -376,5 +382,44 @@ document.addEventListener("DOMContentLoaded", function() {
         badge.querySelector('.user-count').innerText = finalCountText;
     });
 });
+
+
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const products = document.querySelectorAll('.product-item');
+
+    let visibleCount = 6;
+    const loadCount = 6;
+
+    function loadMoreProducts(){
+
+        const scrollPosition =
+            window.innerHeight + window.scrollY;
+
+        const pageHeight =
+            document.body.offsetHeight;
+
+        if(scrollPosition >= pageHeight - 800){
+
+            for(
+                let i = visibleCount;
+                i < visibleCount + loadCount &&
+                i < products.length;
+                i++
+            ){
+                products[i].classList.remove('hidden-product');
+            }
+
+            visibleCount += loadCount;
+        }
+    }
+
+    window.addEventListener('scroll', loadMoreProducts);
+
+});
+</script>
+
 {% endblock %}
