@@ -1186,7 +1186,9 @@ def create_razorpay_order(request):
         # 🔹 5. Duplicate pending order delete
         Order.objects.filter(
             user=request.user,
-            payment_status="Pending"
+            payment_method="ONLINE",
+            payment_status="Pending",
+            status="Pending"  
         ).delete()
 
         # 🔹 6. Razorpay Order create
