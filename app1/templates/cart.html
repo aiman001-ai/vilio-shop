@@ -2,63 +2,460 @@
 {% block title %}Your Cart{% endblock %}
 
 {% block content %}
-<div style="padding:40px; max-width:900px; margin:auto;">
-    <h1>🛒 Your Cart</h1>
+
+<style>
+  /* ===== CART PAGE STYLES ===== */
+  .cart-page {
+    background: #f5f5f0;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  .cart-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ===== PAGE HEADING ===== */
+  .cart-heading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .cart-heading h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f0f0f;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+
+  .cart-heading .item-count {
+    font-size: 14px;
+    color: #888;
+    font-weight: 400;
+  }
+
+  /* ===== CART ITEMS COLUMN ===== */
+  .cart-items-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ===== SINGLE CART CARD ===== */
+  .cart-card {
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid #ececec;
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+
+  .cart-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  }
+
+  /* Orange left accent strip */
+  .cart-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: #E8441A;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .cart-card-img {
+    width: 130px;
+    min-width: 130px;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    margin-left: 4px; /* offset for strip */
+  }
+
+  .cart-card-img-placeholder {
+    width: 130px;
+    min-width: 130px;
+    height: 160px;
+    background: #f0f0ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  .cart-card-body {
+    flex: 1;
+    padding: 18px 20px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .cart-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f0f0f;
+    margin: 0 0 6px;
+    line-height: 1.3;
+  }
+
+  .cart-card-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+
+  .cart-meta-tag {
+    font-size: 12px;
+    color: #666;
+    background: #f5f5f0;
+    border-radius: 20px;
+    padding: 3px 10px;
+    border: 1px solid #e5e5e0;
+  }
+
+  .cart-meta-tag strong {
+    color: #0f0f0f;
+  }
+
+  .cart-card-price {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 14px;
+  }
+
+  .cart-card-price span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f0f0f;
+  }
+
+  /* ===== QTY CONTROLS ===== */
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: fit-content;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fafafa;
+  }
+
+  .qty-btn {
+    background: none;
+    border: none;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    font-weight: 300;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+  }
+
+  .qty-btn:hover {
+    background: #E8441A;
+    color: #fff;
+  }
+
+  .qty-divider {
+    width: 1px;
+    height: 24px;
+    background: #e0e0e0;
+  }
+
+  .qty-number {
+    width: 40px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f0f0f;
+  }
+
+  /* ===== SUBTOTAL ROW ===== */
+  .cart-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .subtotal-label {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .subtotal-amount {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f0f0f;
+  }
+
+  /* ===== SUMMARY PANEL (RIGHT) ===== */
+  .cart-summary {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid #ececec;
+    position: sticky;
+    top: 24px;
+  }
+
+  .summary-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f0f0f;
+    margin: 0 0 22px;
+    letter-spacing: -0.2px;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #888;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .summary-row.total-row {
+    border-top: 1.5px solid #0f0f0f;
+    padding-top: 16px;
+    margin-top: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f0f0f;
+  }
+
+  .summary-row.total-row span:last-child {
+    color: #E8441A;
+  }
+
+  .summary-note {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+
+  .checkout-btn {
+    display: block;
+    width: 100%;
+    background: #E8441A;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .checkout-btn:hover {
+    background: #cc3a15;
+    transform: translateY(-1px);
+  }
+
+  .checkout-btn:active {
+    transform: translateY(0);
+  }
+
+  .continue-link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #888;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .continue-link:hover {
+    color: #E8441A;
+  }
+
+  /* ===== EMPTY CART ===== */
+  .empty-cart {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ececec;
+  }
+
+  .empty-cart-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+  }
+
+  .empty-cart h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #0f0f0f;
+    margin: 0 0 8px;
+  }
+
+  .empty-cart p {
+    color: #888;
+    margin: 0 0 28px;
+    font-size: 15px;
+  }
+
+  .shop-btn {
+    display: inline-block;
+    background: #E8441A;
+    color: #fff;
+    text-decoration: none;
+    padding: 13px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .shop-btn:hover {
+    background: #cc3a15;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .cart-wrapper {
+      grid-template-columns: 1fr;
+    }
+
+    .cart-summary {
+      position: static;
+    }
+
+    .cart-card-img,
+    .cart-card-img-placeholder {
+      width: 100px;
+      min-width: 100px;
+      height: 130px;
+    }
+  }
+</style>
+
+<div class="cart-page">
+  <div class="cart-wrapper">
 
     {% if cart_items %}
+
+      <!-- Heading -->
+      <div class="cart-heading">
+        <h1>Your Cart</h1>
+        <span class="item-count">{{ cart_items|length }} item{% if cart_items|length != 1 %}s{% endif %}</span>
+      </div>
+
+      <!-- LEFT: Cart Items -->
+      <div class="cart-items-col">
         {% for item in cart_items %}
-            <div id="cart-item-{{ item.item_id }}" style="display:flex; gap:20px; align-items:center; border:1px solid #ccc; padding:15px; margin:15px 0;">
-        
-        <div style="width: 120px;">
-            {% if item.display_image %}
-                <img src="{{ item.display_image }}" width="120" style="border-radius:6px; height: 150px; object-fit: cover;">
-            {% else %}
-                <div style="width:120px; height:150px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:6px;">No Image</div>
-            {% endif %}
-        </div>
+        <div id="cart-item-{{ item.item_id }}" class="cart-card">
 
-        <div style="flex:1;">
-    <h3>{{ item.product.name }}</h3>
-    
-    <p style="margin: 5px 0; color: #555;">
-        {% if item.color %} <span>Color: <strong>{{ item.color }}</strong></span> {% endif %}
-        {% if item.size %} <span style="margin-left: 15px;">Size: <strong>{{ item.size }}</strong></span> {% endif %}
-    </p>
-                    <p>Price: ₹{{ item.product.price }}</p>
+          {% if item.display_image %}
+            <img src="{{ item.display_image }}" class="cart-card-img" alt="{{ item.product.name }}">
+          {% else %}
+            <div class="cart-card-img-placeholder">No Image</div>
+          {% endif %}
 
-                    <div style="display:flex; gap:10px; align-items:center; margin:10px 0;">
-                        <button type="button" class="decrease-btn" data-id="{{ item.item_id }}" style="padding:6px 12px; cursor:pointer;">−</button>
-                        <strong id="qty-{{ item.item_id }}">{{ item.quantity }}</strong>
-                        <button type="button" class="increase-btn" data-id="{{ item.item_id }}" style="padding:6px 12px; cursor:pointer;">+</button>
-                    </div>
+          <div class="cart-card-body">
+            <div>
+              <h3 class="cart-card-name">{{ item.product.name }}</h3>
 
-                    <p><strong>Subtotal: <span id="subtotal-{{ item.item_id }}">₹{{ item.subtotal }}</span></strong></p>
-                </div>
+              <div class="cart-card-meta">
+                {% if item.color %}<span class="cart-meta-tag">Color: <strong>{{ item.color }}</strong></span>{% endif %}
+                {% if item.size %}<span class="cart-meta-tag">Size: <strong>{{ item.size }}</strong></span>{% endif %}
+              </div>
+
+              <p class="cart-card-price">₹<span>{{ item.product.price }}</span> per item</p>
+
+              <!-- Qty Controls -->
+              <div class="qty-controls">
+                <button type="button" class="qty-btn decrease-btn" data-id="{{ item.item_id }}">−</button>
+                <div class="qty-divider"></div>
+                <div class="qty-number" id="qty-{{ item.item_id }}">{{ item.quantity }}</div>
+                <div class="qty-divider"></div>
+                <button type="button" class="qty-btn increase-btn" data-id="{{ item.item_id }}">+</button>
+              </div>
             </div>
-        {% endfor %}
 
-        <h2 id="total-display" style="margin-top:30px;">Total: ₹{{ total }}</h2>
+            <div class="cart-card-footer">
+              <span class="subtotal-label">Subtotal</span>
+              <span class="subtotal-amount" id="subtotal-{{ item.item_id }}">₹{{ item.subtotal }}</span>
+            </div>
+          </div>
 
-        <div style="margin-top:30px; text-align:right;">
-            <a href="{% url 'checkout' %}"
-               style="
-                    padding:12px 24px;
-                    background:#28a745;
-                    color:#fff;
-                    text-decoration:none;
-                    border-radius:6px;
-                    font-size:16px;
-                    font-weight:bold;
-               ">
-                Proceed to Checkout →
-            </a>
         </div>
-        
+        {% endfor %}
+      </div>
+
+      <!-- RIGHT: Summary Panel -->
+      <div class="cart-summary">
+        <p class="summary-title">Order Summary</p>
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="total-display">₹{{ total }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span style="color:#27ae60; font-weight:600;">Calculated at checkout</span>
+        </div>
+
+        <div class="summary-row total-row">
+          <span>Total</span>
+          <span id="total-display-summary">₹{{ total }}</span>
+        </div>
+
+        <p class="summary-note">* COD orders include a ₹60 handling fee</p>
+
+        <a href="{% url 'checkout' %}" class="checkout-btn">Proceed to Checkout →</a>
+        <a href="{% url 'home' %}" class="continue-link">← Continue Shopping</a>
+      </div>
+
     {% else %}
-        <p>Your cart is empty 😔</p>
+      <!-- Empty State -->
+      <div class="empty-cart">
+        <div class="empty-cart-icon">🛒</div>
+        <h2>Your cart is empty</h2>
+        <p>Looks like you haven't added anything yet.</p>
+        <a href="{% url 'home' %}" class="shop-btn">Start Shopping</a>
+      </div>
     {% endif %}
 
-    <a href="{% url 'home' %}" style="display:inline-block; margin-top:20px;">⬅ Back to Shop</a>
+  </div>
 </div>
 
 <script>
@@ -91,50 +488,52 @@ function updateHeaderBadge() {
     }
 }
 
+function syncTotalDisplays(totalValue) {
+    const d1 = document.getElementById("total-display");
+    const d2 = document.getElementById("total-display-summary");
+    if (d1) d1.innerText = "₹" + totalValue;
+    if (d2) d2.innerText = "₹" + totalValue;
+}
+
 document.addEventListener("click", function(e) {
-    const btn = e.target;
-    if (btn.classList.contains('increase-btn') || btn.classList.contains('decrease-btn')) {
-        const itemId = btn.getAttribute('data-id');
-        const action = btn.classList.contains('increase-btn') ? 'increase' : 'decrease';
-        const csrftoken = getCookie('csrftoken');
+    const btn = e.target.closest('.increase-btn, .decrease-btn');
+    if (!btn) return;
 
-        fetch(`/cart/${action}/${itemId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Agar quantity 0 ho gayi toh row hata do
-                if (data.quantity === 0) {
-                    const itemRow = document.getElementById(`cart-item-${itemId}`);
-                    if (itemRow) itemRow.remove();
-                    if (document.querySelectorAll('[id^="cart-item-"]').length === 0) {
-                        location.reload();
-                    }
-                } else {
-                    // UI update karein
-                    const qtyElement = document.getElementById(`qty-${itemId}`);
-                    const subtotalElement = document.getElementById(`subtotal-${itemId}`);
-                    if (qtyElement) qtyElement.innerText = data.quantity;
-                    if (subtotalElement) subtotalElement.innerText = "₹" + data.subtotal;
+    const itemId = btn.getAttribute('data-id');
+    const action = btn.classList.contains('increase-btn') ? 'increase' : 'decrease';
+    const csrftoken = getCookie('csrftoken');
+
+    fetch(`/cart/${action}/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (data.quantity === 0) {
+                const itemRow = document.getElementById(`cart-item-${itemId}`);
+                if (itemRow) itemRow.remove();
+                if (document.querySelectorAll('[id^="cart-item-"]').length === 0) {
+                    location.reload();
                 }
-                
-                // Total update karein
-                const totalDisplay = document.getElementById("total-display");
-                if (totalDisplay) totalDisplay.innerText = "Total: ₹" + data.total;
-
-                updateHeaderBadge();
             } else {
-                // 🚨 YE HAI MAIN ADDITION: Stock khatam hone par alert dikhayega
-                alert(data.message); 
+                const qtyElement = document.getElementById(`qty-${itemId}`);
+                const subtotalElement = document.getElementById(`subtotal-${itemId}`);
+                if (qtyElement) qtyElement.innerText = data.quantity;
+                if (subtotalElement) subtotalElement.innerText = "₹" + data.subtotal;
             }
-        })
-        .catch(err => console.error("Error:", err));
-    }
+
+            syncTotalDisplays(data.total);
+            updateHeaderBadge();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(err => console.error("Error:", err));
 });
 </script>
+
 {% endblock %}
