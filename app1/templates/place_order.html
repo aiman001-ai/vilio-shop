@@ -114,14 +114,14 @@
 
             <h3>2. Payment Method</h3>
             <label class="payment-box">
-                <input type="radio" name="payment_method" value="COD" checked>
-                <span>Cash on Delivery</span>
-            </label>
+    <input type="radio" name="payment_method" value="COD">
+    <span>Cash on Delivery</span>
+</label>
 
-            <label class="payment-box">
-                <input type="radio" name="payment_method" value="ONLINE">
-                <span>Online Payment</span>
-            </label>
+<label class="payment-box">
+    <input type="radio" name="payment_method" value="ONLINE" checked>
+    <span>Online Payment</span>
+</label>
 
             <h3>3. Delivery Address</h3>
             {% for address in addresses %}
