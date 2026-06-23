@@ -280,6 +280,8 @@
     font-weight: 700;
     letter-spacing: 0.3px;
     transition: background 0.2s, transform 0.1s;
+    width: calc(100% - 10px);
+    margin-left: -9px;
   }
 
   .checkout-btn:hover {
@@ -351,9 +353,33 @@
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
+
+    .cart-page {
+    padding-top: 8px;
+    
+  }
+    
     .cart-wrapper {
       grid-template-columns: 1fr;
+      gap: 6px;
     }
+
+    .cart-items-col {
+    gap: 14px;
+  }
+
+  .cart-card-body {
+    padding: 12px;
+  }
+
+  .cart-card-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .summary-note {
+    margin-bottom: 4px;
+  }
 
     .cart-summary {
       position: static;

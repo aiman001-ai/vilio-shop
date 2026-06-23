@@ -28,6 +28,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '0.0.0.0',
     '192.168.1.63',
+    '192.168.1.12',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -37,6 +38,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
     'http://192.168.1.134:8000',
+    'http://192.168.1.12:8000',
 ]
 
 # Security Settings
