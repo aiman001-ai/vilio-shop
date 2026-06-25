@@ -9,7 +9,7 @@
     .container { 
         width: 95%; 
         max-width: 1200px; 
-        margin: 10px auto; 
+        margin: 90px auto 20px auto; 
         display: flex; 
         flex-direction: column; /* Mobile first: stack vertically */
         gap: 15px; 
@@ -32,18 +32,28 @@
         height: fit-content; 
         box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
         box-sizing: border-box;
+        margin-bottom:20px;
     }
 
     /* Desktop View: Side by Side */
     @media (min-width: 768px) {
-        .container { 
-            flex-direction: row; 
-            margin: 20px auto; 
-            gap: 20px;
-        }
-        .left { width: 65%; padding: 20px; }
-        .right { width: 35%; padding: 20px; position: sticky; top: 20px; }
+    .container {
+        flex-direction: column;
+        margin: 90px auto 20px auto;
+        gap: 15px;
     }
+
+    .left {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .right {
+        width: 100%;
+        padding: 15px;
+        position: static;
+    }
+}
 
     .price { color: #B12704; font-weight: bold; }
     .summary-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 15px; }
@@ -93,7 +103,7 @@
 {% block content %}
 <div class="container">
     <div class="left">
-        <h2>Checkout</h2>
+        
 
         <h3>1. Review Your Items</h3>
         {% for c in cart_items %}
@@ -111,6 +121,28 @@
             {% csrf_token %}
             
             <input type="hidden" name="razorpay_order_id" id="hidden_razorpay_order_id" value="{{ razorpay_order_id }}">
+
+            <div class="right">
+        <h3>Order Summary</h3>
+        <div class="summary-row">
+            <span>Items Total:</span>
+            <span>₹{{ total }}</span>
+        </div>
+
+        <div class="summary-row" id="shipping-row">
+            <span>Shipping Fee:</span>
+            <span id="shipping-amount" style="color: green; font-weight: bold;">FREE</span>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
+
+        <div class="summary-row" style="font-size: 18px; font-weight: bold;">
+            <span>Order Total:</span>
+            <span class="price" id="grand-total" data-base-total="{{ total }}">₹{{ total }}</span>
+        </div>
+        
+        <p style="font-size: 12px; color: #777;">By placing your order, you agree to Vilio's privacy notice and conditions of use.</p>
+    </div>
 
             <h3>2. Payment Method</h3>
             <label class="payment-box">
@@ -138,27 +170,7 @@
         </form>
     </div>
 
-    <div class="right">
-        <h3>Order Summary</h3>
-        <div class="summary-row">
-            <span>Items Total:</span>
-            <span>₹{{ total }}</span>
-        </div>
-
-        <div class="summary-row" id="shipping-row">
-            <span>Shipping/COD Fee:</span>
-            <span id="shipping-amount" style="color: green; font-weight: bold;">FREE</span>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
-
-        <div class="summary-row" style="font-size: 18px; font-weight: bold;">
-            <span>Order Total:</span>
-            <span class="price" id="grand-total" data-base-total="{{ total }}">₹{{ total }}</span>
-        </div>
-        
-        <p style="font-size: 12px; color: #777;">By placing your order, you agree to Vilio's privacy notice and conditions of use.</p>
-    </div>
+    
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -175,7 +187,7 @@ document.querySelectorAll('input[name="payment_method"]').forEach(function(radio
 
         if (this.value === 'COD') {
             const finalTotal = baseTotal + 60;
-            shippingAmountEl.innerText = "₹60";
+            shippingAmountEl.innerText = "+₹60";
             shippingAmountEl.style.color = "#B12704";
             grandTotalEl.innerText = "₹" + finalTotal.toFixed(2);
         } else {
@@ -260,13 +272,26 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                         }
                     });
                 },
-                "modal": { 
-                    "ondismiss": function() { 
-                        // Agar user gateway cancel karega toh button wapas active ho jayega
-                        btn.disabled = false; 
-                        btn.innerText = "Place Order"; 
-                    } 
-                },
+                "modal": {
+    "ondismiss": function() {
+        // 1. Server ko batao ki orphan order delete karo
+        fetch("/cancel-razorpay-order/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ razorpay_order_id: data.order_id })
+        })
+        .then(res => res.json())
+        .then(result => console.log("Order cleanup:", result.status))
+        .catch(err => console.error("Cleanup failed:", err));
+        
+        // 2. Button wapas active karo
+        btn.disabled = false;
+        btn.innerText = "Place Order";
+    }
+},
                 "theme": { "color": "#f08804" }
             };
             var rzp = new Razorpay(options);

@@ -784,8 +784,13 @@ def place_order(request):
 
 @login_required
 def my_orders(request):
-    # FIX: Order ke sath user data aur uske andar ke items + products ko ek baar me nikal liya
     orders = Order.objects.filter(user=request.user)\
+                          .exclude(
+                              # Orphan orders hide karo: ONLINE + dono Pending = payment kabhi hua hi nahi
+                              payment_method="ONLINE",
+                              payment_status="Pending",
+                              status="Pending"
+                          )\
                           .select_related('user')\
                           .prefetch_related('items__product')\
                           .order_by('-created_at')
@@ -944,6 +949,43 @@ def cancel_order(request, order_id):
         messages.error(request, "This order cannot be cancelled anymore.")
     
     return redirect('my_orders')
+
+
+# ===== ADD KARO: views.py mein kahi bhi (cancel_order ke paas rakho) =====
+
+@login_required
+@csrf_exempt
+def cancel_razorpay_order(request):
+    """
+    Jab user Razorpay modal dismiss kare (cancel/back button),
+    tab frontend ye endpoint call karta hai taaki orphan pending order delete ho sake.
+    """
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+            razorpay_order_id = body.get("razorpay_order_id")
+            
+            if razorpay_order_id:
+                # Sirf us specific order ko delete karo jo abhi bana tha
+                # Extra filters: sirf ONLINE + Pending + is user ka — galti se kuch aur na ude
+                deleted_count, _ = Order.objects.filter(
+                    user=request.user,
+                    razorpay_order_id=razorpay_order_id,
+                    payment_method="ONLINE",
+                    payment_status="Pending",
+                    status="Pending"
+                ).delete()
+                
+                print(f"Cleanup: {deleted_count} orphan order(s) deleted for user {request.user.id}")
+                return JsonResponse({"status": "cleaned"})
+            
+            return JsonResponse({"status": "no_order_id"})
+            
+        except Exception as e:
+            print(f"Cleanup error: {e}")
+            return JsonResponse({"status": "error"}, status=500)
+    
+    return JsonResponse({"error": "invalid method"}, status=400)
 
 
 
