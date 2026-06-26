@@ -9,20 +9,22 @@
         <div class="main-img-card" id="imageSlider">
 
     {% if product.image %}
-        <img class="slide-img" src="{{ product.image.url }}" alt="{{ product.name }}">
+    <!-- fetchpriority="high" पहली इमेज को तुरंत लोड करेगा -->
+    <img class="slide-img" src="{{ product.image.url }}" alt="{{ product.name }}" fetchpriority="high" loading="eager">
+{% endif %}
+
+{% with first_variant=product.color_variants.first %}
+    {% if first_variant and first_variant.color_image and first_variant.color_image.url != product.image.url %}
+        <img class="slide-img"
+             src="{{ first_variant.color_image.url }}"
+             alt="{{ first_variant.color_name }}" loading="lazy" decoding="async">
     {% endif %}
+{% endwith %}
 
-    {% with first_variant=product.color_variants.first %}
-        {% if first_variant and first_variant.color_image and first_variant.color_image.url != product.image.url %}
-            <img class="slide-img"
-                 src="{{ first_variant.color_image.url }}"
-                 alt="{{ first_variant.color_name }}">
-        {% endif %}
-    {% endwith %}
-
-    {% for img in product.images.all %}
-        <img class="slide-img" src="{{ img.image.url }}">
-    {% endfor %}
+{% for img in product.images.all %}
+    <!-- यहाँ lazy loading जोड़ी गई है -->
+    <img class="slide-img" src="{{ img.image.url }}" loading="lazy" decoding="async">
+{% endfor %}
 
 </div>
         
@@ -183,10 +185,11 @@
                 <a href="{% url 'product_detail' item.id %}">
                     <div class="suggest-img-box">
                         {% if item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.name }}">
-                        {% else %}
-                            <img src="{% static 'images/no-image.png' %}" alt="No Image">
-                        {% endif %}
+    <!-- यहाँ loading="lazy" लगाना सबसे ज़रूरी था -->
+    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" decoding="async">
+{% else %}
+    <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy">
+{% endif %}
                         <div class="product-ribbon" data-discount="{{ item.discount_percentage }}"></div>
                         <div class="rating-badge" data-product-id="{{ item.id }}">
                             <span class="rating-value">-.-</span>
@@ -1033,6 +1036,15 @@ function goToSlide(index) {
         const width = slider.clientWidth;
         slider.scrollTo({ left: width * index, behavior: 'smooth' });
     }
+    const thumbs = document.querySelectorAll(".thumbnail-row .thumb");
+
+    thumbs.forEach(t => t.classList.remove("active"));
+
+    if (thumbs[index]) {
+
+        thumbs[index].classList.add("active");
+
+    }
 }
 
 // --- AJX VARIANT PICKER CONTROLLER ---
@@ -1065,19 +1077,57 @@ function selectVariant(productId, element) {
 
 if (slider && data.gallery_images) {
 
-    let imagesHTML = '';
-
     const uniqueImages = [...new Set(data.gallery_images)];
 
+    // ---------- Slider ----------
+    slider.innerHTML = "";
+
     uniqueImages.forEach(img => {
-        imagesHTML += `
-            <img class="slide-img" src="${img}">
+        slider.innerHTML += `
+            <img class="slide-img"
+                 src="${img}"
+                 loading="lazy"
+                 decoding="async">
         `;
     });
 
-    slider.innerHTML = imagesHTML;
+    // ---------- Desktop Thumbnails ----------
+    const thumbRow = document.querySelector(".thumbnail-row");
+
+    if (thumbRow) {
+
+        thumbRow.innerHTML = "";
+
+        uniqueImages.forEach((img,index)=>{
+
+            thumbRow.innerHTML += `
+                <img
+                    class="thumb ${index===0 ? "active" : ""}"
+                    src="${img}"
+                    onclick="goToSlide(${index})">
+            `;
+
+        });
+
+    }
 
     initImageSlider();
+
+    // Reset slider to first image
+requestAnimationFrame(() => {
+    slider.scrollLeft = 0;
+
+    // First thumbnail active
+    document.querySelectorAll(".thumbnail-row .thumb").forEach((thumb, i) => {
+        thumb.classList.toggle("active", i === 0);
+    });
+
+    // First dot active
+    document.querySelectorAll("#sliderDots .dot").forEach((dot, i) => {
+        dot.classList.toggle("active", i === 0);
+    });
+});
+
 }
 
 const priceBox = document.querySelector('.price-box');

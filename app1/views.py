@@ -3,6 +3,8 @@ import json
 import hmac
 import hashlib
 import razorpay
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.core.cache import cache
 from urllib.parse import urlparse, parse_qs, unquote
 from django.core.mail import send_mail
@@ -527,20 +529,10 @@ def product_detail(request, id):
         name=current_product.name,
         brand=current_product.brand,
         is_active=True
-    ).prefetch_related('color_variants__sizes')
+    ).prefetch_related('color_variants__sizes', 'simple_size_stocks')
 
     # FIX 1: DEBUG logic ko optimized kiya taaki loop ke andar DB hit na ho
-    print("Current Product:", current_product.name)
-    print("Has Variants:", current_product.has_variants)
-    
-    # Sibling count ko evaluation se bachaane ke liye list count use kar sakte hain ya pre-evaluated cache
     siblings_list = list(sibling_products)
-    print("Sibling Count:", len(siblings_list))
-
-    for p in siblings_list:
-        print("Sibling:", p.id, p.name)
-        # len() use karne se prefetch data use hota hai, database hit ZERO ho jata hai
-        print("Colors:", len(p.color_variants.all()))
 
     # 3. JavaScript ke liye JSON data
     variants_json_data = {}
@@ -580,8 +572,7 @@ def product_detail(request, id):
             Product.objects.filter(
                 sub_category=current_product.sub_category,
                 is_active=True
-            ).exclude(name=current_product.name)
-            .only(*suggestion_fields)[:15]
+            ).exclude(name=current_product.name)[:15]
         )
 
     if len(all_suggestions) < 4 and current_product.category:
@@ -592,8 +583,7 @@ def product_detail(request, id):
             Product.objects.filter(
                 category=current_product.category,
                 is_active=True
-            ).exclude(id__in=existing_ids)
-            .only(*suggestion_fields)[:extra_count]
+            ).exclude(id__in=existing_ids)[:extra_count]
         )
 
         all_suggestions.extend(backup_products)
@@ -619,7 +609,7 @@ def product_detail(request, id):
         'sibling_products': siblings_list,
         'variants': variants,
         'simple_sizes_list': simple_sizes_list,
-        'variants_json': variants_json_data,
+        'variants_json': mark_safe(json.dumps(variants_json_data)),
         'suggestions': all_suggestions
     })
 # ================= CHECKOUT & ORDERS =================
@@ -779,7 +769,28 @@ def place_order(request):
     # Message me clear dikhega agar COD charge lga h
     msg_addon = " (including ₹60 COD Fee)" if payment_method == "COD" else ""
     messages.success(request, f"🎉 Order placed successfully via {payment_method}{msg_addon}!")
-    return redirect('my_orders')
+
+    return redirect(
+        'order_success',
+        order_id=order.id
+    )
+
+@login_required
+def order_success(request, order_id):
+
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        user=request.user
+    )
+
+    return render(
+        request,
+        "order_success.html",
+        {
+            "order": order
+        }
+    )
 
 
 @login_required
@@ -1384,7 +1395,13 @@ def verify_payment(request):
 
             messages.success(request, "Order placed successfully!")
 
-            return JsonResponse({"status": "Success"})
+            return JsonResponse({
+    "status": "Success",
+    "redirect_url": reverse(
+        "order_success",
+        args=[order.id]
+    )
+})
 
         except Exception as e:
             # Agar signature mismatch ya koi aur technical error aaye

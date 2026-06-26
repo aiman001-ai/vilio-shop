@@ -264,8 +264,8 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                     .then(res => res.json())
                     .then(data => {
                         if(data.status === "Success"){
-                            window.location.href = "/my-orders/";
-                        } else {
+    window.location.href = data.redirect_url;
+} else {
                             alert("Payment failed: " + data.message);
                             btn.disabled = false;
                             btn.innerText = "Place Order";

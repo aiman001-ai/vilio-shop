@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Order Successful{% endblock %}
+
+{% block content %}
+
+<div style="max-width:700px;margin:80px auto;text-align:center;">
+
+<h1>🎉 Order Placed Successfully</h1>
+
+<p>Thank you for shopping with Vilio.</p>
+
+<p>
+Order ID :
+<strong>#{{ order.id }}</strong>
+</p>
+
+<p>
+Total Paid :
+<strong>₹{{ order.total_amount }}</strong>
+</p>
+
+<a href="{% url 'my_orders' %}">
+<button>
+View My Orders
+</button>
+</a>
+
+</div>
+
+
+<script>
+gtag('event', 'conversion', {
+      'send_to': 'AW-18260900548/gYjaCKer88McEMT1vINE',
+      'value': {{ order.total_amount }},
+      'currency': 'INR',
+      'transaction_id': '{{ order.id }}'
+});
+</script>
+
+{% endblock %}
