@@ -4,6 +4,9 @@ from django.utils import timezone
 from django.utils.text import slugify
 from cloudinary.models import CloudinaryField # Required for Render
 from datetime import timedelta
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.cache import cache
 
 # --- 1. Categories ---
 
@@ -34,6 +37,12 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.PositiveIntegerField(default=0)
     original_price = models.PositiveIntegerField(default=0, help_text="MRP")
+
+    offer_end_time = models.DateTimeField(
+    null=True,
+    blank=True,
+    help_text="Offer end date and time"
+)
     
     # Cloudinary for Render support
     image = CloudinaryField('image', folder='villi-shop/products/', null=True, blank=True)
@@ -63,6 +72,22 @@ class Product(models.Model):
         if self.original_price and self.original_price > self.price:
             return int(((self.original_price - self.price) / self.original_price) * 100)
         return 0
+
+    @property
+    def offer_active(self):
+        if (
+            self.offer_end_time
+            and self.offer_end_time > timezone.now()
+            and self.original_price > self.price
+        ):
+            return True
+        return False
+
+    @property
+    def current_price(self):
+        if self.offer_active:
+            return self.price
+        return self.original_price
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -204,3 +229,8 @@ class Blog(models.Model):
 
     def __str__(self):
         return self.title
+
+
+@receiver(post_save, sender=Product)
+def clear_home_product_cache(sender, instance, **kwargs):
+    cache.delete('home_display_products_v2')        

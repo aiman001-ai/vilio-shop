@@ -21,7 +21,7 @@ body{
 /* Product Grid (Desktop) */
 .products{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
     gap: 6px; 
 }
 .hidden-product{
@@ -89,6 +89,30 @@ body{
     box-shadow: 2px 2px 5px rgba(0,0,0,0.15);
 }
 
+/* Purana absolute ribbon style hata diya */
+.offer-timer { display: none; }
+.offer-timer.expired { display: none; }
+
+/* Naya inline price row timer */
+.offer-timer-inline{
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0;          /* margin-top ya margin-left hata do */
+    padding: 2px 6px;
+    font-size: 10px;
+    background: #111;
+    color: #fff;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.offer-timer-inline .countdown {
+    color: #ff9f00;
+    font-family: monospace;
+    font-size: 9px;
+}
+
 /* --- GLASSMORPHISM REVIEWS BADGE (REAL GLASS LOOK) --- */
 .rating-badge {
     position: absolute;
@@ -147,6 +171,9 @@ body{
 
 /* Product Info */
 .product-info{
+    display: flex;
+    flex-direction: column;
+    min-height: 35px;   /* ya 70px */
     padding:12px;
 }
 
@@ -162,10 +189,11 @@ body{
 }
 
 .price-box{
-    display:flex;
-    gap:6px;
-    align-items:center;
-    flex-wrap:wrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;       /* Price aur timer ke beech ka gap */
+    flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .discount-price{
@@ -239,6 +267,8 @@ body{
         font-size: 8px;
         padding: 1px 2px;
     }
+
+    
     
     /* Mobile responsive for reviews */
     .rating-badge {
@@ -252,6 +282,7 @@ body{
     }
     .rating-badge .star-svg svg { width: 9px; height: 9px; }
     .rating-badge .user-count { font-size: 8px; }
+    
 }
 
 /* Small Mobile (480px) */
@@ -280,14 +311,19 @@ body{
     <div class="products" id="productsGrid">
         {% for product in products %}
 <div class="product-item {% if forloop.counter > 6 %}hidden-product{% endif %}">
-        <div class="card" onmouseenter="startSlider(this)" onmouseleave="stopSlider(this)">
+        <div class="card"
+     data-product="{{ product.id }}"
+     onmouseenter="startSlider(this)"
+     onmouseleave="stopSlider(this)">
             <a href="{% url 'product_detail' product.id %}" style="text-decoration:none; color:inherit; display:block;">
 
                 <div class="image-container">
                     <!-- Ribbon Code -->
-                    {% if product.original_price > product.price %}
+                    {% if product.offer_active %}
                         <div class="discount-ribbon">{{ product.discount_percentage }}% OFF</div>
                     {% endif %}
+
+                   
 
                     <!-- Transparent Glassmorphism Review Badge (Dynamic Ratings & Counts via JS) -->
                     <div class="rating-badge" data-product-id="{{ product.id }}">
@@ -318,13 +354,25 @@ body{
                 <div class="product-info">
                     <span class="prod-short-desc">{{ product.name }}</span>
 
-                    <div class="price-box">
-                        <span class="discount-price">Rs. {{ product.price }}</span>
+                <div class="price-box" id="price-box-{{ product.id }}">
+    <span class="discount-price" id="discount-price-{{ product.id }}">
+        ₹{{ product.current_price }}
+    </span>
 
-                        {% if product.original_price > product.price %}
-                            <span class="original-price">Rs. {{ product.original_price }}</span>
-                        {% endif %}
-                    </div>
+    {% if product.offer_active %}
+    <span class="original-price" id="original-price-{{ product.id }}">
+        ₹{{ product.original_price }}
+    </span>
+
+    <div class="offer-timer-inline"
+         id="offer-timer-{{ product.id }}"
+         data-end="{{ product.offer_end_time|date:'c' }}"
+         data-product-id="{{ product.id }}"
+         data-original-price="{{ product.original_price }}">
+        ⏳ <span class="countdown">--:--:--</span>
+    </div>
+    {% endif %}
+</div>
                 </div>
 
             </a>
@@ -427,6 +475,68 @@ document.addEventListener("DOMContentLoaded", function(){
     window.addEventListener('scroll', loadMoreProducts);
 
 });
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    function updateCountdown() {
+        document.querySelectorAll(".offer-timer-inline").forEach(function(timer) {
+            const endStr = timer.getAttribute("data-end");
+            if (!endStr) return;
+
+            const end = new Date(endStr).getTime();
+            if (isNaN(end)) return;
+
+            const now = new Date().getTime();
+            const diff = end - now;
+            const productId = timer.getAttribute("data-product-id");
+            const originalPrice = timer.getAttribute("data-original-price");
+
+            if (diff <= 0) {
+                // 1. Timer chhupao
+                timer.style.display = "none";
+
+                // 2. Offer price → original price
+                const discountEl = document.getElementById("discount-price-" + productId);
+                if (discountEl && originalPrice) {
+                    discountEl.innerText = "₹" + originalPrice;
+                }
+
+                // 3. Strikethrough original price chhupao
+                const originalEl = document.getElementById("original-price-" + productId);
+                if (originalEl) originalEl.style.display = "none";
+
+                // 4. Image pe discount ribbon bhi chhupao
+                const productItem = timer.closest('.product-item');
+                if (productItem) {
+                    const ribbon = productItem.querySelector('.discount-ribbon');
+                    if (ribbon) ribbon.style.display = 'none';
+                }
+
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hrs  = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+            let text = days > 0
+                ? days + "d " + hrs + "h"
+                : String(hrs).padStart(2,"0") + ":" + String(mins).padStart(2,"0") + ":" + String(secs).padStart(2,"0");
+
+            const countdownEl = timer.querySelector(".countdown");
+            if (countdownEl) countdownEl.innerText = text;
+        });
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+});
+
+   
 </script>
 
 {% endblock %}

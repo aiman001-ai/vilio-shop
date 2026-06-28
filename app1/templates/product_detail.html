@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load cloudinary %}
 
 {% block title %}{{ product.name }} | Vilio{% endblock %}
 
@@ -21,8 +22,7 @@
     {% endif %}
 {% endwith %}
 
-{% for img in product.images.all %}
-    <!-- यहाँ lazy loading जोड़ी गई है -->
+{% for img in clean_gallery %}
     <img class="slide-img" src="{{ img.image.url }}" loading="lazy" decoding="async">
 {% endfor %}
 
@@ -44,13 +44,34 @@
     <div class="details-section">
         <h1 class="prod-title">{{ product.name }}</h1>
         
-        <div class="price-box">
-            <span class="discount-price">₹{{ product.price }}</span>
-            {% if product.original_price > product.price %}
-                <span class="original-price">₹{{ product.original_price }}</span>
-                <span class="discount-percentage">({{ product.discount_percentage }}% OFF)</span>
-            {% endif %}
-        </div>
+        <div class="price-box" id="main-price-box">
+
+    <span class="discount-price" id="main-discount-price">
+        ₹{{ product.current_price }}
+    </span>
+
+    {% if product.offer_active %}
+
+        <span class="original-price" id="main-original-price">
+            ₹{{ product.original_price }}
+        </span>
+
+        <span class="discount-percentage" id="main-discount-pct">
+            ({{ product.discount_percentage }}% OFF)
+        </span>
+
+        <div class="offer-timer-detail"
+     id="offer-timer-detail"
+     data-end="{{ product.offer_end_time|date:'c' }}"
+     data-original-price="{{ product.original_price }}">
+    ⏳ Offer Ends In: <span class="offer-countdown">--:--:--</span>
+</div>
+
+    {% endif %}
+
+</div>
+
+
 
         {% if product.has_variants and variants %}
         <div class="selection-box">
@@ -185,10 +206,9 @@
                 <a href="{% url 'product_detail' item.id %}">
                     <div class="suggest-img-box">
                         {% if item.image %}
-    <!-- यहाँ loading="lazy" लगाना सबसे ज़रूरी था -->
-    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" decoding="async">
+    {% cloudinary item.image width=300 height=380 quality="auto" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" alt=item.name %}
 {% else %}
-    <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy">
+    <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" class="suggest-img">
 {% endif %}
                         <div class="product-ribbon" data-discount="{{ item.discount_percentage }}"></div>
                         <div class="rating-badge" data-product-id="{{ item.id }}">
@@ -281,6 +301,37 @@
 </div>
 
 <style>
+
+    .suggest-img-box .suggest-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+    /* ===== OFFER TIMER (Product Detail) ===== */
+.offer-timer-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #111;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 4px;
+    margin:0;
+margin-left:8px;
+    letter-spacing: 0.3px;
+}
+
+.offer-timer-detail .offer-countdown {
+    color: #ff9f00;
+    font-size: 13px;
+    font-family: monospace;
+} 
+
+
 /* --- Header Cleanup --- */
 #category-header { 
     display: none !important; 
@@ -957,6 +1008,38 @@ body, html {
     40%, 80% { transform: translateX(6px); }
 }
 
+.price-box{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        flex-wrap:nowrap !important;
+        gap:6px;
+    }
+
+    .discount-price{
+        font-size:18px !important;
+    }
+
+    .original-price{
+        font-size:13px !important;
+    }
+
+    .discount-percentage{
+        font-size:12px !important;
+    }
+
+    .offer-timer-detail{
+        margin-left:auto !important;
+        padding:3px 6px !important;
+        font-size:10px !important;
+        white-space:nowrap;
+    }
+
+    .offer-timer-detail .offer-countdown{
+        font-size:11px !important;
+    }
+
+
 
 </style>
 
@@ -971,9 +1054,46 @@ function initImageSlider() {
     const dotsContainer = document.getElementById('sliderDots');
     if (!slider || !dotsContainer) return;
 
+    // ===== STEP 1: DUPLICATE SLIDES HATAO =====
+    // URL ke base path se compare karo — Cloudinary version/transformation ignore karo
+    const seenKeys = new Set();
+    Array.from(slider.querySelectorAll('.slide-img')).forEach(function(img) {
+        const src = img.getAttribute('src') || '';
+        // /upload/v123456/folder/filename.jpg → folder/filename (key)
+        const match = src.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\?.*)?$/);
+        const key = match ? match[1].split('.')[0] : src; // Extension bhi hata do
+        if (seenKeys.has(key)) {
+            img.remove(); // Duplicate — hata do
+        } else {
+            seenKeys.add(key);
+        }
+    });
+
+    // ===== STEP 2: NON-VARIANT PRODUCTS KE THUMBNAILS REBUILD KARO =====
+    // Variant products ke thumbs HTML mein hain (selectVariantViaThumb ke saath)
+    // Non-variant products ke gallery thumbs JS se dynamically banao
+    const isVariantProduct = document.querySelectorAll('.color-item-wrapper').length > 0;
+    const thumbRow = document.querySelector('.thumbnail-row');
+
+    if (!isVariantProduct && thumbRow) {
+        const cleanSlides = slider.querySelectorAll('.slide-img');
+        if (cleanSlides.length > 1) {
+            // Ek se zyada images hain — sahi indices ke saath thumbs rebuild karo
+            thumbRow.innerHTML = '';
+            cleanSlides.forEach(function(slide, idx) {
+                const th = document.createElement('img');
+                th.className = 'thumb' + (idx === 0 ? ' active' : '');
+                th.src = slide.getAttribute('src') || slide.src;
+                th.setAttribute('onclick', 'goToSlide(' + idx + ')');
+                thumbRow.appendChild(th);
+            });
+        }
+    }
+
+    // ===== STEP 3: DOTS AUR SCROLL SETUP (clean slides ke baad) =====
     const slides = slider.querySelectorAll('.slide-img');
-    dotsContainer.innerHTML = ''; // Fresh render
-    
+    dotsContainer.innerHTML = '';
+
     slides.forEach((_, idx) => {
         const dot = document.createElement('div');
         dot.className = `dot ${idx === 0 ? 'active' : ''}`;
@@ -983,51 +1103,37 @@ function initImageSlider() {
 
     const dots = dotsContainer.querySelectorAll('.dot');
 
-    slider.removeEventListener('scroll', handleSliderScroll); // Removals prevent duplication
+    slider.removeEventListener('scroll', handleSliderScroll);
     slider.addEventListener('scroll', handleSliderScroll);
 
     function handleSliderScroll() {
         const width = slider.clientWidth;
         const activeIndex = Math.round(slider.scrollLeft / width);
-        
+
         dots.forEach((dot, idx) => {
-            if(idx === activeIndex) dot.classList.add('active');
+            if (idx === activeIndex) dot.classList.add('active');
             else dot.classList.remove('active');
         });
 
         const desktopThumbs = document.querySelectorAll('.thumbnail-row .thumb');
-        if(desktopThumbs[activeIndex]) {
+        if (desktopThumbs[activeIndex]) {
             desktopThumbs.forEach(t => t.classList.remove('active'));
             desktopThumbs[activeIndex].classList.add('active');
         }
     }
 
-    // Touch setup for dynamic images
     setupImageInteractions();
 
     let isScrolling;
-
-slider.addEventListener('scroll', () => {
-    clearTimeout(isScrolling);
-
-    isScrolling = setTimeout(() => {
-        const slideWidth = slider.clientWidth;
-
-        let index = Math.round(slider.scrollLeft / slideWidth);
-
-        // bounds protection
-        index = Math.max(
-            0,
-            Math.min(index, slides.length - 1)
-        );
-
-        slider.scrollTo({
-            left: index * slideWidth,
-            behavior: "auto"
-        });
-
-    }, 150);
-});
+    slider.addEventListener('scroll', () => {
+        clearTimeout(isScrolling);
+        isScrolling = setTimeout(() => {
+            const slideWidth = slider.clientWidth;
+            let index = Math.round(slider.scrollLeft / slideWidth);
+            index = Math.max(0, Math.min(index, slides.length - 1));
+            slider.scrollTo({ left: index * slideWidth, behavior: "auto" });
+        }, 150);
+    });
 }
 
 function goToSlide(index) {
@@ -1130,14 +1236,48 @@ requestAnimationFrame(() => {
 
 }
 
-const priceBox = document.querySelector('.price-box');
+// Price update
+const discountPriceEl = document.getElementById('main-discount-price');
+const originalPriceEl = document.getElementById('main-original-price');
+const discountPctEl   = document.getElementById('main-discount-pct');
+const timerEl         = document.getElementById('offer-timer-detail');
 
-if (priceBox) {
-    priceBox.innerHTML = `
-        <span class="discount-price">₹${data.price}</span>
-        <span class="original-price">₹${data.original_price}</span>
-        <span class="discount-percentage">(${data.discount}% OFF)</span>
-    `;
+// Check karo kya offer timer expire ho chuka hai
+if (data.offer_active) {
+
+    if (discountPriceEl)
+        discountPriceEl.innerText = "₹" + data.price;
+
+    if (originalPriceEl) {
+        originalPriceEl.style.display = "";
+        originalPriceEl.innerText = "₹" + data.original_price;
+    }
+
+    if (discountPctEl) {
+        discountPctEl.style.display = "";
+        discountPctEl.innerText = "(" + data.discount + "% OFF)";
+    }
+
+    if (timerEl) {
+        timerEl.style.display = "";
+        timerEl.dataset.end = data.offer_end_time;
+        timerEl.dataset.originalPrice = data.original_price;
+        startDetailTimer();
+    }
+
+} else {
+
+    if (discountPriceEl)
+        discountPriceEl.innerText = "₹" + data.price;
+
+    if (originalPriceEl)
+        originalPriceEl.style.display = "none";
+
+    if (discountPctEl)
+        discountPctEl.style.display = "none";
+
+    if (timerEl)
+        timerEl.style.display = "none";
 }
 
 if (sizeContainer && data.sizes) {
@@ -1314,12 +1454,11 @@ function setupImageInteractions() {
 
 document.addEventListener("DOMContentLoaded", function() {
     // Fallback selection trigger if first-variant class wasn't manually set
-    const activeColor = document.querySelector('.color-item-wrapper.active');
+    // Auto-click hataya — server-side clean_gallery se deduplication ho chuki hai
+// Ab page load pe extra API call ki zaroorat nahi
+// Color items sirf manual click pe hi API call karenge
 const colorItems = document.querySelectorAll('.color-item-wrapper');
-
-if (!activeColor && colorItems.length > 0) {
-    colorItems[0].click();
-}
+// (kuch nahi karna — template se images aur sizes already sahi hain)
 
     // Rating Badge Generator Logic
     document.querySelectorAll(".rating-badge").forEach(function(badge) {
@@ -1412,4 +1551,98 @@ function openImageViewer(clickedSrc){
     }, 100);
 }
 </script>
+
+<script>
+
+// ===== OFFER TIMER COUNTDOWN (Product Detail Page) =====
+function startDetailTimer() {
+    const timerEl = document.getElementById('offer-timer-detail');
+    if (!timerEl || timerEl.style.display === 'none') return;
+
+    const endTimeStr = timerEl.getAttribute('data-end');
+    if (!endTimeStr) return;
+
+    const endTime = new Date(endTimeStr).getTime();
+    if (isNaN(endTime)) return; // Invalid date guard
+
+    let intervalId = null;
+
+    // Agar page open hone tak offer expire ho chuka hai
+if (Date.now() >= endTime) {
+
+    timerEl.style.display = "none";
+
+    const discountPriceEl = document.getElementById("main-discount-price");
+    const originalPriceEl = document.getElementById("main-original-price");
+    const discountPctEl   = document.getElementById("main-discount-pct");
+
+    const originalPrice = timerEl.dataset.originalPrice;
+
+    if (discountPriceEl) {
+        discountPriceEl.textContent = "₹" + originalPrice;
+    }
+
+    if (originalPriceEl) {
+        originalPriceEl.remove();
+    }
+
+    if (discountPctEl) {
+        discountPctEl.remove();
+    }
+
+    return;
+}
+
+    function tick() {
+        const now  = new Date().getTime();
+        const diff = endTime - now;
+
+        if (diff <= 0) {
+    clearInterval(intervalId);
+
+    timerEl.style.display = "none";
+
+    const discountPriceEl = document.getElementById("main-discount-price");
+    const originalPriceEl = document.getElementById("main-original-price");
+    const discountPctEl = document.getElementById("main-discount-pct");
+
+    const originalPrice = timerEl.dataset.originalPrice;
+
+    // Main price = Original Price
+    if (discountPriceEl) {
+        discountPriceEl.textContent = "₹" + originalPrice;
+    }
+
+    // Remove old elements completely
+    if (originalPriceEl) {
+        originalPriceEl.remove();
+    }
+
+    if (discountPctEl) {
+        discountPctEl.remove();
+    }
+
+    return;
+}
+
+        const hrs  = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const countdownEl = timerEl.querySelector('.offer-countdown');
+        if (countdownEl) {
+            countdownEl.innerText =
+                String(hrs).padStart(2, '0') + ':' +
+                String(mins).padStart(2, '0') + ':' +
+                String(secs).padStart(2, '0');
+        }
+    }
+
+    tick(); // Pehle ek baar turant chalao
+    intervalId = setInterval(tick, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', startDetailTimer);
+</script>
+
 {% endblock %}

@@ -87,7 +87,17 @@ class ProductColorAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     # 1. List View Tweaks
-    list_display = ['name', 'brand', 'price', 'get_full_category', 'has_variants', 'is_active']
+    list_display = [
+    'name',
+    'brand',
+    'price',
+    'original_price',
+    'offer_end_time',
+    'offer_status',
+    'get_full_category',
+    'has_variants',
+    'is_active'
+]
     list_filter = ['is_active', 'has_variants', 'brand']
     
     # Autocomplete config mapping smoothly now
@@ -112,12 +122,20 @@ class ProductAdmin(admin.ModelAdmin):
         return path
     get_full_category.short_description = 'Full Category Path'
 
+    def offer_status(self, obj):
+        if obj.offer_active:
+            return "✅ Active"
+            return "❌ Expired"
+
+    offer_status.short_description = "Offer"
+    
+            
     # 4. Detailed Sections Fieldsets
     fieldsets = (
         ("Basic Information", {
             'fields': (
                 'brand', 'name', 'description', 
-                'price', 'original_price', 'image', 'size_chart',
+                'price', 'original_price', 'offer_end_time', 'image', 'size_chart',
                 'category', 
                 'sub_category', 
                 'product_type', 

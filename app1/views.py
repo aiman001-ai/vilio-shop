@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt  # Sahi import yahan hai
 from .models import SimpleProductSizeStock, ColorSizeStock
 from django.db.models import F, Sum, Q
+from django.utils import timezone
 
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
 from .models import (
@@ -32,27 +33,36 @@ from .models import (
 
 # ================= HOME =================
 def home(request):
-    # 1. Pehle check karo kya processed products cache mein hain
+
+    # Expired offers ka cache clear karo
+    latest_offer = Product.objects.filter(
+        offer_end_time__isnull=False
+    ).order_by("-offer_end_time").first()
+
+    cache_key = "home_offer_last"
+
+    if latest_offer:
+        last_cached = cache.get(cache_key)
+
+        if last_cached != latest_offer.offer_end_time:
+            cache.delete("home_display_products_v2")
+            cache.set(cache_key, latest_offer.offer_end_time)
+
     display_products = cache.get('home_display_products_v2')
-    
+
     if not display_products:
-        # 2. ULTRA OPTIMIZATION: select_related aur prefetch_related ek sath lagaya
-        # Taaki template me jab product.image ya variant call ho, toh extra query na chale
         queryset = Product.objects.filter(is_active=True).select_related(
-            'category', 
-            'sub_category', 
+            'category',
+            'sub_category',
             'product_type'
         ).prefetch_related(
-            'images',          # Agar aap home page par multiple images/sliders dikha rahe hain
-            'color_variants'   # Agar home page par color dots/variants dikha rahe hain
+            'images',
+            'color_variants'
         ).order_by('-id')
-        
-        # 3. Data ko RAM me lock kiya
+
         display_products = list(queryset)
-        
-        # 4. Cache me save kiya
         cache.set('home_display_products_v2', display_products, 900)
-        
+
     return render(request, 'home.html', {'products': display_products})
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
@@ -362,7 +372,7 @@ def cart(request):
         items_queryset = cart_obj.items.select_related('product').prefetch_related('product__color_variants').all()
         
         for item in items_queryset:
-            subtotal = item.product.price * item.quantity
+            subtotal = item.product.current_price * item.quantity
             total += subtotal
             
             display_img = "/static/images/no-image.png"
@@ -459,7 +469,7 @@ def calculate_total(user):
         return 0
     total_price = 0
     for item in cart.items.select_related('product').all():
-        total_price += (item.product.price * item.quantity)
+        total_price += (item.product.current_price * item.quantity)
     return total_price
 
 # ================= ADDRESS & OTP =================
@@ -554,14 +564,19 @@ def product_detail(request, id):
                 total_stock += s.stock
 
             variants_json_data[str(prod.id)] = {
-                'color_name': color_var.color_name,
-                'color_image': color_var.color_image.url if color_var.color_image else prod.image.url,
-                'price': float(prod.price),  
-                'original_price': float(prod.original_price) if prod.original_price else float(prod.price),
-                'discount': getattr(prod, 'discount_percentage', 0),
-                'sizes': size_list,
-                'total_stock': total_stock
-            }
+    "color_name": color_var.color_name,
+    "color_image": color_var.color_image.url if color_var.color_image else (
+        prod.image.url if prod.image else ""
+    ),
+
+    "price": float(prod.current_price),
+    "original_price": float(prod.original_price) if prod.original_price else float(prod.price),
+    "offer_active": prod.offer_active,
+    "discount": prod.discount_percentage,
+
+    "sizes": size_list,
+    "total_stock": total_stock,
+}
 
     # 4. Suggestions Engine (Optimized with only necessary fields to reduce database load)
     all_suggestions = []
@@ -589,12 +604,24 @@ def product_detail(request, id):
         all_suggestions.extend(backup_products)
 
     # 5. Variants data for template (Purely runs from RAM memory)
+
+    # ===== SIZE SORT ORDER =====
+    SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL',
+                  '28', '30', '32', '34', '36', '38', '40', '42', '44',
+                  'FREE SIZE', 'FREE']
+
+    def size_sort_key(size_name):
+        name = str(size_name).strip().upper()
+        return SIZE_ORDER.index(name) if name in SIZE_ORDER else 999
+
     variants = []
     simple_sizes_list = []
 
     if current_product.has_variants:
         for color in current_product.color_variants.all():
-            for size in color.sizes.all():
+            # Sizes ko sort karke loop karo
+            sorted_sizes = sorted(color.sizes.all(), key=lambda s: size_sort_key(s.size_name))
+            for size in sorted_sizes:
                 variants.append({
                     "color_name": color.color_name,
                     "color_image": color.color_image,
@@ -602,7 +629,31 @@ def product_detail(request, id):
                     "stock": size.stock
                 })
     else:
-        simple_sizes_list = current_product.simple_size_stocks.all()
+        # Simple sizes bhi sort karo
+        simple_sizes_list = sorted(
+            current_product.simple_size_stocks.all(),
+            key=lambda s: size_sort_key(s.size_name)
+        )
+
+    # ===== DEDUPLICATION: Gallery images se main image aur variant image hata do =====
+    seen_public_ids = set()
+
+    # Main image ka public_id track karo
+    if current_product.image:
+        seen_public_ids.add(str(current_product.image))
+
+    # Pehle variant ki image ka public_id track karo
+    first_variant_obj = current_product.color_variants.first() if current_product.has_variants else None
+    if first_variant_obj and first_variant_obj.color_image:
+        seen_public_ids.add(str(first_variant_obj.color_image))
+
+    # Gallery mein sirf wo images rakho jo pehle se nahi dikhaayi
+    clean_gallery = []
+    for img in current_product.images.all():
+        public_id = str(img.image)
+        if public_id not in seen_public_ids:
+            seen_public_ids.add(public_id)
+            clean_gallery.append(img)
 
     return render(request, 'product_detail.html', {
         'product': current_product,
@@ -610,7 +661,8 @@ def product_detail(request, id):
         'variants': variants,
         'simple_sizes_list': simple_sizes_list,
         'variants_json': mark_safe(json.dumps(variants_json_data)),
-        'suggestions': all_suggestions
+        'suggestions': all_suggestions,
+        'clean_gallery': clean_gallery,  # ← Naya deduplicated list
     })
 # ================= CHECKOUT & ORDERS =================
 @login_required
@@ -632,7 +684,7 @@ def checkout(request):
     
     # 2. Cart items calculation
     for item in cart_obj.items.select_related('product'):
-        subtotal = item.product.price * item.quantity
+        subtotal = item.product.current_price * item.quantity
         total += subtotal
         
         color_var = ProductColor.objects.filter(
@@ -720,7 +772,7 @@ def place_order(request):
             return redirect('cart')
 
     # --- 🟢 STEP 2: ORDER CREATE LOGIC ---
-    base_total = sum(item.product.price * item.quantity for item in cart_items)
+    base_total = sum(item.product.current_price * item.quantity for item in cart_items)
     
     # 🚀 FIX: Agar payment method COD hai toh ₹60 jod kar final total banega, online me free
     shipping_charges = 60 if payment_method == "COD" else 0
@@ -760,7 +812,7 @@ def place_order(request):
             color=item.color,
             size=item.size,
             quantity=item.quantity,
-            price=item.product.price
+            price=item.product.current_price
         )
     
     # 4. Cart Saaf Karein
@@ -846,13 +898,21 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
 def get_product_data(request, product_id):
     try:
         product = Product.objects.get(id=product_id)
-
         color_variant = product.color_variants.first()
-
         sizes = []
 
+        SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL',
+                      '28', '30', '32', '34', '36', '38', '40', '42', '44',
+                      'FREE SIZE', 'FREE']
+
+        def size_sort_key(size_name):
+            name = str(size_name).strip().upper()
+            return SIZE_ORDER.index(name) if name in SIZE_ORDER else 999
+
         if color_variant:
-            for s in color_variant.sizes.all():
+            # Sort karke sizes add karo
+            sorted_sizes = sorted(color_variant.sizes.all(), key=lambda s: size_sort_key(s.size_name))
+            for s in sorted_sizes:
                 sizes.append({
                     "size_name": s.size_name,
                     "stock": s.stock
@@ -878,8 +938,9 @@ def get_product_data(request, product_id):
             "success": True,
             "product_id": product.id,
             "name": product.name,
-            "price": product.price,
+            "price": product.current_price,
             "original_price": product.original_price,
+            "offer_active": product.offer_active,
             "discount": product.discount_percentage,
             "color_name": color_variant.color_name if color_variant else "",
 
@@ -1233,7 +1294,7 @@ def create_razorpay_order(request):
         # --- END OF STOCK VALIDATION ---
 
         # 🔹 4. Total calculate
-        total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
+        total_amount = sum(item.product.current_price * item.quantity for item in cart.items.all())
         amount_in_paise = int(total_amount * 100)
 
         # 🔹 5. Duplicate pending order delete
@@ -1275,7 +1336,7 @@ def create_razorpay_order(request):
                 color=item.color,
                 size=item.size,
                 quantity=item.quantity,
-                price=item.product.price
+                price=item.product.current_price
             )
 
         return JsonResponse({
