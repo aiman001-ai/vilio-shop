@@ -209,6 +209,7 @@ class Address(models.Model):
     city = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
     pincode = models.CharField(max_length=10)
+    created_at  = models.DateTimeField(auto_now_add=True, null=True) 
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}, {self.mobile}"
@@ -234,3 +235,20 @@ class Blog(models.Model):
 @receiver(post_save, sender=Product)
 def clear_home_product_cache(sender, instance, **kwargs):
     cache.delete('home_display_products_v2')        
+
+# ===== LEAD CAPTURE MODEL =====
+class Lead(models.Model):
+    name        = models.CharField(max_length=100)
+    email       = models.EmailField(blank=True, null=True)
+    phone       = models.CharField(max_length=20, blank=True, null=True)
+    message     = models.TextField(blank=True, null=True)
+    source      = models.CharField(max_length=50, default='Contact Form')
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Lead'
+        verbose_name_plural = 'Leads'
+
+    def __str__(self):
+        return f"{self.name} — {self.email or self.phone or 'No contact'} ({self.created_at.strftime('%d %b %Y')})"    

@@ -4,10 +4,12 @@ from django.http import HttpResponse
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html  # <-- यह इम्पोर्ट करना ज़रूरी है
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Product, ProductImage, Category, SubCategory, ProductType,
     ProductColor, ColorSizeStock, SimpleProductSizeStock,
-    Cart, CartItem, Order, OrderItem, Address, Profile
+    Cart, CartItem, Order, OrderItem, Address, Profile, Lead
 )
 
 # --- Autocomplete Mandatory Registration Engine ---
@@ -265,5 +267,81 @@ class CartItemAdmin(admin.ModelAdmin):
 # --- Remaining Standard Model Registrations ---
 # (Note: Category registration removed from here and decorated at the top class level successfully)
 admin.site.register(Cart)
-admin.site.register(Address)
 admin.site.register(Profile)
+
+# ===== ADDRESS ADMIN (Improved) =====
+# Pehle plain registration hatao
+admin.site.unregister(Address) if Address in [m.model for m in admin.site._registry.values()] else None
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display  = ('user_name', 'user_email', 'full_name', 'mobile', 'city', 'state', 'pincode', 'submitted_at')
+    list_filter   = ('state', 'city')
+    search_fields = ('user__username', 'user__email', 'first_name', 'last_name', 'mobile', 'city')
+    ordering      = ('-id',)
+
+    def user_name(self, obj):
+        return obj.user.username
+    user_name.short_description = 'Username'
+
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'Email'
+
+    def full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+    full_name.short_description = 'Full Name'
+
+    def submitted_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime('%d %b %Y %H:%M')
+        return '—'
+    submitted_at.short_description = 'Submitted At'
+
+
+# ===== USER ADMIN (Google Login + Normal dono dikhaye) =====
+# Pehle Django ka default User admin unregister karo
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
+
+@admin.register(User)
+class CustomUserAdmin(BaseUserAdmin):
+    list_display  = ('username', 'email', 'full_name', 'login_type', 
+                     'has_address', 'has_order', 'date_joined', 'last_login')
+    list_filter   = ('is_active', 'date_joined')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    ordering      = ('-date_joined',)
+
+    def full_name(self, obj):
+        name = f"{obj.first_name} {obj.last_name}".strip()
+        return name if name else '—'
+    full_name.short_description = 'Name'
+
+    def login_type(self, obj):
+        # Google se login kiya toh socialaccount hoga
+        try:
+            from allauth.socialaccount.models import SocialAccount
+            if SocialAccount.objects.filter(user=obj, provider='google').exists():
+                return '🟢 Google'
+        except ImportError:
+            pass
+        return '🔵 Email'
+    login_type.short_description = 'Login Type'
+
+    def has_address(self, obj):
+        return '✅' if Address.objects.filter(user=obj).exists() else '❌'
+    has_address.short_description = 'Address?'
+
+    def has_order(self, obj):
+        return '✅' if Order.objects.filter(user=obj).exists() else '❌'
+    has_order.short_description = 'Order?'
+
+@admin.register(Lead)
+class LeadAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'email', 'phone', 'source', 'created_at')
+    list_filter   = ('source', 'created_at')
+    search_fields = ('name', 'email', 'phone')
+    readonly_fields = ('created_at',)
+    ordering      = ('-created_at',)    

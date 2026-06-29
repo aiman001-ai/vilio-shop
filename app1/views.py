@@ -28,7 +28,7 @@ from django.utils import timezone
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
 from .models import (
     Address, Profile, Product, Cart, CartItem, 
-    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog
+    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead
 )
 
 # ================= HOME =================
@@ -1119,11 +1119,25 @@ from django.contrib import messages
 
 def contact_us(request):
     if request.method == "POST":
-        # यहाँ आप डेटाबेस में सेव करने या ईमेल भेजने का कोड लिख सकते हैं
-        name = request.POST.get('name')
+        name    = request.POST.get('name', '').strip()
+        email   = request.POST.get('email', '').strip()
+        phone   = request.POST.get('phone', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        # Database mein save karo
+        if name:
+            Lead.objects.create(
+                name    = name,
+                email   = email   or None,
+                phone   = phone   or None,
+                message = message or None,
+                source  = 'Contact Form'
+            )
+
         messages.success(request, f"Thank you {name}, your message has been sent!")
         return redirect('contact_us')
-    return render(request, 'contact.html')    
+
+    return render(request, 'contact.html')  
 
     # app1/views.py
 def faq_page(request):
