@@ -86,8 +86,20 @@ class Product(models.Model):
     @property
     def current_price(self):
         if self.offer_active:
+            return self.price      # Offer mein: discounted price
+        return self.original_price 
+
+    @property
+    def google_price(self):
+        """Google Merchant ke liye hamesha consistent price"""
+        return self.original_price  # Regular selling price
+
+    @property
+    def google_sale_price(self):
+        """Offer active ho toh sale price, warna None"""
+        if self.offer_active:
             return self.price
-        return self.original_price
+        return None
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

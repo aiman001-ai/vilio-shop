@@ -63,7 +63,8 @@
         <div class="offer-timer-detail"
      id="offer-timer-detail"
      data-end="{{ product.offer_end_time|date:'c' }}"
-     data-original-price="{{ product.original_price }}">
+     data-original-price="{{ product.original_price }}"
+     aria-hidden="true">
     ⏳ Offer Ends In: <span class="offer-countdown">--:--:--</span>
 </div>
 
@@ -1643,6 +1644,38 @@ if (Date.now() >= endTime) {
 }
 
 document.addEventListener('DOMContentLoaded', startDetailTimer);
+</script>
+
+<!-- ===== GOOGLE STRUCTURED DATA ===== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "description": "{{ product.description|default:product.name }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.brand }}"
+  },
+  "image": "{% if product.image %}{{ product.image.url }}{% endif %}",
+  "sku": "{{ product.id }}",
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.build_absolute_uri }}",
+    "priceCurrency": "INR",
+    {% if product.offer_active %}
+    "price": "{{ product.price }}",
+    "priceValidUntil": "{{ product.offer_end_time|date:'Y-m-d' }}",
+    {% else %}
+    "price": "{{ product.original_price }}",
+    {% endif %}
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "Vilio"
+    }
+  }
+}
 </script>
 
 {% endblock %}

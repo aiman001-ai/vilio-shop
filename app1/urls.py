@@ -7,7 +7,7 @@ from .views import (
     post_login_redirect, increase_quantity, decrease_quantity,
     checkout, place_order, my_orders, search, 
     category_default, category_products, # Category views
-    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order, razorpay_webhook, get_product_data, cancel_razorpay_order, order_success
+    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order, razorpay_webhook, get_product_data, cancel_razorpay_order, order_success, product_feed_json
 )
 
 sitemaps = {
@@ -109,5 +109,7 @@ path('razorpay/webhook/', razorpay_webhook, name='razorpay_webhook'),
 path('cancel-razorpay-order/', cancel_razorpay_order, name='cancel_razorpay_order'),
 
 path('order-success/<int:order_id>/', order_success, name='order_success'),
+
+path('product-feed/', product_feed_json, name='product_feed'),
 ]
 
