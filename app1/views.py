@@ -1510,33 +1510,61 @@ def initiate_payment(request):
 
 def product_feed_json(request):
     """
-    Google Merchant Center custom feed ke liye
+    Google Merchant Center ke liye TSV (Tab-Separated) feed
     URL: /product-feed/
+    Google ye format expect karta hai — JSON nahi
     """
-    products = Product.objects.filter(is_active=True).prefetch_related('color_variants')
-    
-    feed = []
+    from django.http import HttpResponse
+
+    products = Product.objects.filter(is_active=True).select_related(
+        'category', 'sub_category'
+    )
+
+    # Google Merchant required headers — exact spelling zaroori hai
+    headers = [
+        "id", "title", "description", "link", "image_link",
+        "availability", "price", "sale_price", "sale_price_effective_date",
+        "brand", "condition", "google_product_category"
+    ]
+
+    lines = ["\t".join(headers)]
+
     for p in products:
-        item = {
-            "id": str(p.id),
-            "title": p.name,
-            "description": p.description or p.name,
-            "brand": p.brand,
-            "price": f"{p.original_price} INR",  # Regular price hamesha
-            "availability": "in stock",
-            "condition": "new",
-            "image_link": p.image.url if p.image else "",
-            "link": f"https://vilio.shop/product/{p.id}/",
-        }
-        
-        # Offer active hai toh sale price bhi bhejo
+        image_url = p.image.url if p.image else ""
+        product_link = request.build_absolute_uri(f"/product/{p.id}/")
+
+        # Description se tabs/newlines hatao (TSV format break na ho)
+        clean_title = (p.name or "").replace("\t", " ").replace("\n", " ")
+        clean_desc = (p.description or p.name or "").replace("\t", " ").replace("\n", " ")
+
+        row = [
+            str(p.id),
+            clean_title,
+            clean_desc,
+            product_link,
+            image_url,
+            "in stock",
+            f"{p.original_price} INR",   # Regular price hamesha consistent
+        ]
+
+        # Sale price sirf offer active hone par
         if p.offer_active:
-            item["sale_price"] = f"{p.price} INR"
-            item["sale_price_effective_date"] = (
-                f"2024-01-01T00:00:00+05:30/"
-                f"{p.offer_end_time.strftime('%Y-%m-%dT%H:%M:%S+05:30')}"
-            )
-        
-        feed.append(item)
-    
-    return JsonResponse({"products": feed})    
+            row.append(f"{p.price} INR")
+            start_date = timezone.now().strftime('%Y-%m-%d')
+            end_date = p.offer_end_time.strftime('%Y-%m-%dT%H:%M:%S+05:30')
+            row.append(f"{start_date}T00:00:00+05:30/{end_date}")
+        else:
+            row.append("")  # sale_price khaali
+            row.append("")  # sale_price_effective_date khaali
+
+        row.append(p.brand or "Vilio")
+        row.append("new")
+        row.append("")  # google_product_category khaali rakho abhi
+
+        lines.append("\t".join(row))
+
+    feed_content = "\n".join(lines)
+
+    response = HttpResponse(feed_content, content_type="text/tab-separated-values; charset=utf-8")
+    response['Content-Disposition'] = 'inline; filename="product_feed.txt"'
+    return response
