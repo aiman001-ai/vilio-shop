@@ -2,6 +2,13 @@
 {% load static %}
 {% load cloudinary %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
 {% block title %}{{ product.name }} | Vilio{% endblock %}
 
 {% block content %}
@@ -10,20 +17,17 @@
         <div class="main-img-card" id="imageSlider">
 
     {% if product.image %}
-    <!-- fetchpriority="high" पहली इमेज को तुरंत लोड करेगा -->
-    <img class="slide-img" src="{{ product.image.url }}" alt="{{ product.name }}" fetchpriority="high" loading="eager">
+    {% cloudinary product.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" alt=product.name %}
 {% endif %}
 
 {% with first_variant=product.color_variants.first %}
     {% if first_variant and first_variant.color_image and first_variant.color_image.url != product.image.url %}
-        <img class="slide-img"
-             src="{{ first_variant.color_image.url }}"
-             alt="{{ first_variant.color_name }}" loading="lazy" decoding="async">
+        {% cloudinary first_variant.color_image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=first_variant.color_name %}
     {% endif %}
 {% endwith %}
 
 {% for img in clean_gallery %}
-    <img class="slide-img" src="{{ img.image.url }}" loading="lazy" decoding="async">
+    {% cloudinary img.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
 {% endfor %}
 
 </div>
@@ -31,14 +35,14 @@
         <div class="slider-dots" id="sliderDots"></div>
         
         <div class="thumbnail-row">
-            {% if product.image %}
-                <img class="thumb active" src="{{ product.image.url }}" onclick="goToSlide(0)">
-            {% endif %}
-            
-            {% for variant in variants %}
-                <img class="thumb" src="{{ variant.color_image.url }}" onclick="selectVariantViaThumb('{{ variant.color_image.url }}', '{{ variant.color_name }}', '{{ variant.size_name }}', {{ variant.stock }}, this)">
-            {% endfor %}
-        </div>
+    {% if product.image %}
+        {% cloudinary product.image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" %}
+    {% endif %}
+    
+    {% for variant in variants %}
+        {% cloudinary variant.color_image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" %}
+    {% endfor %}
+</div>
     </div>
 
     <div class="details-section">
@@ -366,7 +370,7 @@ body, html {
     background: #fff; 
     width: 100%;
     max-width: 580px; 
-    height: 640px;    
+    height: 680px;    
     display: flex; 
     overflow: hidden;
     margin: 0 auto; 
@@ -504,7 +508,16 @@ body, html {
     display: none; /* Cross line hatane ke liye isko none rakhein, Snitch styles me clear texts zyada visual lagte hain */
 }
 
-.description { font-size: 14px; color: #535766; line-height: 1.6; margin-top: 25px; border-top: 1px solid #f5f5f6; padding-top: 15px; }
+.description {
+    font-size: 14.5px;
+    color: #4a4d57;
+    line-height: 1.75;
+    margin-top: 25px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 18px;
+    font-weight: 400;
+    letter-spacing: 0.1px;
+}
 
 /* Desktop Buttons */
 .action-btns { display: flex; gap: 15px; margin-top: 30px; }
@@ -712,7 +725,7 @@ body, html {
         position: relative; 
         top: 0; 
         margin-top: 48px !important;   
-        padding-top: 0 !important;  
+        padding-top: 0 !important;  mg
         margin-bottom: 15px; 
         width: 100% !important;
     }
@@ -1010,12 +1023,12 @@ body, html {
 }
 
 .price-box{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        flex-wrap:nowrap !important;
-        gap:6px;
-    }
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:8px;
+    flex-wrap:wrap;
+}
 
     .discount-price{
         font-size:18px !important;
@@ -1030,7 +1043,7 @@ body, html {
     }
 
     .offer-timer-detail{
-        margin-left:auto !important;
+        margin-left:8px !important;
         padding:3px 6px !important;
         font-size:10px !important;
         white-space:nowrap;
@@ -1428,28 +1441,35 @@ function setupImageInteractions() {
     let startX = 0;
     let startY = 0;
 
-    document.querySelectorAll('.slide-img').forEach(img => {
-        img.style.cursor = "zoom-in";
-        img.replaceWith(img.cloneNode(true)); // Flushes old bounds
+    // cloneNode hataya — expensive DOM rebuild avoid karo
+    // Event delegation use karo — sirf ek listener slider pe
+    const slider = document.getElementById('imageSlider');
+    if (!slider) return;
+
+    // Cursor set karo CSS se (JS se nahi)
+    slider.style.cursor = 'zoom-in';
+
+    // Purane listeners hata ke naye lagao (slider pe, har image pe nahi)
+    const newSlider = slider.cloneNode(false); // Sirf element clone, children nahi
+    // Nahi — bas listeners directly lagao with { once: false } aur guard
+
+    slider.addEventListener('touchstart', function(e) {
+        startX = e.changedTouches[0].clientX;
+        startY = e.changedTouches[0].clientY;
+    }, { passive: true });
+
+    slider.addEventListener('touchend', function(e) {
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        if (Math.abs(endX - startX) > 15 || Math.abs(endY - startY) > 15) return;
+        const img = e.target.closest('.slide-img');
+        if (img) openImageViewer(img.src);
     });
 
-    document.querySelectorAll('.slide-img').forEach(img => {
-        img.addEventListener('touchstart', function(e){
-            startX = e.changedTouches[0].clientX;
-            startY = e.changedTouches[0].clientY;
-        }, { passive: true });
-
-        img.addEventListener('touchend', function(e){
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            if(Math.abs(endX - startX) > 15 || Math.abs(endY - startY) > 15) return;
-            openImageViewer(this.src);
-        });
-
-        img.addEventListener('click', function(){
-            if(window.innerWidth <= 768) return;
-            openImageViewer(this.src);
-        });
+    slider.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) return;
+        const img = e.target.closest('.slide-img');
+        if (img) openImageViewer(img.src);
     });
 }
 
