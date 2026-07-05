@@ -156,7 +156,7 @@ WHITENOISE_USE_FINDERS = True
 # 1. Pehle variables define karo (Inhe STORAGES ke upar hona chahiye)
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', 'iftjznoq')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '279582544763469')
-CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'TERI_NAYI_SECRET_KEY_YAHAN') # <--- Apni secret key yahan string mein daal de local testing ke liye
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'KrTpyDKhg88jFySMC-NdbbVaU7I') # <--- Apni secret key yahan string mein daal de local testing ke liye
 
 # 2. Base Configuration
 cloudinary.config(
