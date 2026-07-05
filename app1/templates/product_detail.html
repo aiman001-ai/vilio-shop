@@ -369,8 +369,8 @@ body, html {
     border: 1px solid #f0f0f0; 
     background: #fff; 
     width: 100%;
-    max-width: 580px; 
-    height: 680px;    
+    max-width: 510px;        /* 3:4 calculation ke hisab se width ko perfect 510px balance kiya */
+    aspect-ratio: 3 / 4;     /* Fixed height (680px) hata kar pure 3:4 aspect ratio lagaya */
     display: flex; 
     overflow: hidden;
     margin: 0 auto; 
@@ -725,12 +725,13 @@ body, html {
         position: relative; 
         top: 0; 
         margin-top: 48px !important;   
-        padding-top: 0 !important;  mg
+        padding-top: 0 !important;
         margin-bottom: 15px; 
         width: 100% !important;
     }
     .main-img-card { 
-        height: 520px !important; 
+        height: auto !important;     /* Fixed 520px height ko override karke auto kiya */
+        aspect-ratio: 3 / 4 !important; /* Mobile screen ke width ke hisab se automatic 3:4 height pakad lega */
         max-width: 100% !important; 
         width: 100vw !important;   
         border: none !important;
@@ -742,16 +743,15 @@ body, html {
         justify-content: flex-start !important;
         margin: 0 !important;      
         padding: 0 !important;     
-        
     }
     .main-img-card::-webkit-scrollbar { display: none; } 
     
     .slide-img { 
         width: 100vw !important; 
-        height: 520px !important; 
+        height: 100% !important;     /* FIXED 520px KO HATA KAR 100% KIYA TAQI YEH CONTAINER KA 3:4 RATIO PAKAD LE */
         object-fit: cover !important; 
         scroll-snap-align: start;
-    scroll-snap-stop: always;
+        scroll-snap-stop: always;
         flex-shrink: 0 !important;
         margin: 0 !important;
         cursor: zoom-in;
@@ -1557,7 +1557,7 @@ function openImageViewer(clickedSrc){
 
     images.forEach((img, index) => {
         if(img.src === clickedSrc) activeIndex = index;
-        console.log(img.src);
+        
         modalSlider.innerHTML += `
             <div class="modal-slide">
                 <img src="${img.src}" alt="Preview">

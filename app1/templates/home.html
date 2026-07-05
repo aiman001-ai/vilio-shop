@@ -49,9 +49,9 @@ body{
 .image-container {
     position: relative;
     width: 100%;
-    height: 380px; 
+    /* Fixed heights ko hata kar responsive aspect ratio set kiya */
+    aspect-ratio: 3 / 4; 
     overflow: hidden;
-    /* Solid color hataya taaki elements transparently interact kar sakein */
     background: transparent; 
 }
 
@@ -240,9 +240,7 @@ body{
         grid-template-columns:repeat(3,1fr);
         gap: 5px; 
     }
-    .image-container{
-        height: 320px; 
-    }
+   
 }
 
 
@@ -255,9 +253,7 @@ body{
         grid-template-columns:repeat(2,1fr);
         gap: 4px; 
     }
-    .image-container{
-        height: 280px; 
-    }
+    
     .prod-short-desc{font-size:13px;}
     .hero-banner {
         margin-bottom: 8px;
@@ -291,9 +287,7 @@ body{
         grid-template-columns:repeat(2,1fr);
         gap: 1px; 
     }
-    .image-container{
-        height: 260px; 
-    }
+    
     .prod-short-desc{font-size:12px;}
     .discount-price{font-size:12px;}
 }

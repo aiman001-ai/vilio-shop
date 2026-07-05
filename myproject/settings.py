@@ -176,6 +176,8 @@ STORAGES = {
             "API_SECRET": CLOUDINARY_API_SECRET,
             "QUALITY": "auto:eco",       
             "FETCH_FORMAT": "auto",    
+            "USE_FILENAME": True,       # 🚀 Version number ke jhanjhat ko बाईपास karega
+            "UNIQUE_FILENAME": False,
         }
     },
     "staticfiles": {
