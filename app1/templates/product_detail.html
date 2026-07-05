@@ -1557,6 +1557,7 @@ function openImageViewer(clickedSrc){
 
     images.forEach((img, index) => {
         if(img.src === clickedSrc) activeIndex = index;
+        console.log(img.src);
         modalSlider.innerHTML += `
             <div class="modal-slide">
                 <img src="${img.src}" alt="Preview">

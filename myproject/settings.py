@@ -133,21 +133,7 @@ DATABASES = {
 # STORAGE & MEDIA CONFIG
 # =========================
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'drda3jvoc',
-    'API_KEY': '743562395273835',
-    'API_SECRET': '4u7e4Qc9AzyeeQDFwANbuF2F0bU',
 
-    'QUALITY': 'auto:good',
-    'FETCH_FORMAT': 'auto',
-}
-
-cloudinary.config(
-    cloud_name='drda3jvoc',
-    api_key='743562395273835',
-    api_secret='4u7e4Qc9AzyeeQDFwANbuF2F0bU',
-    secure=True
-)
 
 # Static and Media URLs
 STATIC_URL = '/static/'
@@ -167,13 +153,41 @@ STATICFILES_DIRS = [
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
 # Niche wali line ko change karke simple kar do (Bina compression ke)
+# 1. Pehle variables define karo (Inhe STORAGES ke upar hona chahiye)
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', 'iftjznoq')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '279582544763469')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'TERI_NAYI_SECRET_KEY_YAHAN') # <--- Apni secret key yahan string mein daal de local testing ke liye
+
+# 2. Base Configuration
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True
+)
+
+# 3. Ab STORAGES block aayega (Ab ye crash nahi karega)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        "OPTIONS": {
+            "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+            "API_KEY": CLOUDINARY_API_KEY,
+            "API_SECRET": CLOUDINARY_API_SECRET,
+            "QUALITY": "auto:eco",       
+            "FETCH_FORMAT": "auto",    
+        }
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage", # 'CompressedManifest' hata diya
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
+}
+
+# 4. Old compatibility config (Isko bhi niche rehne do)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+    'API_KEY': CLOUDINARY_API_KEY,
+    'API_SECRET': CLOUDINARY_API_SECRET,
 }
 
 # Legacy support (Sirf compatibility ke liye, agar koi purani library ise dhoonde)
