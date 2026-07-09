@@ -675,7 +675,7 @@ body, html {
     display:flex;
     align-items:center;
     justify-content:center;
-    display: none !important;
+    
 }
 
 
@@ -1561,6 +1561,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openImageViewer(clickedSrc){
     const modal = document.getElementById('imageModal');
     const modalSlider = document.getElementById('modalSlider');
+    const downloadBtn = document.getElementById('downloadImageBtn');
     if(!modal || !modalSlider) return;
 
     modalSlider.innerHTML = '';
@@ -1576,6 +1577,17 @@ function openImageViewer(clickedSrc){
             </div>
         `;
     });
+
+    if(downloadBtn){
+    downloadBtn.href = clickedSrc.replace(
+    "/upload/",
+    "/upload/fl_attachment/"
+);
+    downloadBtn.setAttribute(
+        "download",
+        clickedSrc.split('/').pop().split('?')[0]
+    );
+}
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
