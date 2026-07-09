@@ -369,16 +369,23 @@ body, html {
     border: 1px solid #f0f0f0; 
     background: #fff; 
     width: 100%;
-    max-width: 510px;        /* 3:4 calculation ke hisab se width ko perfect 510px balance kiya */
-    aspect-ratio: 3 / 4;     /* Fixed height (680px) hata kar pure 3:4 aspect ratio lagaya */
+    max-width: 510px;
+    aspect-ratio: 3 / 4;
     display: flex; 
-    overflow: hidden;
+    overflow-x: auto;          /* hidden ki jagah auto */
+    overflow-y: hidden;
     margin: 0 auto; 
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     scroll-snap-stop: always;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;     /* Firefox scrollbar hide */
+    -ms-overflow-style: none;  /* IE/Edge scrollbar hide */
+}
+
+.main-img-card::-webkit-scrollbar {
+    display: none;             /* Chrome/Safari scrollbar hide */
 }
 
 .main-img-card img { 
@@ -1086,23 +1093,28 @@ function initImageSlider() {
     // ===== STEP 2: NON-VARIANT PRODUCTS KE THUMBNAILS REBUILD KARO =====
     // Variant products ke thumbs HTML mein hain (selectVariantViaThumb ke saath)
     // Non-variant products ke gallery thumbs JS se dynamically banao
-    const isVariantProduct = document.querySelectorAll('.color-item-wrapper').length > 0;
     const thumbRow = document.querySelector('.thumbnail-row');
 
-    if (!isVariantProduct && thumbRow) {
-        const cleanSlides = slider.querySelectorAll('.slide-img');
-        if (cleanSlides.length > 1) {
-            // Ek se zyada images hain — sahi indices ke saath thumbs rebuild karo
-            thumbRow.innerHTML = '';
-            cleanSlides.forEach(function(slide, idx) {
-                const th = document.createElement('img');
-                th.className = 'thumb' + (idx === 0 ? ' active' : '');
-                th.src = slide.getAttribute('src') || slide.src;
-                th.setAttribute('onclick', 'goToSlide(' + idx + ')');
-                thumbRow.appendChild(th);
-            });
-        }
+if (thumbRow) {
+    const cleanSlides = slider.querySelectorAll('.slide-img');
+    if (cleanSlides.length > 1) {
+        thumbRow.innerHTML = '';
+        cleanSlides.forEach(function(slide, idx) {
+            const th = document.createElement('img');
+            th.className = 'thumb' + (idx === 0 ? ' active' : '');
+            th.src = slide.getAttribute('src') || slide.src;
+            th.setAttribute('onclick', 'goToSlide(' + idx + ')');
+            thumbRow.appendChild(th);
+        });
+    } else if (cleanSlides.length === 1) {
+        // single image ho to bhi ek thumb dikhado
+        thumbRow.innerHTML = '';
+        const th = document.createElement('img');
+        th.className = 'thumb active';
+        th.src = cleanSlides[0].getAttribute('src') || cleanSlides[0].src;
+        thumbRow.appendChild(th);
     }
+}
 
     // ===== STEP 3: DOTS AUR SCROLL SETUP (clean slides ke baad) =====
     const slides = slider.querySelectorAll('.slide-img');
