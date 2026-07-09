@@ -34,19 +34,8 @@ from .models import (
 # ================= HOME =================
 def home(request):
 
-    # Expired offers ka cache clear karo
-    latest_offer = Product.objects.filter(
-        offer_end_time__isnull=False
-    ).order_by("-offer_end_time").first()
-
-    cache_key = "home_offer_last"
-
-    if latest_offer:
-        last_cached = cache.get(cache_key)
-
-        if last_cached != latest_offer.offer_end_time:
-            cache.delete("home_display_products_v2")
-            cache.set(cache_key, latest_offer.offer_end_time)
+    # Auto recycle timer hone ki wajah se home cache ko periodically refresh karna hoga
+    cache.delete("home_display_products_v2")
 
     display_products = cache.get('home_display_products_v2')
 
@@ -573,6 +562,7 @@ def product_detail(request, id):
     "original_price": float(prod.original_price) if prod.original_price else float(prod.price),
     "offer_active": prod.offer_active,
     "discount": prod.discount_percentage,
+    "offer_end_time": prod.current_offer_end_time.isoformat() if prod.current_offer_end_time else None,
 
     "sizes": size_list,
     "total_stock": total_stock,
@@ -942,6 +932,11 @@ def get_product_data(request, product_id):
             "original_price": product.original_price,
             "offer_active": product.offer_active,
             "discount": product.discount_percentage,
+            "offer_end_time": (
+    product.current_offer_end_time.isoformat()
+    if product.current_offer_end_time
+    else None
+),
             "color_name": color_variant.color_name if color_variant else "",
 
             "image": (
@@ -1548,10 +1543,10 @@ def product_feed_json(request):
         ]
 
         # Sale price sirf offer active hone par
-        if p.offer_active:
+        if p.offer_active and p.current_offer_end_time:
             row.append(f"{p.price} INR")
             start_date = timezone.now().strftime('%Y-%m-%d')
-            end_date = p.offer_end_time.strftime('%Y-%m-%dT%H:%M:%S+05:30')
+            end_date = p.current_offer_end_time.strftime('%Y-%m-%dT%H:%M:%S+05:30')
             row.append(f"{start_date}T00:00:00+05:30/{end_date}")
         else:
             row.append("")  # sale_price khaali

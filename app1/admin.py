@@ -3,6 +3,7 @@ import re  # Pincode dhoondne ke liye
 from django.http import HttpResponse
 from django.contrib import admin
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html  # <-- यह इम्पोर्ट करना ज़रूरी है
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -94,20 +95,39 @@ class ProductAdmin(admin.ModelAdmin):
     'brand',
     'price',
     'original_price',
-    'offer_end_time',
+    'offer_enabled',
+    'offer_started_at',
     'offer_status',
     'get_full_category',
     'has_variants',
     'is_active'
 ]
     list_filter = ['is_active', 'has_variants', 'brand']
+
     
     # Autocomplete config mapping smoothly now
     autocomplete_fields = ['category', 'sub_category', 'product_type']
     search_fields = ['name', 'brand']
     list_per_page = 20  # RAM saturation security boundaries
+    readonly_fields = ('offer_started_at',)
     
     inlines = [ProductImageInline, SimpleProductSizeStockInline, ProductColorInline]
+
+    def save_model(self, request, obj, form, change):
+
+        if change:
+            old_obj = Product.objects.get(pk=obj.pk)
+
+            if not old_obj.offer_enabled and obj.       offer_enabled:
+                obj.offer_started_at = timezone.now()
+
+            elif old_obj.offer_enabled and not obj.offer_enabled:
+                obj.offer_started_at = None
+
+        elif obj.offer_enabled:
+            obj.offer_started_at = timezone.now()
+
+        super().save_model(request, obj, form, change)
 
     # 2. SQL N+1 Query Optimization
     def get_queryset(self, request):
@@ -137,7 +157,7 @@ class ProductAdmin(admin.ModelAdmin):
         ("Basic Information", {
             'fields': (
                 'brand', 'name', 'description', 
-                'price', 'original_price', 'offer_end_time', 'image', 'size_chart',
+                'price', 'original_price', 'offer_enabled', 'offer_started_at', 'image', 'size_chart',
                 'category', 
                 'sub_category', 
                 'product_type', 

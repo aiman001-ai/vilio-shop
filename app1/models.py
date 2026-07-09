@@ -38,10 +38,14 @@ class Product(models.Model):
     price = models.PositiveIntegerField(default=0)
     original_price = models.PositiveIntegerField(default=0, help_text="MRP")
 
-    offer_end_time = models.DateTimeField(
+    offer_enabled = models.BooleanField(
+    default=False,
+    verbose_name="Enable Auto Offer Timer"
+)
+
+    offer_started_at = models.DateTimeField(
     null=True,
-    blank=True,
-    help_text="Offer end date and time"
+    blank=True
 )
     
     # Cloudinary for Render support
@@ -76,12 +80,40 @@ class Product(models.Model):
     @property
     def offer_active(self):
         if (
-            self.offer_end_time
-            and self.offer_end_time > timezone.now()
-            and self.original_price > self.price
+           not self.offer_enabled
+           or not self.offer_started_at
+           or self.original_price <= self.price
         ):
-            return True
-        return False
+           return False
+
+        now = timezone.now()
+
+        elapsed_seconds = (now - self.offer_started_at).total_seconds()
+
+        cycle_seconds = 63 * 60   # 1 hour ON + 3 min OFF
+
+        current_position = elapsed_seconds % cycle_seconds
+
+        return current_position < 3600
+
+    @property
+    def current_offer_end_time(self): 
+        if not self.offer_enabled or not self.offer_started_at:   
+            return None
+
+        now = timezone.now()
+
+        elapsed_seconds = (now - self.offer_started_at).total_seconds()
+
+        cycle_seconds = 63 * 60
+
+        current_position = elapsed_seconds % cycle_seconds
+
+        if current_position < 3600:
+            remaining = 3600 - current_position
+            return now + timedelta(seconds=remaining)
+
+        return None
 
     @property
     def current_price(self):

@@ -360,7 +360,7 @@ body{
 
     <div class="offer-timer-inline"
          id="offer-timer-{{ product.id }}"
-         data-end="{{ product.offer_end_time|date:'c' }}"
+         data-end="{{ product.current_offer_end_time|date:'c' }}"
          data-product-id="{{ product.id }}"
          data-original-price="{{ product.original_price }}">
         ⏳ <span class="countdown">--:--:--</span>
@@ -489,28 +489,12 @@ document.addEventListener("DOMContentLoaded", function() {
             const originalPrice = timer.getAttribute("data-original-price");
 
             if (diff <= 0) {
-                // 1. Timer chhupao
-                timer.style.display = "none";
+    setTimeout(function(){
+        location.reload();
+    }, 5000);
 
-                // 2. Offer price → original price
-                const discountEl = document.getElementById("discount-price-" + productId);
-                if (discountEl && originalPrice) {
-                    discountEl.innerText = "₹" + originalPrice;
-                }
-
-                // 3. Strikethrough original price chhupao
-                const originalEl = document.getElementById("original-price-" + productId);
-                if (originalEl) originalEl.style.display = "none";
-
-                // 4. Image pe discount ribbon bhi chhupao
-                const productItem = timer.closest('.product-item');
-                if (productItem) {
-                    const ribbon = productItem.querySelector('.discount-ribbon');
-                    if (ribbon) ribbon.style.display = 'none';
-                }
-
-                return;
-            }
+    return;
+}
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hrs  = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
