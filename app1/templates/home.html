@@ -507,15 +507,16 @@ function scheduleOfferCycle(timer) {
             // Yahi live-update ho raha hai — koi reload nahi, turant switch
             isActive = !isActive;
             applyState(isActive);
-            changeAt = Date.now() + (isActive ? 60000 : 30000); // ON=60s, OFF=30s
+            changeAt = Date.now() + (isActive ? 3600000 : 180000); // ON = 1hr, OFF = 3min
             return;
         }
 
         if (countdownEl && isActive) {
-            const mins = Math.floor(diff / 60000);
-            const secs = Math.floor((diff % 60000) / 1000);
-            countdownEl.innerText = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-        }
+    const hrs  = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    countdownEl.innerText = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+}
     }, 1000);
 }
 </script>
