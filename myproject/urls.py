@@ -12,17 +12,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
 
-# DEBUG TOOLBAR URL
 if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
-
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Production
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)# Production
+    
 else:
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
