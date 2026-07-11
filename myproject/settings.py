@@ -72,8 +72,6 @@ INSTALLED_APPS = [
 
     # Development tool
     'django.contrib.sitemaps',
-
-    'debug_toolbar',
     
 ]
 
@@ -81,7 +79,6 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # Static files handling
     'django.contrib.sessions.middleware.SessionMiddleware',
