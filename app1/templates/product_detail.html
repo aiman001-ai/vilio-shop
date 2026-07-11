@@ -34,11 +34,11 @@
         
         <div class="thumbnail-row">
     {% if product.image %}
-        {% cloudinary product.image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" %}
+        {% cloudinary product.image width=120 height=150 quality="auto:eco" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" %}
     {% endif %}
     
     {% for variant in variants %}
-        {% cloudinary variant.color_image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" %}
+        {% cloudinary variant.color_image width=120 height=150 quality="auto:eco" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" %}
     {% endfor %}
 </div>
     </div>
@@ -197,78 +197,7 @@
 </div>
 
 <div class="suggestions-wrapper">
-    <h3 class="section-title" style="padding-left: 10px;">SIMILAR PRODUCTS</h3>
-    <div class="slider-container">
-        <button class="slide-btn prev" onclick="scrollSlider(-1)">&#10094;</button>
-        <button class="slide-btn next" onclick="scrollSlider(1)">&#10095;</button>
-
-        <div class="suggestion-slider" id="suggestionSlider">
-            {% for item in suggestions %}
-            <div class="suggestion-card">
-                <a href="{% url 'product_detail' item.id %}">
-                    <div class="suggest-img-box">
-                        {% if item.image %}
-    {% cloudinary item.image width=300 height=380 quality="auto" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" alt=item.name %}
-{% else %}
-    <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" class="suggest-img">
-{% endif %}
-                        <div class="product-ribbon" data-discount="{{ item.discount_percentage }}"></div>
-                        <div class="rating-badge" data-product-id="{{ item.id }}">
-                            <span class="rating-value">-.-</span>
-                            <svg class="star-svg" viewBox="0 0 24 24">
-                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                            </svg>
-                            <span class="separator">|</span>
-                            <span class="user-count">-</span>
-                        </div>
-                    </div>
-                    <div class="suggest-info">
-                        <p class="suggest-name">{{ item.name|truncatechars:22 }}</p>
-                        <div class="suggest-price-row">
-                            <span class="curr-price">₹{{ item.price }}</span>
-                            {% if item.original_price > item.price %}
-                                <span class="old-price">₹{{ item.original_price }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </a>
-            </div>
-            {% endfor %}      
-        </div>
-    </div>
-
-    <div class="brand-service-section">
-        <div class="service-container">
-            <a href="/return-policy/" class="service-item">
-                <div class="service-icon"><i class="fa-solid fa-arrow-rotate-left"></i></div>
-                <div class="service-text">
-                    <h4>EASY RETURNS</h4>
-                    <p>7 Days Hassle-free Returns</p>
-                </div>
-            </a>
-            <a href="{% url 'shipping_policy' %}" class="service-item">
-                <div class="service-icon"><i class="fa-solid fa-truck-fast"></i></div>
-                <div class="service-text">
-                    <h4>FREE SHIPPING</h4>
-                    <p>On all orders above ₹999</p>
-                </div>
-            </a>
-            <a href="{% url 'privacy_policy' %}" class="service-item">
-                <div class="service-icon"><i class="fa-solid fa-user-lock"></i></div>
-                <div class="service-text">
-                    <h4>PRIVACY POLICY</h4>
-                    <p>100% Safe & Secure Data</p>
-                </div>
-            </a>
-            <a href="/about-us/" class="service-item">
-                <div class="service-icon"><i class="fa-solid fa-gem"></i></div>
-                <div class="service-text">
-                    <h4>OUR STORY</h4>
-                    <p>Quality fashion, Vilio prices</p>
-                </div>
-            </a>
-        </div>
-    </div>
+   
 </div>
 
 <!-- Image Viewer Modal -->
@@ -544,71 +473,6 @@ body, html {
 .spec-value { color: #282c3f; font-size: 14px; font-weight: 500; }
 
 /* Slider Suggestion Logic */
-.suggestions-wrapper { max-width: 100%; margin: 50px auto; padding: 0 20px; overflow: hidden; }
-.slider-container { position: relative; width: 100%; }
-.suggestion-slider { display: flex; gap: 1px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
-.suggestion-slider::-webkit-scrollbar { display: none; }
-.suggestion-card { flex: 0 0 210px; background: #fff; border: 1px solid #f9f9f9; }
-.suggestion-card a { text-decoration: none; color: inherit; }
-.suggest-img-box { position: relative; width: 100%; height: 280px; overflow: hidden; }
-.suggest-img-box img { width: 100%; height: 100%; object-fit: cover; }
-.suggest-info { padding: 10px 5px; }
-.suggest-name { font-size: 13px; font-weight: 500; color: #282c3f; margin: 0 0 5px 0; }
-.suggest-price-row { display: flex; gap: 8px; font-size: 13px; }
-.curr-price { font-weight: 700; color: #282c3f; }
-.old-price { color: #7e818c; text-decoration: line-through; }
-.slide-btn { position: absolute; width: 40px; height: 40px; background: #fff; border: 1px solid #d4d5d9; border-radius: 50%; cursor: pointer; z-index: 10; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.slide-btn.prev { left: -20px; }
-.slide-btn.next { right: -20px; }
-
-.rating-badge {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    z-index: 50;
-
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-
-    background: rgba(255,255,255,0.35) !important;
-
-    backdrop-filter: blur(12px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
-
-    border: 1px solid rgba(255,255,255,0.5);
-    border-radius: 2px;
-
-    font-size: 11px;
-    font-weight: 700;
-    color: #282c3f;
-
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.star-svg {
-    width: 10px;
-    height: 10px;
-    fill: #ff9f00;
-}
-.separator {
-    color: rgba(40,44,63,0.3);
-    font-weight: 400;
-    margin: 0 1px;
-}
-.user-count {
-    font-size: 10px;
-    color: #3e4152;
-    font-weight: 600;
-}
-.product-ribbon { position: absolute; top: 10px; left: 0; font-size: 9px; font-weight: 700; color: #fff; padding: 2px 6px; display: none; }
-
-.brand-service-section { background: #f9f9f9; padding: 40px 0; margin-top: 50px; }
-.service-container { max-width: 1250px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 0 20px; }
-.service-item { text-decoration: none; display: flex; align-items: center; gap: 15px; }
-.service-icon { font-size: 24px; color: #ff3f6c; background: #fff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.service-text h4 { margin: 0; font-size: 13px; color: #282c3f; }
-.service-text p { margin: 2px 0 0 0; font-size: 11px; color: #7e818c; }
 
 /* Full Screen Image Viewer */
 
@@ -1115,6 +979,31 @@ if (thumbRow) {
 
     // ===== STEP 3: DOTS AUR SCROLL SETUP (clean slides ke baad) =====
     const slides = slider.querySelectorAll('.slide-img');
+
+    const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if(entry.isIntersecting){
+            const img = entry.target;
+
+            if(img.dataset.src){
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+            }
+
+            observer.unobserve(img);
+        }
+    });
+},{
+    root: slider,
+    rootMargin: '300px'
+});
+
+slides.forEach(img=>{
+    if(img.dataset.src){
+        observer.observe(img);
+    }
+});
+
     dotsContainer.innerHTML = '';
 
     slides.forEach((_, idx) => {
@@ -1211,14 +1100,15 @@ if (slider && data.gallery_images) {
     // ---------- Slider ----------
     slider.innerHTML = "";
 
-    uniqueImages.forEach(img => {
-        slider.innerHTML += `
-            <img class="slide-img"
-                 src="${img}"
-                 loading="lazy"
-                 decoding="async">
-        `;
-    });
+    uniqueImages.forEach((img,index) => {
+    slider.innerHTML += `
+        <img class="slide-img"
+             src="${index <= 1 ? img : ''}"
+             data-src="${img}"
+             loading="${index <= 1 ? 'eager' : 'lazy'}"
+             decoding="async">
+    `;
+});
 
     // ---------- Desktop Thumbnails ----------
     const thumbRow = document.querySelector(".thumbnail-row");
@@ -1569,10 +1459,13 @@ function openImageViewer(clickedSrc){
         if(img.src === clickedSrc) activeIndex = index;
         
         modalSlider.innerHTML += `
-            <div class="modal-slide">
-                <img src="${img.src}" alt="Preview">
-            </div>
-        `;
+    <div class="modal-slide">
+        <img src=""
+             data-src="${img.src}"
+             loading="lazy"
+             alt="Preview">
+    </div>
+`;
     });
 
     if(downloadBtn){
