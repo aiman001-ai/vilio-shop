@@ -1,24 +1,21 @@
-# context_processors.py
 from .models import Cart, CartItem, Category
+from django.db.models import Sum
 
 def cart_count_processor(request):
     count = 0
     if request.user.is_authenticated:
-        # User login hai toh Database se count lo
-        cart = Cart.objects.filter(user=request.user).first()
-        if cart:
-            # Saare items ki total quantity count karne ke liye
-            count = sum(item.quantity for item in cart.items.all())
+        # 🚀 SPEED FIX: Cart fetch + items loop (2 queries) ki jagah
+        # ek hi aggregate query se seedha total quantity nikal rahe hain
+        result = CartItem.objects.filter(cart__user=request.user).aggregate(total=Sum('quantity'))
+        count = result['total'] or 0
     else:
         # User login nahi hai toh Session se count lo
         session_cart = request.session.get('cart', {})
-        # session_cart ek dictionary hai {'product_id': quantity}
         count = sum(session_cart.values()) if isinstance(session_cart, dict) else 0
         
     return {'global_cart_count': count}
 
 
 def menu_categories(request):
-    # हम सिर्फ वो कैटेगरीज लेंगे जिनके 'parent' नहीं हैं (Main Categories)
     categories = Category.objects.all()
-    return {'all_categories': categories}    
+    return {'all_categories': categories}

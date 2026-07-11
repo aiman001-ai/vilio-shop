@@ -20,11 +20,9 @@
     {% cloudinary product.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" alt=product.name %}
 {% endif %}
 
-{% with first_variant=product.color_variants.first %}
-    {% if first_variant and first_variant.color_image and first_variant.color_image.url != product.image.url %}
-        {% cloudinary first_variant.color_image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=first_variant.color_name %}
-    {% endif %}
-{% endwith %}
+{% if product.cached_first_variant and product.cached_first_variant.color_image and product.cached_first_variant.color_image.url != product.image.url %}
+    {% cloudinary product.cached_first_variant.color_image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=product.cached_first_variant.color_name %}
+{% endif %}
 
 {% for img in clean_gallery %}
     {% cloudinary img.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
@@ -82,19 +80,19 @@
             <h4 class="section-title">SELECT COLOR</h4>
             <div class="color-options">
                 {% for prod in sibling_products %}
-                    {% with col=prod.color_variants.first %}
-                        {% if col %}
-                        <div class="color-item-wrapper {% if prod.id == product.id %}active{% endif %} swap-color-btn" 
-                             data-product-id="{{ prod.id }}"
-                             onclick="handleColorChange('{{ prod.id }}', this)"
-                             style="cursor: pointer;">
-                            <div class="color-item" title="{{ col.color_name }}">
-                                <img src="{{ col.color_image.url }}">
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endwith %}
-                {% endfor %}
+    {% with col=prod.cached_first_variant %}
+        {% if col %}
+        <div class="color-item-wrapper {% if prod.id == product.id %}active{% endif %} swap-color-btn" 
+             data-product-id="{{ prod.id }}"
+             onclick="handleColorChange('{{ prod.id }}', this)"
+             style="cursor: pointer;">
+            <div class="color-item" title="{{ col.color_name }}">
+                <img src="{{ col.color_image.url }}">
+            </div>
+        </div>
+        {% endif %}
+    {% endwith %}
+{% endfor %}
             </div>
         </div>
         {% endif %}
@@ -138,7 +136,7 @@
         <p class="description">{{ product.description }}</p>
 
 
-        <input type="hidden" id="selectedColor" value="{% if product.color_variants.first %}{{ product.color_variants.first.color_name }}{% endif %}">
+        <input type="hidden" id="selectedColor" value="{% if product.cached_first_variant %}{{ product.cached_first_variant.color_name }}{% endif %}">
 <input type="hidden" id="selectedSize" value="">
 <input type="hidden" id="current-active-id" value="{{ product.id }}">
 

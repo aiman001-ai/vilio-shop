@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
 # DEBUG: Error check karne ke liye True rakha hai
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '*',
@@ -72,12 +72,16 @@ INSTALLED_APPS = [
 
     # Development tool
     'django.contrib.sitemaps',
+
+    'debug_toolbar',
     
 ]
 
 SITE_ID = 1
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # Static files handling
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -125,7 +129,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'require',
         },
-        'CONN_MAX_AGE': 0,
+        'CONN_MAX_AGE': 60,
     }
 }
 
@@ -251,3 +255,9 @@ CACHES = {
         'LOCATION': 'vilio-local-cache',
     }
 }
+
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    "localhost",
+]

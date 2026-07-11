@@ -523,6 +523,11 @@ def product_detail(request, id):
         id=id
     )
 
+    # 🚀 SPEED FIX: Main product ka first color-variant Python memory se nikala
+    # (0 extra SQL query — .first() ki jagah .all() ka prefetch cache use hota hai)
+    main_colors_cache = current_product.color_variants.all()
+    current_product.cached_first_variant = main_colors_cache[0] if main_colors_cache else None
+
     # 2. Same Name aur Same Brand ke saare products nikalo
     sibling_products = Product.objects.filter(
         name=current_product.name,
@@ -540,6 +545,7 @@ def product_detail(request, id):
         # FIX 2: .first() hatakar memory cache se pehla element nikala (0 SQL Hits!)
         colors_cache = prod.color_variants.all()
         color_var = colors_cache[0] if colors_cache else None
+        prod.cached_first_variant = color_var   # 🚀 SPEED FIX: Template ke liye cache attach kiya
 
         if color_var:
             size_list = []
