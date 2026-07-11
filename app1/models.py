@@ -114,6 +114,30 @@ class Product(models.Model):
             return now + timedelta(seconds=remaining)
 
         return None
+        
+    @property
+    def next_offer_change_time(self):
+        """
+        Offer chahe ON ho ya OFF, agla transition kab hoga — wo hamesha deta hai.
+        Isse frontend hamesha next flip ka time jaanta hai, reload ki zaroorat nahi.
+        """
+        if not self.offer_enabled or not self.offer_started_at or self.original_price <= self.price:
+            return None
+
+        now = timezone.now()
+        elapsed_seconds = (now - self.offer_started_at).total_seconds()
+        cycle_seconds = 63 * 60
+        on_seconds = 3600
+
+        current_position = elapsed_seconds % cycle_seconds
+
+        if current_position < on_seconds:
+            remaining = on_seconds - current_position   # ON hai -> OFF hone tak
+        else:
+            remaining = cycle_seconds - current_position # OFF hai -> ON hone tak
+
+        return now + timedelta(seconds=remaining)    
+            
 
     @property
     def current_price(self):

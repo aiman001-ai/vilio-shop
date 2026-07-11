@@ -54,25 +54,24 @@
         ₹{{ product.current_price }}
     </span>
 
-    {% if product.offer_active %}
+    <span class="original-price" id="main-original-price"
+      style="{% if not product.offer_active %}display:none;{% endif %}">
+    ₹{{ product.original_price }}
+</span>
+<span class="discount-percentage" id="main-discount-pct"
+      style="{% if not product.offer_active %}display:none;{% endif %}">
+    ({{ product.discount_percentage }}% OFF)
+</span>
 
-        <span class="original-price" id="main-original-price">
-            ₹{{ product.original_price }}
-        </span>
-
-        <span class="discount-percentage" id="main-discount-pct">
-            ({{ product.discount_percentage }}% OFF)
-        </span>
-
-        <div class="offer-timer-detail"
-     id="offer-timer-detail"
-     data-end="{{ product.current_offer_end_time|date:'c' }}"
-     data-original-price="{{ product.original_price }}"
-     aria-hidden="true">
+{% if product.offer_enabled and product.original_price > product.price %}
+<div class="offer-timer-detail" id="offer-timer-detail"
+     data-active="{{ product.offer_active|yesno:'true,false' }}"
+     data-change="{{ product.next_offer_change_time|date:'c' }}"
+     data-price="{{ product.price }}"
+     data-original-price="{{ product.original_price }}">
     ⏳ Offer Ends In: <span class="offer-countdown">--:--:--</span>
 </div>
-
-    {% endif %}
+{% endif %}
 
 </div>
 
@@ -1602,69 +1601,47 @@ function openImageViewer(clickedSrc){
 
 // ===== OFFER TIMER COUNTDOWN (Product Detail Page) =====
 function startDetailTimer() {
-    const timerEl = document.getElementById('offer-timer-detail');
-    if (!timerEl || timerEl.style.display === 'none') return;
+    const timer = document.getElementById('offer-timer-detail');
+    if (!timer) return;
 
-    const endTimeStr = timerEl.getAttribute('data-end');
-    if (!endTimeStr) return;
+    const price          = timer.getAttribute('data-price');
+    const originalPrice  = timer.getAttribute('data-original-price');
+    let isActive          = timer.getAttribute('data-active') === 'true';
+    let changeAt           = new Date(timer.getAttribute('data-change')).getTime();
 
-    const endTime = new Date(endTimeStr).getTime();
-    if (isNaN(endTime)) return; // Invalid date guard
+    const discountEl = document.getElementById('main-discount-price');
+    const originalEl = document.getElementById('main-original-price');
+    const pctEl        = document.getElementById('main-discount-pct');
+    const countdownEl = timer.querySelector('.offer-countdown');
 
-    let intervalId = null;
-
-    // Agar page open hone tak offer expire ho chuka hai
-if (Date.now() >= endTime) {
-
-    timerEl.style.display = "none";
-
-    const discountPriceEl = document.getElementById("main-discount-price");
-    const originalPriceEl = document.getElementById("main-original-price");
-    const discountPctEl   = document.getElementById("main-discount-pct");
-
-    const originalPrice = timerEl.dataset.originalPrice;
-
-    if (discountPriceEl) {
-        discountPriceEl.textContent = "₹" + originalPrice;
+    function applyState(active) {
+        timer.style.display    = active ? '' : 'none';
+        if (originalEl) originalEl.style.display = active ? '' : 'none';
+        if (pctEl)        pctEl.style.display     = active ? '' : 'none';
+        if (discountEl)  discountEl.innerText     = '₹' + (active ? price : originalPrice);
     }
 
-    if (originalPriceEl) {
-        originalPriceEl.remove();
-    }
+    applyState(isActive);
 
-    if (discountPctEl) {
-        discountPctEl.remove();
-    }
-
-    return;
-}
-
-    function tick() {
-        const now  = new Date().getTime();
-        const diff = endTime - now;
+    setInterval(function () {
+        const diff = changeAt - Date.now();
 
         if (diff <= 0) {
-    clearInterval(intervalId);
-    location.reload();
-    return;
-}
-
-        const hrs  = Math.floor(diff / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-        const countdownEl = timerEl.querySelector('.offer-countdown');
-        if (countdownEl) {
-            countdownEl.innerText =
-                String(hrs).padStart(2, '0') + ':' +
-                String(mins).padStart(2, '0') + ':' +
-                String(secs).padStart(2, '0');
+            isActive = !isActive;
+            applyState(isActive);
+            changeAt = Date.now() + (isActive ? 60000 : 30000);
+            return;
         }
-    }
 
-    tick(); // Pehle ek baar turant chalao
-    intervalId = setInterval(tick, 1000);
+        if (countdownEl && isActive) {
+            const mins = Math.floor(diff / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            countdownEl.innerText = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+    }, 1000);
 }
+
+    
 
 document.addEventListener('DOMContentLoaded', startDetailTimer);
 </script>

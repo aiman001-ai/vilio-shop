@@ -937,6 +937,7 @@ def get_product_data(request, product_id):
     if product.current_offer_end_time
     else None
 ),
+            "next_change_time": product.next_offer_change_time.isoformat() if product.next_offer_change_time else None,
             "color_name": color_variant.color_name if color_variant else "",
 
             "image": (

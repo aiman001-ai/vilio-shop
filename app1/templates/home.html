@@ -313,9 +313,9 @@ body{
 
                 <div class="image-container">
                     <!-- Ribbon Code -->
-                    {% if product.offer_active %}
-                        <div class="discount-ribbon">{{ product.discount_percentage }}% OFF</div>
-                    {% endif %}
+                    <div class="discount-ribbon" id="ribbon-{{ product.id }}" style="{% if not product.offer_active %}display:none;{% endif %}">
+    {{ product.discount_percentage }}% OFF
+</div>
 
                    
 
@@ -353,16 +353,19 @@ body{
         ₹{{ product.current_price }}
     </span>
 
-    {% if product.offer_active %}
-    <span class="original-price" id="original-price-{{ product.id }}">
+    <span class="original-price" id="original-price-{{ product.id }}"
+          style="{% if not product.offer_active %}display:none;{% endif %}">
         ₹{{ product.original_price }}
     </span>
 
+    {% if product.offer_enabled and product.original_price > product.price %}
     <div class="offer-timer-inline"
          id="offer-timer-{{ product.id }}"
-         data-end="{{ product.current_offer_end_time|date:'c' }}"
-         data-product-id="{{ product.id }}"
-         data-original-price="{{ product.original_price }}">
+         data-active="{{ product.offer_active|yesno:'true,false' }}"
+         data-change="{{ product.next_offer_change_time|date:'c' }}"
+         data-price="{{ product.price }}"
+         data-original-price="{{ product.original_price }}"
+         style="{% if not product.offer_active %}display:none;{% endif %}">
         ⏳ <span class="countdown">--:--:--</span>
     </div>
     {% endif %}
@@ -472,49 +475,49 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 
 <script>
-
 document.addEventListener("DOMContentLoaded", function() {
-
-    function updateCountdown() {
-        document.querySelectorAll(".offer-timer-inline").forEach(function(timer) {
-            const endStr = timer.getAttribute("data-end");
-            if (!endStr) return;
-
-            const end = new Date(endStr).getTime();
-            if (isNaN(end)) return;
-
-            const now = new Date().getTime();
-            const diff = end - now;
-            const productId = timer.getAttribute("data-product-id");
-            const originalPrice = timer.getAttribute("data-original-price");
-
-            if (diff <= 0) {
-    setTimeout(function(){
-        location.reload();
-    }, 5000);
-
-    return;
-}
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hrs  = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-            let text = days > 0
-                ? days + "d " + hrs + "h"
-                : String(hrs).padStart(2,"0") + ":" + String(mins).padStart(2,"0") + ":" + String(secs).padStart(2,"0");
-
-            const countdownEl = timer.querySelector(".countdown");
-            if (countdownEl) countdownEl.innerText = text;
-        });
-    }
-
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    document.querySelectorAll('.offer-timer-inline').forEach(scheduleOfferCycle);
 });
 
-   
+function scheduleOfferCycle(timer) {
+    const productId     = timer.getAttribute('data-product-id') || timer.id.split('-').pop();
+    const price          = timer.getAttribute('data-price');
+    const originalPrice  = timer.getAttribute('data-original-price');
+    let isActive          = timer.getAttribute('data-active') === 'true';
+    let changeAt           = new Date(timer.getAttribute('data-change')).getTime();
+
+    const discountEl = document.getElementById('discount-price-' + productId);
+    const originalEl = document.getElementById('original-price-' + productId);
+    const ribbonEl    = document.getElementById('ribbon-' + productId);
+    const countdownEl = timer.querySelector('.countdown');
+
+    function applyState(active) {
+        timer.style.display     = active ? '' : 'none';
+        if (originalEl) originalEl.style.display = active ? '' : 'none';
+        if (ribbonEl)    ribbonEl.style.display   = active ? '' : 'none';
+        if (discountEl)  discountEl.innerText     = '₹' + (active ? price : originalPrice);
+    }
+
+    applyState(isActive);
+
+    setInterval(function () {
+        const diff = changeAt - Date.now();
+
+        if (diff <= 0) {
+            // Yahi live-update ho raha hai — koi reload nahi, turant switch
+            isActive = !isActive;
+            applyState(isActive);
+            changeAt = Date.now() + (isActive ? 60000 : 30000); // ON=60s, OFF=30s
+            return;
+        }
+
+        if (countdownEl && isActive) {
+            const mins = Math.floor(diff / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            countdownEl.innerText = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+    }, 1000);
+}
 </script>
 
 {% endblock %}
