@@ -71,6 +71,13 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active', 'sub_category']),
+            models.Index(fields=['is_active', 'category']),
+            models.Index(fields=['name', 'brand', 'is_active']),
+        ]
+
     @property
     def discount_percentage(self):
         if self.original_price and self.original_price > self.price:

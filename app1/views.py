@@ -533,6 +533,9 @@ def product_detail(request, id):
         name=current_product.name,
         brand=current_product.brand,
         is_active=True
+    ).only(
+        'id', 'name', 'brand', 'price', 'original_price', 'image',
+        'has_variants', 'offer_enabled', 'offer_started_at'
     ).prefetch_related('color_variants__sizes', 'simple_size_stocks')
 
     # FIX 1: DEBUG logic ko optimized kiya taaki loop ke andar DB hit na ho
@@ -583,7 +586,9 @@ def product_detail(request, id):
             Product.objects.filter(
                 sub_category=current_product.sub_category,
                 is_active=True
-            ).exclude(name=current_product.name)[:15]
+            ).exclude(name=current_product.name).only(
+                'id', 'name', 'price', 'original_price', 'image'
+            )[:15]
         )
 
     if len(all_suggestions) < 4 and current_product.category:
@@ -594,7 +599,9 @@ def product_detail(request, id):
             Product.objects.filter(
                 category=current_product.category,
                 is_active=True
-            ).exclude(id__in=existing_ids)[:extra_count]
+            ).exclude(id__in=existing_ids).only(
+                'id', 'name', 'price', 'original_price', 'image'
+            )[:extra_count]
         )
 
         all_suggestions.extend(backup_products)
