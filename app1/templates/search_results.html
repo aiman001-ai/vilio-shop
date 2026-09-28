@@ -1,25 +1,241 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load cloudinary %}
+
+{% block title %}Search Results for "{{ query }}" | Vilio{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-results-page {
+        max-width: 1360px;
+        margin: 20px auto 60px;
+        padding: 0 16px;
+    }
+
+    .search-head-box {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        margin-bottom: 24px;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .search-head-box h1 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #09090b;
+        margin-bottom: 6px;
+    }
+
+    .search-head-box p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+        .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-results-page {
+            padding: 0 8px;
+            margin: 10px auto 40px;
+        }
+        .search-head-box {
+            padding: 16px 12px;
+            margin-bottom: 16px;
+        }
+        .search-head-box h1 {
+            font-size: 17px;
+        }
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+    }
+
+    .product-card {
+        background: #ffffff;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 1px solid #f0f0f2;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        border-color: #e4e4e7;
+    }
+
+    .card-media-box {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        background: #f4f4f5;
+        overflow: hidden;
+        display: block;
+    }
+
+    .card-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .badge-discount {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #000000;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 8px;
+        border-radius: var(--radius-sm);
+        letter-spacing: 0.5px;
+        z-index: 5;
+    }
+
+    .card-body {
+        padding: 12px 14px 16px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .card-brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .card-brand-name {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #71717a;
+    }
+
+    .card-delivery-tag {
+        font-size: 10px;
+        color: var(--success);
+        font-weight: 700;
+    }
+
+    .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #18181b;
+        margin-bottom: 8px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: 38px;
+    }
+
+    .card-price-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .price-current {
+        font-size: 16px;
+        font-weight: 800;
+        color: #09090b;
+    }
+
+    .price-mrp {
+        font-size: 12px;
+        color: #a1a1aa;
+        text-decoration: line-through;
+    }
+
+    .empty-search-box {
+        text-align: center;
+        padding: 80px 20px;
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="padding: 120px 20px 50px 20px; max-width: 1200px; margin: 0 auto;">
-    <h2>Search Results for "{{ query }}"</h2>
-    <hr>
-    
+<div class="search-results-page">
+    <div class="search-head-box">
+        <h1>Search Results: "{{ query }}"</h1>
+        <p>Found {{ products|length }} matching styles</p>
+    </div>
+
     {% if products %}
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 30px;">
-            {% for product in products %}
-                <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center;">
-                    <!-- Agar product image use kar rahe hain -->
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 100%; height: 250px; object-fit: cover;">
-                    {% endif %}
-                    <h3 style="font-size: 16px; margin: 10px 0 5px 0;">{{ product.name }}</h3>
-                    <p style="color: #e52e2e; font-weight: 600;">₹{{ product.price }}</p>
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <a href="{% url 'product_detail' product.id %}" class="card-media-box">
+                {% if product.original_price > product.price %}
+                    <div class="badge-discount">{{ product.discount_percentage }}% OFF</div>
+                {% endif %}
+
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img" loading="lazy">
+                {% else %}
+                    <img src="{% static 'images/no-image.png' %}" class="card-img" loading="lazy">
+                {% endif %}
+            </a>
+
+            <div class="card-body">
+                <div class="card-brand-row">
+                    <span class="card-brand-name">{{ product.brand|default:"VILIO" }}</span>
+                    <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
                 </div>
-            {% endfor %}
+
+                <a href="{% url 'product_detail' product.id %}" class="card-title">
+                    {{ product.name }}
+                </a>
+
+                <div class="card-price-row">
+                    <span class="price-current">₹{{ product.current_price }}</span>
+                    {% if product.original_price > product.current_price %}
+                        <span class="price-mrp">₹{{ product.original_price }}</span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
+        {% endfor %}
+    </div>
     {% else %}
-        <p style="margin-top: 20px; color: #666;">No products found matching your search.</p>
+    <div class="empty-search-box">
+        <div style="font-size: 48px; color: #94a3b8; margin-bottom: 12px;"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3 style="font-size: 20px; font-weight: 700; color: #18181b; margin-bottom: 8px;">No Results Found</h3>
+        <p style="color: #71717a; font-size: 14px; margin-bottom: 24px;">We couldn't find anything matching "{{ query }}". Try searching for "Shirt", "Denim", or "T-Shirt".</p>
+        <a href="{% url 'home' %}" style="display: inline-block; background: #0d0d0f; color: #fff; padding: 12px 28px; border-radius: 4px; font-weight: 700; text-transform: uppercase; font-size: 13px;">Browse All Drops</a>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

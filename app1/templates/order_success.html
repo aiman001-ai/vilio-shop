@@ -1,41 +1,229 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Order Successful{% endblock %}
+{% block title %}Order Confirmed #{{ order.id }} | VILIO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-page-wrapper {
+        min-height: calc(100vh - 220px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 20px 80px;
+        background: radial-gradient(circle at 50% 10%, rgba(0, 208, 132, 0.08) 0%, transparent 60%);
+    }
+
+    .success-card {
+        width: 100%;
+        max-width: 540px;
+        background: #141418;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 44px 36px;
+        text-align: center;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+        position: relative;
+    }
+
+    .success-icon-badge {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: rgba(0, 208, 132, 0.12);
+        border: 2px solid rgba(0, 208, 132, 0.4);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: #00d084;
+        margin-bottom: 24px;
+        box-shadow: 0 0 30px rgba(0, 208, 132, 0.25);
+        animation: pulseCheck 2s infinite;
+    }
+
+    @keyframes pulseCheck {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.06); }
+    }
+
+    .success-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #fff;
+        margin: 0 0 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .success-subtitle {
+        font-size: 14px;
+        color: #9e9ea8;
+        margin: 0 0 28px;
+        line-height: 1.5;
+    }
+
+    .order-summary-box {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 28px;
+        text-align: left;
+    }
+
+    .order-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 13.5px;
+        color: #b0b0bc;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .order-summary-row:last-child {
+        border-bottom: none;
+        padding-top: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .order-id-tag {
+        font-family: monospace;
+        font-weight: 700;
+        color: #ffaa00;
+        background: rgba(255, 170, 0, 0.1);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .success-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-view-orders {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        background: #fff;
+        color: #0c0c0e;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .btn-view-orders:hover {
+        background: #f0f0f2;
+        transform: translateY(-2px);
+    }
+
+    .btn-whatsapp-confirm {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 13px;
+        background: rgba(37, 211, 102, 0.12);
+        color: #25d366;
+        border: 1px solid rgba(37, 211, 102, 0.3);
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .btn-whatsapp-confirm:hover {
+        background: rgba(37, 211, 102, 0.2);
+    }
+
+    .btn-continue-shopping {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 13px;
+        color: #7e818c;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .btn-continue-shopping:hover {
+        color: #fff;
+    }
+
+    @media (max-width: 480px) {
+        .success-page-wrapper {
+            padding: 30px 16px 60px;
+        }
+        .success-card {
+            padding: 32px 20px;
+            border-radius: 18px;
+        }
+        .success-title {
+            font-size: 22px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="success-page-wrapper">
+    <div class="success-card">
+        <div class="success-icon-badge">
+            <i class="fa-solid fa-check"></i>
+        </div>
 
-<div style="max-width:700px;margin:80px auto;text-align:center;">
+        <h1 class="success-title">Order Confirmed!</h1>
+        <p class="success-subtitle">Thank you for choosing Vilio. Your order is received and is being prepared for dispatch.</p>
 
-<h1>🎉 Order Placed Successfully</h1>
+        <div class="order-summary-box">
+            <div class="order-summary-row">
+                <span>Order Reference</span>
+                <span class="order-id-tag">#{{ order.id }}</span>
+            </div>
+            <div class="order-summary-row">
+                <span>Payment Method</span>
+                <span>{{ order.payment_method|default:"Confirmed" }}</span>
+            </div>
+            <div class="order-summary-row">
+                <span>Estimated Delivery</span>
+                <span style="color:#00d084;"><i class="fa-solid fa-truck-bolt"></i> 3 - 5 Business Days</span>
+            </div>
+            <div class="order-summary-row">
+                <span>Total Amount Paid</span>
+                <span>₹{{ order.total_amount }}</span>
+            </div>
+        </div>
 
-<p>Thank you for shopping with Vilio.</p>
+        <div class="success-actions">
+            <a href="{% url 'my_orders' %}" class="btn-view-orders">
+                <i class="fa-solid fa-box-open" style="margin-right:6px;"></i> Track My Order
+            </a>
 
-<p>
-Order ID :
-<strong>#{{ order.id }}</strong>
-</p>
+            <a href="https://wa.me/917417482813?text=Hi%20Vilio%20Support,%20I%20just%20placed%20order%20%23{{ order.id }}.%20Please%20confirm%20dispatch!" target="_blank" rel="noopener" class="btn-whatsapp-confirm">
+                <i class="fa-brands fa-whatsapp" style="font-size:16px;"></i> Get WhatsApp Tracking Updates
+            </a>
 
-<p>
-Total Paid :
-<strong>₹{{ order.total_amount }}</strong>
-</p>
-
-<a href="{% url 'my_orders' %}">
-<button>
-View My Orders
-</button>
-</a>
-
+            <a href="/" class="btn-continue-shopping">
+                ← Return to Homepage & Continue Shopping
+            </a>
+        </div>
+    </div>
 </div>
 
-
 <script>
-gtag('event', 'conversion', {
-      'send_to': 'AW-18260900548/gYjaCKer88McEMT1vINE',
-      'value': {{ order.total_amount }},
-      'currency': 'INR',
-      'transaction_id': '{{ order.id }}'
-});
+if (typeof gtag === 'function') {
+    gtag('event', 'conversion', {
+          'send_to': 'AW-18260900548/gYjaCKer88McEMT1vINE',
+          'value': {{ order.total_amount }},
+          'currency': 'INR',
+          'transaction_id': '{{ order.id }}'
+    });
+}
 </script>
-
 {% endblock %}

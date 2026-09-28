@@ -1,184 +1,464 @@
 {% extends "base.html" %}
-{% block title %}Checkout | Vilio{% endblock %}
+{% load static %}
+
+{% block title %}Secure Checkout | Vilio{% endblock %}
 
 {% block extra_css %}
 <style>
-    body { background: #f1f3f6; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    
-    /* Responsive Container */
-    .container { 
-        width: 95%; 
-        max-width: 1200px; 
-        margin: 90px auto 20px auto; 
-        display: flex; 
-        flex-direction: column; /* Mobile first: stack vertically */
-        gap: 15px; 
+    .checkout-page-wrap {
+        max-width: 1180px;
+        margin: 20px auto 50px;
+        padding: 0 16px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    .left { 
-        width: 100%; 
-        background: #fff; 
-        padding: 15px; 
-        border-radius: 4px; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-        box-sizing: border-box;
+    .checkout-steps-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .right { 
-        width: 100%; 
-        background: #fff; 
-        padding: 15px; 
-        border-radius: 4px; 
-        height: fit-content; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-        box-sizing: border-box;
-        margin-bottom:20px;
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #71717a;
     }
 
-    /* Desktop View: Side by Side */
-    @media (min-width: 768px) {
-    .container {
+    .step-item.active {
+        color: #09090b;
+    }
+
+    .step-circle {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #e4e4e7;
+        color: #18181b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+    }
+
+    .step-item.active .step-circle {
+        background: #09090b;
+        color: #ffffff;
+    }
+
+    .step-line {
+        width: 40px;
+        height: 2px;
+        background: #e4e4e7;
+    }
+
+    /* Grid Layout */
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 28px;
+        align-items: start;
+    }
+
+    .checkout-section-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .section-head {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #09090b;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-head span.step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        background: #09090b;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 11px;
+        margin-right: 8px;
+    }
+
+    /* Cart Items Review */
+    .review-items-list {
+        display: flex;
         flex-direction: column;
-        margin: 90px auto 20px auto;
-        gap: 15px;
+        gap: 12px;
     }
 
-    .left {
-        width: 100%;
-        padding: 20px;
+    .review-item-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f4f4f5;
     }
 
-    .right {
-        width: 100%;
-        padding: 15px;
-        position: static;
+    .review-item-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
     }
-}
 
-    .price { color: #B12704; font-weight: bold; }
-    .summary-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 15px; }
-    
-    .address-box, .payment-box { 
-        border: 1px solid #ccc; 
-        padding: 12px; 
-        margin-bottom: 12px; 
-        border-radius: 6px; 
-        cursor: pointer; 
-        display: flex; 
-        align-items: flex-start; 
+    .review-thumb {
+        width: 65px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: var(--radius-sm);
+        background: #f4f4f5;
+    }
+
+    .review-info {
+        flex: 1;
+    }
+
+    .review-title {
         font-size: 14px;
-        line-height: 1.4;
+        font-weight: 700;
+        color: #09090b;
+        margin-bottom: 4px;
     }
 
-    input[type="radio"] { margin-top: 4px; margin-right: 12px; min-width: 18px; accent-color: #f08804; }
-    
-    .place-btn { 
-        width: 100%; 
-        padding: 14px; 
-        background: #f08804; 
-        color: #fff; 
-        border: none; 
-        font-size: 16px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        border-radius: 4px; 
-        margin-top: 10px;
+    .review-meta {
+        font-size: 12px;
+        color: #71717a;
     }
 
-    /* Disabled state visual improvement */
-    .place-btn:disabled {
-        background: #ffc473 !important;
+    .review-price {
+        font-size: 14px;
+        font-weight: 800;
+        color: #09090b;
+    }
+
+    /* Option Boxes (Address & Payment) */
+    .option-card-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1.5px solid var(--border-light);
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #ffffff;
+    }
+
+    .option-card-label:hover {
+        border-color: #a1a1aa;
+    }
+
+    .option-card-label.selected,
+    .option-card-label:has(input:checked) {
+        border-color: #09090b;
+        background: #fafafa;
+        box-shadow: 0 0 0 1px #09090b;
+    }
+
+    .option-radio {
+        margin-top: 3px;
+        accent-color: #09090b;
+        cursor: pointer;
+    }
+
+    .option-text-wrap {
+        flex: 1;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #3f3f46;
+    }
+
+    .option-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #09090b;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .badge-cod-fee {
+        font-size: 11px;
+        color: #e11d48;
+        font-weight: 700;
+    }
+
+    .badge-online-free {
+        font-size: 11px;
+        color: #16a34a;
+        font-weight: 700;
+    }
+
+    /* Order Summary (Right) */
+    .summary-card-sticky {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 90px;
+    }
+
+    .summary-title-main {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #09090b;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 10px;
+    }
+
+    .summary-row-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13.5px;
+        color: #52525b;
+        margin-bottom: 12px;
+    }
+
+    .summary-total-bold {
+        border-top: 2px solid #09090b;
+        padding-top: 14px;
+        margin-top: 14px;
+        font-size: 18px;
+        font-weight: 800;
+        color: #09090b;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .btn-place-order-final {
+        width: 100%;
+        background: #0d0d0f;
+        color: #ffffff;
+        border: none;
+        padding: 16px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: background 0.2s ease, transform 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-place-order-final:hover {
+        background: #27272a;
+        transform: translateY(-1px);
+    }
+
+    .btn-place-order-final:disabled {
+        background: #71717a !important;
         cursor: not-allowed !important;
+        transform: none !important;
     }
 
-    .cart-item { display: flex; gap: 12px; border-bottom: 1px solid #eee; padding: 12px 0; }
-    .cart-item img { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; }
-    .cart-item h4 { margin: 0 0 5px 0; font-size: 15px; }
-    .cart-item p { margin: 2px 0; font-size: 13px; color: #555; }
+    .checkout-guarantees {
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 11.5px;
+        color: #52525b;
+    }
 
-    h2, h3 { font-size: 18px; margin-top: 0; }
+    .checkout-guarantees div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+    }
+
+    .checkout-guarantees i {
+        color: var(--success);
+    }
+
+    @media (max-width: 850px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+        .summary-card-sticky {
+            position: static;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="left">
-        
+<div class="checkout-page-wrap">
+    <!-- Progress Indicator -->
+    <div class="checkout-steps-badge">
+        <div class="step-item"><span class="step-circle"><i class="fa-solid fa-check"></i></span> Bag</div>
+        <div class="step-line"></div>
+        <div class="step-item active"><span class="step-circle">2</span> Checkout</div>
+        <div class="step-line"></div>
+        <div class="step-item"><span class="step-circle">3</span> Payment</div>
+    </div>
 
-        <h3>1. Review Your Items</h3>
-        {% for c in cart_items %}
-        <div class="cart-item">
-            <img src="{{ c.display_image }}">
-            <div>
-                <h4>{{ c.product.name }}</h4>
-                <p>Qty: {{ c.quantity }} | Size: {{ c.size }} | Color: {{ c.color }}</p>
-                <p class="price">₹{{ c.subtotal }}</p>
+    <form method="post" action="{% url 'place_order' %}" id="checkout-form">
+        {% csrf_token %}
+        <input type="hidden" name="razorpay_order_id" id="hidden_razorpay_order_id" value="{{ razorpay_order_id }}">
+
+        <div class="checkout-grid">
+            <!-- LEFT: Checkout Information -->
+            <div class="checkout-main-col">
+                
+                <!-- 1. Order Items Review -->
+                <div class="checkout-section-card">
+                    <div class="section-head">
+                        <div><span class="step-num">1</span> Order Items ({{ cart_items|length }})</div>
+                        <a href="{% url 'cart' %}" style="font-size: 12px; color: var(--accent); text-transform: none; font-weight: 600;">Edit Bag</a>
+                    </div>
+
+                    <div class="review-items-list">
+                        {% for c in cart_items %}
+                        <div class="review-item-row">
+                            <img src="{{ c.display_image }}" alt="{{ c.product.name }}" class="review-thumb">
+                            <div class="review-info">
+                                <div class="review-title">{{ c.product.name }}</div>
+                                <div class="review-meta">
+                                    Qty: <strong>{{ c.quantity }}</strong>
+                                    {% if c.size %}| Size: <strong>{{ c.size }}</strong>{% endif %}
+                                    {% if c.color and c.color != 'Default' %}| Color: <strong>{{ c.color }}</strong>{% endif %}
+                                </div>
+                            </div>
+                            <div class="review-price">₹{{ c.subtotal }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- 2. Delivery Address -->
+                <div class="checkout-section-card">
+                    <div class="section-head">
+                        <div><span class="step-num">2</span> Select Delivery Address</div>
+                        <a href="{% url 'add_address' %}?next=checkout" style="font-size: 12px; color: #2563eb; text-transform: none; font-weight: 700;">+ Add New</a>
+                    </div>
+
+                    {% if addresses %}
+                        {% for address in addresses %}
+                        <label class="option-card-label">
+                            <input type="radio" name="address_id" value="{{ address.id }}" class="option-radio" required {% if forloop.first %}checked{% endif %}>
+                            <div class="option-text-wrap">
+                                <div class="option-title">
+                                    <span>{{ address.first_name }} {{ address.last_name }}</span>
+                                    <span style="font-size: 11px; color: #71717a;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> {{ address.mobile }}</span>
+                                </div>
+                                <p style="margin: 0; color: #52525b;">{{ address.address }}{% if address.address_2 %}, {{ address.address_2 }}{% endif %}</p>
+                                <p style="margin: 0; color: #71717a;">{{ address.city }}, {{ address.state }} - <strong>{{ address.pincode }}</strong></p>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: #71717a; font-size: 13px; margin-bottom: 12px;">No saved address found.</p>
+                        <a href="{% url 'add_address' %}?next=checkout" style="display: inline-block; background: #0d0d0f; color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 13px; font-weight: 700; text-decoration: none;">+ Add Delivery Address</a>
+                    {% endif %}
+                </div>
+
+                <!-- 3. Payment Method -->
+                <div class="checkout-section-card">
+                    <div class="section-head">
+                        <div><span class="step-num">3</span> Payment Method</div>
+                    </div>
+
+                    <label class="option-card-label">
+                        <input type="radio" name="payment_method" value="ONLINE" class="option-radio" checked>
+                        <div class="option-text-wrap">
+                            <div class="option-title">
+                                <span><i class="fa-solid fa-bolt" style="color: #f59e0b; margin-right: 6px;"></i> Instant Online Payment (UPI / Cards / NetBanking)</span>
+                                <span class="badge-online-free">FREE SHIPPING</span>
+                            </div>
+                            <p style="margin: 0; color: #71717a; font-size: 12px;">Pay securely via Google Pay, PhonePe, Paytm, Cards, or NetBanking.</p>
+                        </div>
+                    </label>
+
+                    <label class="option-card-label">
+                        <input type="radio" name="payment_method" value="COD" class="option-radio">
+                        <div class="option-text-wrap">
+                            <div class="option-title">
+                                <span><i class="fa-solid fa-hand-holding-dollar" style="color: #10b981; margin-right: 6px;"></i> Cash on Delivery (COD)</span>
+                                <span class="badge-cod-fee">+₹60 Handling Fee</span>
+                            </div>
+                            <p style="margin: 0; color: #71717a; font-size: 12px;">Pay with cash when courier delivers the package to your doorstep.</p>
+                        </div>
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: Order Summary -->
+            <div class="checkout-summary-col">
+                <div class="summary-card-sticky">
+                    <h3 class="summary-title-main">Payment Summary</h3>
+
+                    <div class="summary-row-item">
+                        <span>Items Total:</span>
+                        <span>₹{{ total }}</span>
+                    </div>
+
+                    <div class="summary-row-item">
+                        <span>Shipping & Handling:</span>
+                        <span id="shipping-amount" style="color: #16a34a; font-weight: 700;">FREE</span>
+                    </div>
+
+                    <div class="summary-total-bold">
+                        <span>Total Payable:</span>
+                        <span id="grand-total" data-base-total="{{ total }}">₹{{ total }}</span>
+                    </div>
+
+                    <button type="submit" class="btn-place-order-final" id="final-submit-btn">
+                        <i class="fa-solid fa-lock"></i> Place Order Securely
+                    </button>
+
+                    <div class="checkout-guarantees">
+                        <div><i class="fa-solid fa-shield-halved"></i> 256-Bit SSL Encrypted & Protected</div>
+                        <div><i class="fa-solid fa-truck-fast"></i> Dispatched via Bluedart / Delhivery / XpressBees</div>
+                        <div><i class="fa-solid fa-arrow-rotate-left"></i> 7-Day Easy Returns & Size Replacement</div>
+                    </div>
+                </div>
             </div>
         </div>
-        {% endfor %}
-
-        <form method="post" action="{% url 'place_order' %}" id="checkout-form">
-            {% csrf_token %}
-            
-            <input type="hidden" name="razorpay_order_id" id="hidden_razorpay_order_id" value="{{ razorpay_order_id }}">
-
-            <div class="right">
-        <h3>Order Summary</h3>
-        <div class="summary-row">
-            <span>Items Total:</span>
-            <span>₹{{ total }}</span>
-        </div>
-
-        <div class="summary-row" id="shipping-row">
-            <span>Shipping Fee:</span>
-            <span id="shipping-amount" style="color: green; font-weight: bold;">FREE</span>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
-
-        <div class="summary-row" style="font-size: 18px; font-weight: bold;">
-            <span>Order Total:</span>
-            <span class="price" id="grand-total" data-base-total="{{ total }}">₹{{ total }}</span>
-        </div>
-        
-        <p style="font-size: 12px; color: #777;">By placing your order, you agree to Vilio's privacy notice and conditions of use.</p>
-    </div>
-
-            <h3>2. Payment Method</h3>
-            <label class="payment-box">
-    <input type="radio" name="payment_method" value="COD">
-    <span>Cash on Delivery</span>
-</label>
-
-<label class="payment-box">
-    <input type="radio" name="payment_method" value="ONLINE" checked>
-    <span>Online Payment</span>
-</label>
-
-            <h3>3. Delivery Address</h3>
-            {% for address in addresses %}
-            <label class="address-box">
-                <input type="radio" name="address_id" value="{{ address.id }}" required {% if forloop.first %}checked{% endif %}>
-                <span>
-                    <strong>{{ address.first_name }} {{ address.last_name }}</strong> - {{ address.mobile }}<br>
-                    {{ address.address }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}
-                </span>
-            </label>
-            {% endfor %}
-
-            <button type="submit" class="place-btn" id="final-submit-btn">Place Order</button>
-        </form>
-    </div>
-
-    
+    </form>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-// ==========================================================
-// 🚀 DYNAMIC CALCULATION FOR COD VS ONLINE
-// ==========================================================
+// COD vs ONLINE price toggle
 document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
     radio.addEventListener('change', function() {
         const baseTotal = parseFloat(document.getElementById('grand-total').getAttribute('data-base-total'));
@@ -187,18 +467,17 @@ document.querySelectorAll('input[name="payment_method"]').forEach(function(radio
 
         if (this.value === 'COD') {
             const finalTotal = baseTotal + 60;
-            shippingAmountEl.innerText = "+₹60";
-            shippingAmountEl.style.color = "#B12704";
+            shippingAmountEl.innerText = "+₹60 (COD Fee)";
+            shippingAmountEl.style.color = "#e11d48";
             grandTotalEl.innerText = "₹" + finalTotal.toFixed(2);
         } else {
             shippingAmountEl.innerText = "FREE";
-            shippingAmountEl.style.color = "green";
+            shippingAmountEl.style.color = "#16a34a";
             grandTotalEl.innerText = "₹" + baseTotal.toFixed(2);
         }
     });
 });
 
-// Run calculation state once on page refresh/render
 document.addEventListener("DOMContentLoaded", function() {
     const activePayment = document.querySelector('input[name="payment_method"]:checked');
     if (activePayment) {
@@ -206,20 +485,21 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// ==========================================================
-// 🛡️ SECURE SUBMISSION BLOCK (FIXES DOUBLE-CLICK & OVERLAPS)
-// ==========================================================
+// Secure Checkout Submission (Prevents double orders)
 document.getElementById('checkout-form').onsubmit = function(e) {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-    const addressId = document.querySelector('input[name="address_id"]:checked').value;
+    const addressRadio = document.querySelector('input[name="address_id"]:checked');
+    if (!addressRadio) {
+        alert("Please select or add a delivery address first.");
+        return false;
+    }
+    const addressId = addressRadio.value;
     const btn = document.getElementById('final-submit-btn');
 
-    // 🟢 Sabse pehle button ko disable karke text badlo taaki double submission ruk sake
     btn.disabled = true;
-    btn.innerText = "Processing...";
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Order...';
 
     if (paymentMethod === 'ONLINE') {
-        // Online form ka default HTML submit rokenge kyunki pehle Razorpay chalega
         e.preventDefault();
 
         fetch("{% url 'create_razorpay_order' %}", {
@@ -232,10 +512,10 @@ document.getElementById('checkout-form').onsubmit = function(e) {
         })
         .then(res => res.json())
         .then(data => {
-            if(data.error){
+            if (data.error) {
                 alert(data.error);
                 btn.disabled = false;
-                btn.innerText = "Place Order";
+                btn.innerHTML = '<i class="fa-solid fa-lock"></i> Place Order Securely';
                 return;
             }
             document.getElementById('hidden_razorpay_order_id').value = data.order_id;
@@ -245,9 +525,9 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 "amount": data.amount,
                 "currency": "INR",
                 "name": "Vilio.shop",
+                "description": "Urban Streetwear Order",
                 "order_id": data.order_id,
                 "handler": function (response) {
-                    // Payment success ke baad verify endpoint par bhejenge
                     fetch("/verify-payment/", {
                         method: "POST",
                         headers: {
@@ -263,48 +543,39 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                     })
                     .then(res => res.json())
                     .then(data => {
-                        if(data.status === "Success"){
-    window.location.href = data.redirect_url;
-} else {
-                            alert("Payment failed: " + data.message);
+                        if (data.status === "Success") {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            alert("Payment verification failed: " + data.message);
                             btn.disabled = false;
-                            btn.innerText = "Place Order";
+                            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Place Order Securely';
                         }
                     });
                 },
                 "modal": {
-    "ondismiss": function() {
-        // 1. Server ko batao ki orphan order delete karo
-        fetch("/cancel-razorpay-order/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: JSON.stringify({ razorpay_order_id: data.order_id })
-        })
-        .then(res => res.json())
-        .then(result => console.log("Order cleanup:", result.status))
-        .catch(err => console.error("Cleanup failed:", err));
-        
-        // 2. Button wapas active karo
-        btn.disabled = false;
-        btn.innerText = "Place Order";
-    }
-},
-                "theme": { "color": "#f08804" }
+                    "ondismiss": function() {
+                        fetch("/cancel-razorpay-order/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": "{{ csrf_token }}"
+                            },
+                            body: JSON.stringify({ razorpay_order_id: data.order_id })
+                        }).catch(err => console.error(err));
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Place Order Securely';
+                    }
+                },
+                "theme": { "color": "#0d0d0f" }
             };
             var rzp = new Razorpay(options);
             rzp.open();
         })
         .catch(error => {
             btn.disabled = false;
-            btn.innerText = "Place Order";
+            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Place Order Securely';
         });
-    } else {
-        // 🟢 COD Case: Yahan form submit ko prevent nahi karna hai.
-        // Kyunki button upar hi disable ho chuka hai, toh naya click lock rahega aur form safely submit ho jayega.
-        console.log("Processing COD order submission...");
     }
 };
 </script>

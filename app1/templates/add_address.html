@@ -1,41 +1,37 @@
 {% extends 'base.html' %}
-{% block title %}Add New Address | Vilio{% endblock %}
+{% block title %}Add Shipping Address | VILIO{% endblock %}
 
 {% block content %}
 <style>
-    /* Google Fonts Import for Professional Look */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
     .address-wrapper { 
-        background-color: #fcfcfc; 
-        padding: 60px 15px; 
-        min-height: 100vh;
-        font-family: 'Inter', sans-serif;
+        padding: 50px 15px 80px; 
+        min-height: calc(100vh - 220px);
     }
 
     .address-container { 
         max-width: 650px; 
         margin: 0 auto; 
-        background: #ffffff; 
+        background: #141418; 
         padding: 40px; 
-        border-radius: 16px; 
-        box-shadow: 0 10px 40px rgba(0,0,0,0.04);
-        border: 1px solid #f0f0f0;
+        border-radius: 20px; 
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .address-container h2 { 
-        font-weight: 600; 
+    .address-container h1 { 
+        font-weight: 800; 
         font-size: 24px;
-        margin-bottom: 8px; 
-        color: #1a1a1a; 
+        margin: 0 0 6px; 
+        color: #fff; 
         text-align: center;
+        letter-spacing: -0.5px;
     }
 
     .sub-text {
         text-align: center;
-        color: #777;
-        font-size: 14px;
-        margin-bottom: 35px;
+        color: #8c8c9a;
+        font-size: 13.5px;
+        margin-bottom: 32px;
     }
 
     /* Grid Layout */
@@ -51,35 +47,37 @@
 
     .form-group label { 
         display: block; 
-        font-size: 12px; 
-        font-weight: 600;
+        font-size: 11.5px; 
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px; 
-        color: #555; 
+        color: #b0b0bc; 
     }
     
     .address-container input, 
     .address-container textarea {
         width: 100%; 
-        padding: 14px 16px; 
-        border: 1.5px solid #eee;
+        padding: 13px 16px; 
+        border: 1.5px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px; 
-        font-size: 15px; 
-        background-color: #fbfbfb;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        color: #333;
+        font-size: 14.5px; 
+        background-color: #191920;
+        transition: all 0.25s ease;
+        color: #fff;
         box-sizing: border-box;
+        font-family: inherit;
     }
 
-    .address-container input::placeholder { color: #aaa; }
+    .address-container input::placeholder,
+    .address-container textarea::placeholder { color: #5a5a68; }
 
     .address-container input:focus, 
     .address-container textarea:focus { 
-        border-color: #000; 
-        background-color: #fff;
+        border-color: rgba(255, 255, 255, 0.4); 
+        background-color: #1f1f28;
         outline: none; 
-        box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
     }
 
     /* Pincode Specific Styles */
@@ -87,66 +85,62 @@
     #pin-loader { 
         position: absolute; 
         right: 15px; 
-        top: 38px; 
+        top: 36px; 
         font-size: 12px; 
-        font-weight: 500;
+        font-weight: 600;
     }
 
     /* Button Styling */
     .btn-save { 
-        background: #000; 
-        color: #fff; 
+        background: #ffffff; 
+        color: #0c0c0e; 
         width: 100%; 
-        padding: 16px; 
+        padding: 15px; 
         border: none; 
         border-radius: 12px; 
-        font-weight: 600; 
-        font-size: 16px;
+        font-weight: 700; 
+        font-size: 15px;
         cursor: pointer; 
-        margin-top: 25px;
-        transition: transform 0.2s, background 0.3s;
+        margin-top: 24px;
+        transition: transform 0.2s, background 0.2s;
         letter-spacing: 0.5px;
     }
 
     .btn-save:hover {
-        background: #222;
+        background: #e8e8ed;
         transform: translateY(-2px);
     }
 
-    .btn-save:active { transform: translateY(0); }
-
     /* Mobile Responsiveness */
     @media (max-width: 600px) { 
-        .address-wrapper { padding: 20px 10px; }
-        .address-container { padding: 25px 20px; border-radius: 0; box-shadow: none; border: none; background: transparent; }
+        .address-wrapper { padding: 20px 12px; }
+        .address-container { padding: 24px 18px; border-radius: 16px; }
         .form-grid { grid-template-columns: 1fr; gap: 15px; } 
         .full-width { grid-column: span 1; } 
-        .address-container h2 { font-size: 20px; text-align: left; }
-        .sub-text { text-align: left; margin-bottom: 25px; }
-        .btn-save { position: sticky; bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .address-container h1 { font-size: 20px; text-align: left; }
+        .sub-text { text-align: left; margin-bottom: 22px; }
     }
 </style>
 
 <div class="address-wrapper">
     <div class="address-container">
-        <h2>Shipping Address</h2>
-        <p class="sub-text">Please enter the details where you want your order delivered.</p>
+        <h1>Shipping Address</h1>
+        <p class="sub-text">Enter your delivery address for fast and accurate order dispatch.</p>
         
         <form method="POST">
             {% csrf_token %}
             <div class="form-grid">
                 <div class="form-group">
                     <label>First Name</label>
-                    <input type="text" name="first_name" placeholder="e.g. Cristiano" required>
+                    <input type="text" name="first_name" placeholder="e.g. Rahul" required>
                 </div>
                 <div class="form-group">
                     <label>Last Name</label>
-                    <input type="text" name="last_name" placeholder="e.g. Ronaldo
-" required>
+                    <input type="text" name="last_name" placeholder="e.g. Sharma" required>
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Mobile Number</label>
+                    <label>Mobile Number (For Courier Updates)</label>
                     <input type="tel" name="mobile" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
                 </div>
 
@@ -157,17 +151,17 @@
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Flat, House no., Building, Company, Apartment</label>
-                    <input type="text" name="address" placeholder="H.No 123, Vilio, Apartments" required>
+                    <label>Flat, House no., Building, Apartment</label>
+                    <input type="text" name="address" placeholder="Flat / House No., Apartment Name" required>
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Area, Street, Sector, Village</label>
-                    <textarea name="address_2" rows="2" placeholder="Main Street, Near Clock Tower"></textarea>
+                    <label>Area, Street, Landmark</label>
+                    <textarea name="address_2" rows="2" placeholder="Street, Sector, Landmark"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Town/City</label>
+                    <label>City</label>
                     <input type="text" name="city" id="city" placeholder="City" required>
                 </div>
                 <div class="form-group">
@@ -176,7 +170,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-save">SAVE AND CONTINUE</button>
+            <button type="submit" class="btn-save">SAVE & PROCEED</button>
         </form>
     </div>
 </div>
@@ -186,8 +180,8 @@
         const pincode = this.value;
         const loader = document.getElementById('pin-loader');
         if (pincode.length === 6) {
-            loader.innerText = "🔍 Fetching...";
-            loader.style.color = "#666";
+            loader.innerText = "🔍 Checking...";
+            loader.style.color = "#888";
             fetch(`https://api.postalpincode.in/pincode/${pincode}`)
             .then(res => res.json())
             .then(data => {
@@ -195,15 +189,14 @@
                     document.getElementById('city').value = data[0].PostOffice[0].District;
                     document.getElementById('state').value = data[0].PostOffice[0].State;
                     loader.innerText = "✅ Found"; 
-                    loader.style.color = "#28a745";
+                    loader.style.color = "#00d084";
                 } else { 
                     loader.innerText = "❌ Invalid"; 
-                    loader.style.color = "#dc3545"; 
+                    loader.style.color = "#ff4757"; 
                 }
             })
             .catch(err => {
-                loader.innerText = "⚠️ Error";
-                loader.style.color = "#ff9800";
+                loader.innerText = "";
             });
         } else {
             loader.innerText = "";

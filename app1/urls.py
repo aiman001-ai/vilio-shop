@@ -34,8 +34,8 @@ urlpatterns = [
     path('address/edit/<int:id>/', edit_address, name='edit_address'),
 
     # Quantity Update AJAX Routes
-    path('cart/increase/<int:item_id>/', increase_quantity, name='increase_quantity'),
-    path('cart/decrease/<int:item_id>/', decrease_quantity, name='decrease_quantity'),
+    path('cart/increase/<str:item_id>/', increase_quantity, name='increase_quantity'),
+    path('cart/decrease/<str:item_id>/', decrease_quantity, name='decrease_quantity'),
 
     # Checkout
     path('checkout/', checkout, name='checkout'),

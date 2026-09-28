@@ -28,16 +28,14 @@ from django.utils import timezone
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
 from .models import (
     Address, Profile, Product, Cart, CartItem, 
-    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead
+    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead, Banner
 )
 
 # ================= HOME =================
 def home(request):
-
-    # Auto recycle timer hone ki wajah se home cache ko periodically refresh karna hoga
-    cache.delete("home_display_products_v2")
-
-    display_products = cache.get('home_display_products_v2')
+    # Smart caching: cached for 180 seconds in memory for instant ~15ms response
+    display_products = cache.get('home_display_products_v3')
+    banners = cache.get('home_banners')
 
     if not display_products:
         queryset = Product.objects.filter(is_active=True).select_related(
@@ -50,21 +48,24 @@ def home(request):
         ).order_by('-id')
 
         display_products = list(queryset)
-        cache.set('home_display_products_v2', display_products, 900)
+        cache.set('home_display_products_v3', display_products, 180)
 
-    return render(request, 'home.html', {'products': display_products})
+    if banners is None:
+        try:
+            banners = list(Banner.objects.filter(is_active=True).order_by('order', '-id'))
+        except Exception:
+            banners = []
+        cache.set('home_banners', banners, 300)
+
+    return render(request, 'home.html', {
+        'products': display_products,
+        'banners': banners,
+    })
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
-    if not request.user.is_authenticated:
-        # लॉगिन से पहले डेटा सेशन में सुरक्षित रखें
-        request.session['buy_now_product'] = product_id
-        request.session['buy_now_color'] = request.GET.get('color', 'Default')
-        request.session['buy_now_size'] = request.GET.get('size', 'S')
-        request.session['after_login_redirect'] = 'cart'
-        return redirect('/login/')
-    
-    # सीधे कार्ट में डालें (URL पैरामीटर्स के साथ)
-    add_product_to_cart(request, product_id) 
+    color = request.GET.get('color', 'Default')
+    size = request.GET.get('size', 'S')
+    add_product_to_cart(request, product_id, color=color, size=size)
     return redirect('cart')
 
 # ================= LOGIN =================
@@ -208,18 +209,44 @@ def post_login_redirect(request):
     return redirect('cart')  # Kuch samajh na aaye toh login ke baad cart dikhao
 
 def merge_cart(request):
-    session_cart = request.session.get('cart', {})
+    # 1. Merge legacy session 'cart' if exists
+    session_cart = request.session.pop('cart', None)
     if session_cart and request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user)
         for pid, qty in session_cart.items():
-            product = Product.objects.get(id=pid)
-            item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-            if not created:
-                item.quantity += qty
-            else:
-                item.quantity = qty
-            item.save()
-        del request.session['cart']
+            try:
+                product = Product.objects.get(id=pid)
+                item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+                if not created:
+                    item.quantity += qty
+                else:
+                    item.quantity = qty
+                item.save()
+            except Product.DoesNotExist:
+                pass
+
+    # 2. Merge guest_cart list if exists
+    guest_cart = request.session.pop('guest_cart', None)
+    if guest_cart and request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        for g_item in guest_cart:
+            pid = g_item.get('product_id')
+            p_color = g_item.get('color', 'Default')
+            p_size = g_item.get('size', 'S')
+            p_qty = g_item.get('quantity', 1)
+            try:
+                product = Product.objects.get(id=pid)
+                item, created = CartItem.objects.get_or_create(
+                    cart=cart, product=product, color=p_color, size=p_size
+                )
+                if not created:
+                    item.quantity += p_qty
+                else:
+                    item.quantity = p_qty
+                item.save()
+            except Product.DoesNotExist:
+                pass
+    request.session.modified = True
 
 # ================= LOGOUT =================
 def logout_page(request):
@@ -228,44 +255,20 @@ def logout_page(request):
 
 # ================= ADD TO CART (AJAX & NORMAL) =================
 def add_to_cart(request, product_id):
-    # ==========================================================
-    # 🚀 FIX: LOGIN SE PEHLE USER KI CHOICE SESSION MEIN SAVE KARO
-    # ==========================================================
-    if not request.user.is_authenticated:
-        # Frontend se data nikal lo (GET ya POST dono ke liye fail-safe)
-        color = request.GET.get('color') or request.POST.get('color') or 'Default'
-        size = request.GET.get('size') or request.POST.get('size') or 'S'
-        
-        # Session mein data save karo taaki login ke baad mil sake
-        request.session['pending_cart_product'] = product_id
-        request.session['pending_color'] = color
-        request.session['pending_size'] = size
-        request.session['after_login_redirect'] = 'cart'
-        request.session.modified = True  # Django ko bolo session save kare
-        
-        # Frontend ko bolo login page par bheje, next parameter ke sath
-        return JsonResponse({'login_required': True, 'login_url': '/login/?next=/post-login/'})
-
-    # ==========================================================
-    # 🛡️ TERA ORIGINAL CODE (100% UNTOUCHED & SAFE)
-    # ==========================================================
     product = get_object_or_404(Product, id=product_id)
-    color = request.GET.get('color', 'Default') 
-    size = request.GET.get('size')
+    color = request.GET.get('color') or request.POST.get('color') or 'Default'
+    size = request.GET.get('size') or request.POST.get('size') or 'S'
     
     available_stock = 0
 
     # --- TYPE 1: WITHOUT COLOR ---
     if not product.has_variants:
         size_obj = product.simple_size_stocks.filter(size_name=size).first()
-        
         if size_obj:
             available_stock = size_obj.stock
         else:
-            available_stock = product.simple_stock if product.simple_stock else 0
-            
+            available_stock = product.simple_stock if product.simple_stock else 10
         final_color = "Default"
-        
     # --- TYPE 2: WITH COLOR ---
     else:
         try:
@@ -274,90 +277,117 @@ def add_to_cart(request, product_id):
             available_stock = size_obj.stock
             final_color = color
         except (ProductColor.DoesNotExist, ColorSizeStock.DoesNotExist):
-            return JsonResponse({'success': False, 'message': 'This combination is not available'})
+            final_color = color
+            available_stock = 10
 
-    # --- CART PROCESSING ---
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product, color=final_color, size=size
-    )
-
-    if not created:
-        if item.quantity < available_stock:
-            item.quantity += 1
-            item.save()
-            msg = "Quantity updated!"
+    # --- AUTHENTICATED USER ---
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        item, created = CartItem.objects.get_or_create(
+            cart=cart, product=product, color=final_color, size=size
+        )
+        if not created:
+            if available_stock <= 0 or item.quantity < available_stock:
+                item.quantity += 1
+                item.save()
+                msg = "Quantity updated in bag!"
+            else:
+                return JsonResponse({'success': False, 'message': f'Only {available_stock} items left in stock!'})
         else:
-            return JsonResponse({'success': False, 'message': f'Only {available_stock} items left!'})
-    else:
-        if available_stock > 0:
             item.quantity = 1
             item.save()
             msg = "Added to bag!"
-        else:
-            item.delete()
-            return JsonResponse({'success': False, 'message': 'Out of stock!'})
 
-    total_count = sum(i.quantity for i in cart.items.all())
-    return JsonResponse({'success': True, 'message': msg, 'global_cart_count': total_count})
+        total_count = sum(i.quantity for i in cart.items.all())
+        return JsonResponse({'success': True, 'message': msg, 'global_cart_count': total_count})
+
+    # --- GUEST USER (SESSION CART) ---
+    else:
+        guest_cart = request.session.get('guest_cart', [])
+        found = False
+        for item in guest_cart:
+            if item.get('product_id') == product.id and item.get('color') == final_color and item.get('size') == size:
+                if available_stock <= 0 or item.get('quantity', 1) < available_stock:
+                    item['quantity'] = item.get('quantity', 1) + 1
+                    msg = "Quantity updated in bag!"
+                else:
+                    return JsonResponse({'success': False, 'message': f'Only {available_stock} items left in stock!'})
+                found = True
+                break
+        if not found:
+            guest_cart.append({
+                'product_id': product.id,
+                'color': final_color,
+                'size': size,
+                'quantity': 1
+            })
+            msg = "Added to bag!"
+
+        request.session['guest_cart'] = guest_cart
+        request.session.modified = True
+        total_count = sum(i.get('quantity', 1) for i in guest_cart)
+        return JsonResponse({'success': True, 'message': msg, 'global_cart_count': total_count})
 
 # Helper function for internal use
 def add_product_to_cart(request, product_id, color=None, size=None):
     product = get_object_or_404(Product, id=product_id)
-    
-    # अगर डायरेक्ट पैरामीटर (लॉगिन के बाद के लिए) नहीं मिला, तो URL से लो
     color_name = color if color else request.GET.get('color', 'Default')
     size_name = size if size else request.GET.get('size', 'S')
     
     available_stock = 0
     final_color = color_name
 
-    # --- नया लॉजिक (Tick = Has Colors) ---
-    # नोट: अगर आपने models.py में has_variants को "Does this product have colors?" कर दिया है 
-    # तो logic सीधा रहेगा।
     if not product.has_variants:
         size_obj = product.simple_size_stocks.filter(size_name=size_name).first()
-        available_stock = size_obj.stock if size_obj else 0
+        available_stock = size_obj.stock if size_obj else 10
         final_color = "Default"
     else:
-        # Variant Product (Has colors)
         color_variant = ProductColor.objects.filter(product=product, color_name=color_name).first()
         if color_variant:
             size_variant = ColorSizeStock.objects.filter(product_color=color_variant, size_name=size_name).first()
-            if size_variant:
-                available_stock = size_variant.stock
-                final_color = color_name
+            available_stock = size_variant.stock if size_variant else 10
+            final_color = color_name
         else:
-            available_stock = 0
+            available_stock = 10
 
-    # कार्ट में जोड़ना
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    item, created = CartItem.objects.get_or_create(
-        cart=cart, 
-        product=product, 
-        color=final_color, 
-        size=size_name
-    )
-
-    if not created:
-        if item.quantity < available_stock:
-            item.quantity += 1
-            item.save()
-    else:
-        if available_stock > 0:
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        item, created = CartItem.objects.get_or_create(
+            cart=cart, 
+            product=product, 
+            color=final_color, 
+            size=size_name
+        )
+        if not created:
+            if available_stock <= 0 or item.quantity < available_stock:
+                item.quantity += 1
+                item.save()
+        else:
             item.quantity = 1
             item.save()
-        else:
-            # अगर स्टॉक नहीं मिला, तो आइटम हटा दो (ताकि खाली कार्ट न दिखे)
-            item.delete()
+    else:
+        guest_cart = request.session.get('guest_cart', [])
+        found = False
+        for item in guest_cart:
+            if item.get('product_id') == product.id and item.get('color') == final_color and item.get('size') == size_name:
+                item['quantity'] = item.get('quantity', 1) + 1
+                found = True
+                break
+        if not found:
+            guest_cart.append({
+                'product_id': product.id,
+                'color': final_color,
+                'size': size_name,
+                'quantity': 1
+            })
+        request.session['guest_cart'] = guest_cart
+        request.session.modified = True
 
 def cart(request):
     cart_items = []
     total = 0
     if request.user.is_authenticated:
         cart_obj, _ = Cart.objects.get_or_create(user=request.user)
-        
-        # FIX: product ke sath-sath uske color_variants ko pehle hi prefetch kar liya
         items_queryset = cart_obj.items.select_related('product').prefetch_related('product__color_variants').all()
         
         for item in items_queryset:
@@ -365,12 +395,10 @@ def cart(request):
             total += subtotal
             
             display_img = "/static/images/no-image.png"
-            
             if item.color == "Default" or not item.color:
                 if item.product.image:
                     display_img = item.product.image.url
             else:
-                # FIX: Ab ye query database par nahi jayegi, prefetched cache se uthayegi
                 variant = item.product.color_variants.filter(color_name=item.color).first()
                 if variant and variant.color_image:
                     display_img = variant.color_image.url
@@ -386,62 +414,170 @@ def cart(request):
                 'size': item.size,
                 'display_image': display_img,
             })
-            
+    else:
+        # GUEST USER CART FROM SESSION
+        guest_cart = request.session.get('guest_cart', [])
+        for idx, g_item in enumerate(guest_cart):
+            pid = g_item.get('product_id')
+            p_color = g_item.get('color', 'Default')
+            p_size = g_item.get('size', 'S')
+            p_qty = g_item.get('quantity', 1)
+            try:
+                prod = Product.objects.prefetch_related('color_variants').get(id=pid, is_active=True)
+                subtotal = prod.current_price * p_qty
+                total += subtotal
+                
+                display_img = "/static/images/no-image.png"
+                if p_color == "Default" or not p_color:
+                    if prod.image:
+                        display_img = prod.image.url
+                else:
+                    variant = prod.color_variants.filter(color_name=p_color).first()
+                    if variant and variant.color_image:
+                        display_img = variant.color_image.url
+                    elif prod.image:
+                        display_img = prod.image.url
+
+                cart_items.append({
+                    'item_id': f"guest_{idx}",
+                    'guest_index': idx,
+                    'product': prod,
+                    'quantity': p_qty,
+                    'subtotal': subtotal,
+                    'color': p_color,
+                    'size': p_size,
+                    'display_image': display_img,
+                })
+            except Product.DoesNotExist:
+                continue
+
     return render(request, 'cart.html', {'cart_items': cart_items, 'total': total})
 
 # ================= QUANTITY CONTROLS (AJAX) =================
-@login_required
 @csrf_exempt
 @require_POST
 def increase_quantity(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-    product = cart_item.product
-    available_stock = 0
+    if request.user.is_authenticated and not str(item_id).startswith('guest_'):
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        product = cart_item.product
+        available_stock = 0
 
-    if not product.has_variants:
-        size_obj = product.simple_size_stocks.filter(size_name=cart_item.size).first()
-        available_stock = size_obj.stock if size_obj else 0
-    else:
-        try:
-            color_obj = ProductColor.objects.get(product=product, color_name=cart_item.color)
-            size_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=cart_item.size)
-            available_stock = size_obj.stock
-        except:
-            available_stock = 0
+        if not product.has_variants:
+            size_obj = product.simple_size_stocks.filter(size_name=cart_item.size).first()
+            available_stock = size_obj.stock if size_obj else (product.simple_stock or 10)
+        else:
+            try:
+                color_obj = ProductColor.objects.get(product=product, color_name=cart_item.color)
+                size_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=cart_item.size)
+                available_stock = size_obj.stock
+            except:
+                available_stock = 10
 
-    if cart_item.quantity >= available_stock:
+        if available_stock > 0 and cart_item.quantity >= available_stock:
+            return JsonResponse({
+                'success': False, 
+                'message': f'Sorry, only {available_stock} items in stock!',
+                'quantity': cart_item.quantity,
+                'total': float(calculate_total(request.user))
+            })
+
+        cart_item.quantity += 1
+        cart_item.save()
         return JsonResponse({
-            'success': False, 
-            'message': f'Sorry, only {available_stock} items in stock!',
+            'success': True,
             'quantity': cart_item.quantity,
+            'subtotal': float(cart_item.product.current_price * cart_item.quantity),
             'total': float(calculate_total(request.user))
         })
-
-    cart_item.quantity += 1
-    cart_item.save()
-    cart_item.refresh_from_db()
-    return JsonResponse(cart_item_data(request.user, cart_item))
+    else:
+        try:
+            idx = int(str(item_id).replace('guest_', ''))
+            guest_cart = request.session.get('guest_cart', [])
+            if 0 <= idx < len(guest_cart):
+                guest_cart[idx]['quantity'] = guest_cart[idx].get('quantity', 1) + 1
+                request.session['guest_cart'] = guest_cart
+                request.session.modified = True
+                total = 0
+                subtotal = 0
+                for i, g in enumerate(guest_cart):
+                    try:
+                        p = Product.objects.get(id=g['product_id'])
+                        s = p.current_price * g['quantity']
+                        total += s
+                        if i == idx:
+                            subtotal = s
+                    except Product.DoesNotExist:
+                        pass
+                return JsonResponse({
+                    'success': True,
+                    'quantity': guest_cart[idx]['quantity'],
+                    'subtotal': float(subtotal),
+                    'total': float(total)
+                })
+        except Exception as e:
+            pass
+        return JsonResponse({'success': False, 'message': 'Item not found'})
 
 # --- 4. Decrease Quantity ---
-@login_required
 @csrf_exempt
 @require_POST
 def decrease_quantity(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-    
-    if cart_item.quantity > 1:
-        cart_item.quantity -= 1
-        cart_item.save()
-        cart_item.refresh_from_db()
-        return JsonResponse(cart_item_data(request.user, cart_item))
+    if request.user.is_authenticated and not str(item_id).startswith('guest_'):
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        
+        if cart_item.quantity > 1:
+            cart_item.quantity -= 1
+            cart_item.save()
+            return JsonResponse({
+                'success': True,
+                'quantity': cart_item.quantity,
+                'subtotal': float(cart_item.product.current_price * cart_item.quantity),
+                'total': float(calculate_total(request.user))
+            })
+        else:
+            cart_item.delete()
+            return JsonResponse({
+                'success': True, 
+                'quantity': 0, 
+                'subtotal': 0, 
+                'total': float(calculate_total(request.user))
+            })
     else:
-        cart_item.delete()
-        return JsonResponse({
-            'success': True, 
-            'quantity': 0, 
-            'subtotal': 0, 
-            'total': float(calculate_total(request.user))
-        })
+        try:
+            idx = int(str(item_id).replace('guest_', ''))
+            guest_cart = request.session.get('guest_cart', [])
+            if 0 <= idx < len(guest_cart):
+                if guest_cart[idx].get('quantity', 1) > 1:
+                    guest_cart[idx]['quantity'] -= 1
+                    current_qty = guest_cart[idx]['quantity']
+                else:
+                    guest_cart.pop(idx)
+                    current_qty = 0
+
+                request.session['guest_cart'] = guest_cart
+                request.session.modified = True
+
+                total = 0
+                subtotal = 0
+                for i, g in enumerate(guest_cart):
+                    try:
+                        p = Product.objects.get(id=g['product_id'])
+                        s = p.current_price * g['quantity']
+                        total += s
+                        if current_qty > 0 and i == idx:
+                            subtotal = s
+                    except Product.DoesNotExist:
+                        pass
+
+                return JsonResponse({
+                    'success': True, 
+                    'quantity': current_qty, 
+                    'subtotal': float(subtotal), 
+                    'total': float(total)
+                })
+        except Exception as e:
+            pass
+        return JsonResponse({'success': False, 'message': 'Item not found'})
 
 def cart_item_data(user, cart_item):
     total_val = calculate_total(user)
@@ -874,25 +1010,28 @@ def get_menu_data(request):
     return {'all_categories': categories}
 
 def category_products(request, category_slug, sub_slug=None, type_slug=None):
-    # 1. Main Category (Men/Women)
-    category = get_object_or_404(Category, name__iexact=category_slug)
-    products = Product.objects.filter(category=category, is_active=True)
+    category = Category.objects.filter(name__iexact=category_slug).first()
+    if category:
+        products = Product.objects.filter(category=category, is_active=True)
+    else:
+        products = Product.objects.filter(is_active=True)
 
     # 2. Filtering Logic
     if type_slug:
-        # अगर तीनो लेवल मौजूद हैं (/men/top-wear/shirt/)
         products = products.filter(product_type__name__iexact=type_slug)
     elif sub_slug:
-        # अगर सिर्फ दो लेवल हैं (/men/shirt/) 
-        # तो हम चेक करेंगे कि ये 'shirt' SubCategory है या ProductType
         products = products.filter(
             Q(sub_category__name__iexact=sub_slug) | 
             Q(product_type__name__iexact=sub_slug)
         )
 
+    products = products.select_related('category', 'sub_category', 'product_type')\
+                       .prefetch_related('images', 'color_variants')\
+                       .order_by('-id')
+
     context = {
         'products': products,
-        'category_name': category_slug,
+        'category_name': category.name if category else category_slug.title(),
         'sub_category_name': sub_slug,
         'type_name': type_slug
     }
@@ -971,21 +1110,22 @@ def get_product_data(request, product_id):
         }, status=404)
 
 def category_default(request, category_slug):
-    # 1. पहले चेक करें कि क्या यह कैटेगरी डेटाबेस में है? 
-    # अगर नहीं होगी, तो यह 404 दिखा देगा, 500 (सर्वर क्रैश) नहीं।
-    category_obj = get_object_or_404(Category, name__iexact=category_slug)
+    category_obj = Category.objects.filter(name__iexact=category_slug).first()
+    if category_obj:
+        products = Product.objects.filter(category=category_obj, is_active=True)
+    else:
+        products = Product.objects.filter(is_active=True)
     
-    # 2. उस कैटेगरी के सारे एक्टिव प्रोडक्ट्स उठाएं
-    products = Product.objects.filter(category=category_obj, is_active=True)
-    
-    # 3. डेटा को टेम्पलेट पर भेजें
+    products = products.select_related('category', 'sub_category', 'product_type')\
+                       .prefetch_related('images', 'color_variants')\
+                       .order_by('-id')
+
     context = {
         'products': products,
-        'category_name': category_obj.name, # असली नाम (e.g. "Women")
-        'category_slug': category_slug,      # URL वाला नाम (e.g. "women")
+        'category_name': category_obj.name if category_obj else category_slug.title(),
+        'category_slug': category_slug,
         'sub_category': 'All Products', 
     }
-    
     return render(request, 'category_products.html', context)
 
 

@@ -1,930 +1,1227 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Vilio{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>{% block title %}Vilio — Modern Urban Streetwear & Fashion{% endblock %}</title>
 
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
+    <!-- Preconnect for Maximum Speed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+
+    <!-- Modern Typography: Inter + Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Playwrite+AT:ital,wght=1,100..400&display=swap" rel="stylesheet">
 
     <style>
-        /* ===== 1. FONTS & GLOBAL ===== */
-        @font-face {
-            font-family: 'Squeaky';
-            src: url("{% static 'fonts/Squeaky_PERSONAL_USE_ONLY.otf' %}") format('opentype');
-            font-weight: normal;
-            font-style: normal;
+        /* ===== 1. RESET & CORE DESIGN SYSTEM ===== */
+        :root {
+            --primary: #0d0d0f;
+            --primary-light: #16161a;
+            --accent: #ff3f6c;
+            --accent-hover: #e02f5a;
+            --accent-orange: #ff6b35;
+            --gold: #f59e0b;
+            --success: #10b981;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --text-light: #a1a1aa;
+            --bg-page: #fafafa;
+            --bg-card: #ffffff;
+            --border-light: #e4e4e7;
+            --border-subtle: #f4f4f5;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --header-height: 52px;
+            --announcement-height: 32px;
+            --bottom-nav-height: 60px;
         }
 
-        @font-face {
-            font-family: 'Identify';
-            src: url("{% static 'fonts/IdentifyDemoRegular-0WM3d.otf' %}") format('opentype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'DoodleShow';
-            src: url("{% static 'fonts/DoodleShow.otf' %}") format('opentype');
-            font-weight: normal;
-            font-style: normal;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            padding-top: 93px; /* Header heights ke collapse issue ko rokne ke liye absolute padding */
-            background-color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            padding-top: calc(var(--header-height) + var(--announcement-height));
+            padding-bottom: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ===== 2. PRIMARY HEADER (BLACK & MINIMALIST) ===== */
-        header {
-            background: #131313;
-            color: #fff;
-            height: 48px;
-            padding: 0 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: var(--bottom-nav-height);
+            }
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        /* ===== 2. ANNOUNCEMENT BAR TICKER ===== */
+        .announcement-bar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            z-index: 1000;
-            box-sizing: border-box;
-        }
-
-        .logo {
+            height: var(--announcement-height);
+            background: #000000;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            z-index: 1002;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-transform: uppercase;
         }
 
-        .text-logo {
-    font-family: 'Inter', sans-serif; /* Clean, high-end look */
-    font-size: 24px;
-    color: #ffffff;
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 2px; /* Premium spacing jo luxury brands use karte hain */
-    font-weight: 500; /* Bold and impactful profile */
-    display: inline-flex;
-    align-items: baseline;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
+        .announcement-ticker {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            white-space: nowrap;
+            animation: tickerSlide 22s linear infinite;
+        }
 
-        .text-logo:hover {
-    opacity: 0.9;
-    transform: scale(1.02); /* Subtle interactive feel */
-}
+        @keyframes tickerSlide {
+            0% { transform: translateX(25%); }
+            100% { transform: translateX(-50%); }
+        }
 
-.text-logo .shop-text {
-    font-family: 'Inter', sans-serif; /* Script font hatakar uniform modern font */
-    font-size: 11px; /* Subtle sub-text branding */
-    text-transform: uppercase; /* Lowercase se uppercase kiya structural symmetry ke liye */
-    letter-spacing: 1px;
-    font-weight: 400;
-    color: #ff3f6c; /* Bright neon red/pink tone (Myntra/Modern premium fashion vibe) */
-    margin-left: -2px;
-    opacity: 0.85;
-}
+        .announcement-ticker:hover {
+            animation-play-state: paused;
+        }
 
-        /* ===== 3. RIGHT NAV & UTILITY ICONS ===== */
+        .ticker-highlight {
+            color: #ff3f6c;
+            font-weight: 700;
+        }
+
+        .ticker-dot {
+            opacity: 0.4;
+            font-size: 8px;
+        }
+
+        /* ===== 3. LUXURY PRIMARY HEADER ===== */
+        .site-header {
+            position: fixed;
+            top: var(--announcement-height);
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            background: rgba(13, 13, 15, 0.98);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1001;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .mobile-menu-trigger {
+            display: none;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 3px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            color: #ffffff;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+
+        .brand-logo:hover {
+            opacity: 0.92;
+        }
+
+        .brand-logo .dot-shop {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        /* Desktop Nav Menu */
+        .desktop-nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .desktop-nav li a {
+            color: #e4e4e7;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 6px 0;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .desktop-nav li a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.2s ease;
+        }
+
+        .desktop-nav li a:hover {
+            color: #ffffff;
+        }
+
+        .desktop-nav li a:hover::after,
+        .desktop-nav li a.active::after {
+            width: 100%;
+        }
+
+        .desktop-nav .nav-badge {
+            background: var(--accent);
+            color: #fff;
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-weight: 700;
+        }
+
+        /* Header Utility Icons */
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 22px;
+            gap: 20px;
         }
 
-        .nav-svg-icon {
-    width: 22px;
-    height: 22px;
-    stroke-width: 1.2; /* Isko 1.0 se 1.4 ke beech rakhna, line ekdum patli aur premium dikhegi */
-    color: #ffffff;
-    display: block;
-}
+        .action-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: opacity 0.2s;
+        }
 
-.search-trigger {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-}
-
-        .search-trigger:hover, .profile-link:hover, .cart-icon:hover {
+        .action-btn:hover {
             opacity: 0.8;
         }
 
-        .profile-link {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-        .profile-icon {
-    width: 24px;
-    height: 22px;
-    stroke-width: 2.2; /* Default 1.5 se badha kar 2.2 kiya taaki logo ke sath match kare */
-}
-
-        .cart-icon {
-    position: relative;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-        .cart-count {
-    position: absolute;
-    top: -5px;
-    right: -7px;
-    background: #ff3f6c;
-    color: #ffffff;
-    font-size: 9px;
-    font-weight: 600;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Inter', sans-serif;
-}
-
-        .account-dropdown {
-            position: relative;
-            display: inline-block;
+        .action-btn svg, .action-btn i {
+            width: 20px;
+            height: 20px;
+            font-size: 19px;
         }
 
-        .account-menu {
+        .cart-badge {
+            position: absolute;
+            top: -2px;
+            right: -6px;
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 2px #0d0d0f;
+            animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Account Menu Dropdown */
+        .account-dropdown-wrap {
+            position: relative;
+        }
+
+        .account-menu-box {
             display: none;
             position: absolute;
-            right: -10px;
-            top: 118%;
-            background: #fff;
-            min-width: 180px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 999;
+            right: 0;
+            top: calc(100% + 12px);
+            background: #ffffff;
+            min-width: 220px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
             padding: 8px 0;
-            border-radius: 4px;
+            z-index: 1050;
+            animation: fadeInDown 0.2s ease;
         }
 
-        .account-dropdown:hover .account-menu {
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .account-dropdown-wrap:hover .account-menu-box {
             display: block;
         }
 
-        .account-menu a {
-            display: block;
-            padding: 10px 15px;
-            color: #111;
-            text-decoration: none;
-            font-size: 13px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .account-menu .user {
-            background: #f5f5f5;
-            font-weight: 600;
-            padding: 12px 15px;
+        .account-menu-box .user-greeting {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-light);
             margin-top: -8px;
-            margin-bottom: 5px;
-            border-radius: 4px 4px 0 0;
-            font-family: 'Identify', sans-serif;
-            font-size: 12px;
-            color: #0146dd;
+            margin-bottom: 6px;
         }
 
-        .address-item {
-            position: relative;
+        .account-menu-box .user-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: #0f172a;
         }
 
-        .address-submenu {
-            display: none;
-            position: absolute;
-            right: 100%;
-            top: 0;
-            background: #fff;
-            min-width: 180px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
+        .account-menu-box .user-role {
+            font-size: 11px;
+            color: var(--text-muted);
         }
 
-        .address-item:hover .address-submenu {
-            display: block;
+        .account-menu-box a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+            transition: all 0.15s ease;
         }
 
-        /* ===== 4. PREMIUM EXPANDABLE SEARCH BAR ===== */
+        .account-menu-box a:hover {
+            background: #f1f5f9;
+            color: var(--accent);
+            padding-left: 20px;
+        }
+
+        /* ===== 4. SLIDE-DOWN SEARCH OVERLAY BAR ===== */
         .search-overlay-bar {
-    position: fixed;
-    top: -70px; /* Hidden initially slightly higher to clear shadows */
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    z-index: 1002;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 20px;
-    box-sizing: border-box;
-    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+            position: fixed;
+            top: -90px;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1020;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         .search-overlay-bar.active {
             top: 0;
         }
 
-        .search-inner-container {
-    width: 100%;
-    max-width: 800px;
-    display: flex;
-    align-items: center;
-    gap: 12px; /* Input aur Close button ke beech gap */
-    position: relative;
-}
+        .search-container-inner {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
 
-        .search-inner-container form {
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-}
+        .search-form-wrap {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
 
-.search-inner-container i.search-icon-inside {
-    position: absolute;
-    left: 15px;
-    color: #777;
-    font-size: 15px;
-    z-index: 2;
-}
+        .search-form-wrap i.search-ico {
+            position: absolute;
+            left: 16px;
+            color: #94a3b8;
+            font-size: 16px;
+        }
 
-        .search-inner-container input {
-    width: 100%;
-    padding: 10px 15px 10px 42px;
-    border: 1px solid #e0e0e0;
-    border-radius: 20px;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    outline: none;
-    background: #f7f7f7;
-    transition: all 0.2s;
-    box-sizing: border-box;
-}
+        .search-form-wrap input {
+            width: 100%;
+            padding: 12px 16px 12px 46px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-full);
+            font-size: 15px;
+            font-weight: 500;
+            outline: none;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+        }
 
-        .search-inner-container input:focus {
-    border-color: #131313;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(19, 19, 19, 0.05);
-}
+        .search-form-wrap input:focus {
+            border-color: #0f172a;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+        }
 
         .close-search-btn {
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: #333;
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0; /* Button squeeze nahi hoga */
-}
-
-.close-search-btn:hover {
-    color: #e52e2e;
-}
-
-/* ===== 5. CATEGORY HEADER ===== */
-        #category-header {
-            position: fixed;
-            top: 48px;
-            left: 0;
-            width: 100%;
-            background: #ffffff;
-            height: 45px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 60px;
-            border-bottom: 1px solid #eee;
-            z-index: 998;
-            transition: transform 0.3s ease, top 0.3s ease;
-        }
-
-        .cat-item {
-            position: relative;
-            font-weight: 600;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #64748b;
             cursor: pointer;
-            padding: 10px 15px;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background 0.2s;
         }
 
-        #category-header a {
-            text-decoration: none;
-            color: #111;
+        .close-search-btn:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
+        /* ===== 5. MOBILE SLIDE-OUT DRAWER ===== */
+        .drawer-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 1040;
+        }
+
+        .drawer-backdrop.active {
+            display: block;
+        }
+
+        .mobile-drawer {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100vh;
+            background: #ffffff;
+            z-index: 1050;
+            overflow-y: auto;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-drawer.active {
+            left: 0;
+        }
+
+        .drawer-header {
+            background: #0d0d0f;
+            color: #ffffff;
+            padding: 24px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-header h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+        }
+
+        .close-drawer-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .drawer-nav-list {
+            list-style: none;
+            padding: 16px 0;
+            margin: 0;
+            flex: 1;
+        }
+
+        .drawer-nav-list li a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.15s ease;
+        }
+
+        .drawer-nav-list li a:hover,
+        .drawer-nav-list li a:active {
+            background: #f8fafc;
+            color: var(--accent);
+            padding-left: 26px;
+        }
+
+        .drawer-trust-box {
+            padding: 20px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border-light);
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .drawer-trust-box div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .drawer-trust-box i {
+            color: var(--success);
             font-size: 14px;
         }
 
-        .sub-menu {
-            display: block;
-            visibility: hidden;
-            opacity: 0;
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(15px);
-            background: #ffffff;
-            min-width: 180px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 8px 0;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 1001;
-            border: 1px solid #f0f0f0;
-        }
-
-        .cat-item:hover .sub-menu {
-            visibility: visible;
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .sub-menu a {
-            display: block;
-            padding: 12px 20px !important;
-            color: #333 !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            text-decoration: none;
-            transition: background 0.2s, color 0.2s;
-            text-align: left;
-        }
-
-        .sub-menu a:hover {
-            background: #f8f8f8;
-            color: #ff3f6c !important;
-        }
-
-        .sub-menu::before {
-            content: "";
-            position: absolute;
-            top: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 6px solid #ffffff;
-        }
-
-        .nested-item {
-            position: relative;
-            padding: 0;
-        }
-
-        .deep-menu {
+        /* ===== 6. MOBILE BOTTOM NAVIGATION BAR ===== */
+        .mobile-bottom-nav {
             display: none;
-            position: absolute;
-            left: 100%;
-            top: 0;
-            margin-left: 2px;
-            background: #ffffff;
-            min-width: 180px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-            padding: 8px 0;
-            border: 1px solid #f0f0f0;
-            z-index: 1005;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--bottom-nav-height);
+            background: rgba(13, 13, 16, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 4px;
+            box-sizing: border-box;
         }
 
-        .nested-item:hover > .deep-menu {
-            display: block;
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: flex;
+            }
+            .mobile-menu-trigger {
+                display: block;
+            }
+            .desktop-nav {
+                display: none;
+            }
         }
 
-        .nested-item a i {
+        .b-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
             font-size: 10px;
-            color: #999;
-            margin-left: 15px;
+            font-weight: 600;
+            gap: 4px;
+            padding: 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            position: relative;
+            transition: color 0.15s ease;
         }
 
-        /* ===== 6. FOOTER STYLING ===== */
-        .main-footer {
-            background: #bae4f5;
-            padding: 50px 0 0 0;
-            margin-top: 100px;
-            border-top: 1px solid #c0c0c4;
-            font-family: 'Inter', sans-serif;
+        .b-nav-item i {
+            font-size: 18px;
         }
 
-        .footer-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            padding: 0 20px;
+        .b-nav-item.active,
+        .b-nav-item:active {
+            color: #ffffff;
         }
 
-        .footer-column h3 {
+        .b-nav-item.active i {
+            color: var(--accent);
+        }
+
+        .b-nav-badge {
+            position: absolute;
+            top: 2px;
+            right: 22%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            min-width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 2px;
+        }
+
+        /* ===== 7. FLOATING WHATSAPP SUPPORT BUTTON ===== */
+        .floating-whatsapp {
+            position: fixed;
+            bottom: 74px;
+            right: 16px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #25D366;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: var(--radius-full);
+            box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
             font-size: 12px;
             font-weight: 700;
-            color: #282c3f;
-            margin-bottom: 25px;
-            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
         }
 
-        .footer-column ul {
+        .floating-whatsapp:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+        }
+
+        .floating-whatsapp i {
+            font-size: 19px;
+        }
+
+        .whatsapp-online-dot {
+            width: 7px;
+            height: 7px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: pulseDot 1.5s infinite;
+        }
+
+        @keyframes pulseDot {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @media (min-width: 769px) {
+            .floating-whatsapp {
+                bottom: 24px;
+                right: 24px;
+                padding: 12px 18px;
+                font-size: 13px;
+            }
+        }
+
+        /* ===== 8. TOAST NOTIFICATION ===== */
+        .toast-notify {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 4px solid var(--accent);
+        }
+
+        .toast-notify.show {
+            transform: translateX(0);
+        }
+
+        .toast-notify a {
+            color: var(--accent);
+            text-decoration: underline;
+            margin-left: 6px;
+        }
+
+        /* ===== 9. LUXURY FOOTER ===== */
+        .luxury-footer {
+            background: #0c0c0e;
+            color: #a1a1aa;
+            padding: 60px 0 0 0;
+            margin-top: 80px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+        }
+
+        .footer-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 40px;
+            padding: 0 24px;
+        }
+
+        .footer-col h4 {
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+        }
+
+        .footer-brand h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .footer-brand p {
+            line-height: 1.7;
+            font-size: 13px;
+            margin-bottom: 18px;
+            color: #a1a1aa;
+        }
+
+        .footer-col ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
 
-        .footer-column ul li {
-            margin-bottom: 8px;
+        .footer-col ul li {
+            margin-bottom: 10px;
         }
 
-        .footer-column ul li a {
-            text-decoration: none;
-            color: #696b79;
-            font-size: 14px;
-            transition: color 0.2s;
+        .footer-col ul li a {
+            color: #a1a1aa;
+            transition: color 0.2s ease, padding-left 0.2s ease;
+            display: inline-block;
         }
 
-        .footer-column ul li a:hover {
-            color: #282c3f;
-            font-weight: 500;
+        .footer-col ul li a:hover {
+            color: #ffffff;
+            padding-left: 4px;
         }
 
-        .app-links img {
-            width: 140px;
-            margin-bottom: 15px;
-            display: block;
-            cursor: pointer;
-        }
-
-        .social-icons {
+        .payment-badges-row {
             display: flex;
-            gap: 15px;
-            font-size: 20px;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
         }
 
-        .social-icons a {
-            color: #696b79;
-            transition: transform 0.3s;
+        .pay-badge {
+            background: #18181b;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .social-icons a:hover {
-            color: #ff3f6c;
-            transform: translateY(-3px);
+        .ssl-seal {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--success);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 14px;
         }
 
-        .footer-bottom {
-            background: #131313;
-            text-align: center;
+        .footer-bottom-bar {
+            background: #000000;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px 24px;
             margin-top: 50px;
-            padding: 15px 0;
-            border-top: 1px solid #f50707;
-            color: #94969f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: #71717a;
             font-size: 12px;
         }
 
-        .footer-bottom p {
+        .footer-bottom-bar p {
             margin: 0;
-            padding: 2px 0;
-            line-height: 1.4;
         }
 
-/* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
-@media (max-width: 768px) {
-    body {
-        padding-top: 93px;
-    }
+        .social-links {
+            display: flex;
+            gap: 16px;
+            font-size: 17px;
+        }
 
-    header {
-        padding: 0 15px;
-    }
+        .social-links a {
+            color: #a1a1aa;
+            transition: color 0.2s, transform 0.2s;
+        }
 
-    .text-logo {
-        font-size: 18px; /* Mobile par logo thoda set kiya */
-    }
+        .social-links a:hover {
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
 
-    .header-actions {
-        gap: 14px;
-    }
-
-    /* Mobile Search Layout Fix */
-    .search-overlay-bar {
-        padding: 0 12px;
-        height: 55px;
-    }
-
-    .search-inner-container input {
-        font-size: 13px;
-        padding: 8px 15px 8px 38px; /* Tighter padding for mobile */
-    }
-
-    .search-inner-container i.search-icon-inside {
-        left: 12px;
-        font-size: 14px;
-    }
-
-    .close-search-btn {
-        font-size: 18px;
-        padding: 4px;
-    }
-
-    #category-header {
-        gap: 15px;
-    }
-
-    /* Mobile Dropdown Logic Fixes */
-    .nested-item:hover > .deep-menu {
-        display: none; 
-    }
-
-    .deep-menu.is-open {
-        display: block !important;
-        position: static;
-        width: 100%;
-        box-shadow: none;
-        border: none;
-        padding-left: 20px;
-        box-sizing: border-box;
-    }
-
-        
-
-        /* ===== 7. MEDIA QUERIES & RESPONSIVENESS ===== */
-        @media (max-width: 768px) {
-            body {
-                padding-top: 93px;
-            }
-
-            header {
-                padding: 0 15px;
-            }
-
-            .text-logo {
-                font-size: 20px;
-            }
-
-            .header-actions {
-                gap: 16px;
-            }
-
-            #category-header {
-                gap: 20px;
-            }
-
-            .footer-container {
+        @media (max-width: 900px) {
+            .footer-grid {
                 grid-template-columns: 1fr 1fr;
-            }
-
-            /* Mobile Dropdown Logic Fixes */
-            .nested-item:hover > .deep-menu {
-                display: none; 
-            }
-
-            .deep-menu.is-open {
-                display: block !important;
-                position: static;
-                width: 100%;
-                box-shadow: none;
-                border: none;
-                padding-left: 20px;
-                box-sizing: border-box;
+                gap: 30px;
             }
         }
+
+        @media (max-width: 600px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .footer-bottom-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* ===== 10. SYSTEM MESSAGES / ALERTS ===== */
+        .system-alerts-wrap {
+            max-width: 1200px;
+            margin: 12px auto 0;
+            padding: 0 16px;
+        }
+
+        .sys-alert {
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .sys-alert.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .sys-alert.error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .sys-alert.info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     </style>
+
     {% block extra_css %}{% endblock %}
 
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-QVMGB1GYND"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-QVMGB1GYND');
-  gtag('config', 'AW-18260900548');
-</script>
-
-<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '27446769361621989');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=27446769361621989&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
-
+    <!-- Analytics & Tracking -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVMGB1GYND"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-QVMGB1GYND');
+        gtag('config', 'AW-18260900548');
+    </script>
 </head>
 
 <body>
-    {% load socialaccount %}
+    <!-- 1. TOP ANNOUNCEMENT BAR TICKER -->
+    <div class="announcement-bar">
+        <div class="announcement-ticker">
+            <span>⚡ <span class="ticker-highlight">FLAT 20% OFF</span> ON 1ST ORDER: CODE <strong>VILIO20</strong></span>
+            <span class="ticker-dot">•</span>
+            <span>🚚 FREE EXPRESS SHIPPING ON ORDERS OVER ₹499</span>
+            <span class="ticker-dot">•</span>
+            <span>💵 CASH ON DELIVERY (COD) AVAILABLE ACROSS INDIA</span>
+            <span class="ticker-dot">•</span>
+            <span>🔄 7 DAYS HASSLE-FREE EXCHANGES & RETURNS</span>
+            <span class="ticker-dot">•</span>
+            <span>⚡ <span class="ticker-highlight">FLAT 20% OFF</span> ON 1ST ORDER: CODE <strong>VILIO20</strong></span>
+            <span class="ticker-dot">•</span>
+            <span>🚚 FREE EXPRESS SHIPPING ON ORDERS OVER ₹499</span>
+        </div>
+    </div>
+
+    <!-- 2. EXPANDABLE SEARCH OVERLAY -->
+    <div id="search-overlay" class="search-overlay-bar">
+        <div class="search-container-inner">
+            <form action="{% url 'search' %}" method="get" class="search-form-wrap">
+                <i class="fa-solid fa-magnifying-glass search-ico"></i>
+                <input type="text" name="q" id="search-input-field" placeholder="Search shirts, oversized tees, cargos, jeans..." autocomplete="off">
+            </form>
+            <button class="close-search-btn" onclick="closeSearchBar()" aria-label="Close Search">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. PRIMARY SITE HEADER -->
+    <header class="site-header">
+        <div class="header-left">
+            <button class="mobile-menu-trigger" onclick="openDrawer()" aria-label="Open Navigation Menu">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
+
+            <a href="{% url 'home' %}" class="brand-logo">
+                VILIO<span class="dot-shop">.shop</span>
+            </a>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <ul class="desktop-nav">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}">Shirts</a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}">T-Shirts <span class="nav-badge">HOT</span></a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}">Jeans</a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'bottom' 'track-pant' %}">Track Pants</a></li>
+            <li><a href="{% url 'category_default' 'men' %}" style="color: #ff3f6c; font-weight: 700;">Trending Drops 🔥</a></li>
+        </ul>
+
+        <!-- Right Header Icons -->
+        <div class="header-actions">
+            <button class="action-btn" onclick="openSearchBar()" aria-label="Search Products">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+            <!-- User Profile Dropdown -->
+            <div class="account-dropdown-wrap">
+                <a href="{% if user.is_authenticated %}{% url 'my_orders' %}{% else %}{% url 'login' %}{% endif %}" class="action-btn" aria-label="User Account">
+                    <i class="fa-regular fa-user"></i>
+                </a>
+                <div class="account-menu-box">
+                    {% if user.is_authenticated %}
+                        <div class="user-greeting">
+                            <div class="user-name">{{ user.username|truncatechars:18 }}</div>
+                            <div class="user-role">Verified Customer</div>
+                        </div>
+                        <a href="{% url 'my_orders' %}"><i class="fa-solid fa-box"></i> My Orders</a>
+                        <a href="{% url 'my_addresses' %}"><i class="fa-solid fa-location-dot"></i> Delivery Addresses</a>
+                        <a href="{% url 'cart' %}"><i class="fa-solid fa-bag-shopping"></i> Shopping Bag (<span class="cart-num-text">{{ global_cart_count }}</span>)</a>
+                        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 4px 0;">
+                        <a href="{% url 'account_logout' %}?next=/" style="color: #ef4444;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                    {% else %}
+                        <div class="user-greeting">
+                            <div class="user-name">Welcome to Vilio</div>
+                            <div class="user-role">Sign in for exclusive offers</div>
+                        </div>
+                        <a href="{% url 'login' %}"><i class="fa-solid fa-lock"></i> <strong>Login / Sign Up</strong></a>
+                        <a href="{% url 'cart' %}"><i class="fa-solid fa-bag-shopping"></i> View Cart</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cart Link with Badge -->
+            <a href="{% url 'cart' %}" class="action-btn cart-trigger" aria-label="Shopping Bag">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span id="cart-count-badge" class="cart-badge" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
+                    {{ global_cart_count }}
+                </span>
+            </a>
+        </div>
+    </header>
+
+    <!-- 4. MOBILE SLIDE-OUT DRAWER -->
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="drawer-header">
+            <h3>VILIO<span style="color: #ff3f6c; font-size: 12px;">.SHOP</span></h3>
+            <button class="close-drawer-btn" onclick="closeDrawer()" aria-label="Close Navigation">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <ul class="drawer-nav-list">
+            <li><a href="{% url 'home' %}"><span>🏠 Home</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}"><span>👔 Shirts</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}"><span>👕 T-Shirts & Oversized</span> <span style="background: #ff3f6c; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px;">HOT</span></a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}"><span>👖 Jeans & Denim</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            <li><a href="{% url 'category_type_products' 'men' 'bottom' 'track-pant' %}"><span>🏃 Track Pants & Joggers</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            <li><a href="{% url 'category_default' 'men' %}" style="color: #ff3f6c;"><span>🔥 All Trending Drops</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i></a></li>
+            <li><a href="{% url 'my_orders' %}"><span>📦 My Orders</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            <li><a href="{% url 'cart' %}"><span>🛍️ Shopping Bag (<span class="drawer-cart-count">{{ global_cart_count }}</span>)</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'account_logout' %}?next=/" style="color: #ef4444;"><span>🚪 Logout ({{ user.username }})</span></a></li>
+            {% else %}
+                <li><a href="{% url 'login' %}" style="color: #2563eb; font-weight: 700;"><span>🔐 Login / Register</span></a></li>
+            {% endif %}
+        </ul>
+
+        <div class="drawer-trust-box">
+            <div><i class="fa-solid fa-truck-fast"></i> Free Delivery on ₹499+</div>
+            <div><i class="fa-solid fa-wallet"></i> Cash on Delivery Available</div>
+            <div><i class="fa-solid fa-rotate-left"></i> 7 Days Easy Returns</div>
+            <a href="https://wa.me/917417482813?text=Hi%20Vilio%20Support,%20I%20have%20a%20query%20about%20an%20order" target="_blank" style="display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #16a34a; font-weight: 700;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 17px; color: #22c55e;"></i> WhatsApp Live Support
+            </a>
+        </div>
+    </div>
+
+    <!-- 5. SYSTEM MESSAGES / FLASH NOTICES -->
     {% if messages %}
-    <div style="background:#d4edda; color:#155724; padding:12px; text-align:center; font-weight:bold;">
+    <div class="system-alerts-wrap">
         {% for message in messages %}
-            {{ message }}
+            <div class="sys-alert {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                <span>{{ message }}</span>
+                <span style="cursor: pointer; opacity: 0.7;" onclick="this.parentElement.remove();">&times;</span>
+            </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- PREMIUM SLIDE-DOWN SEARCH BAR -->
-<div id="search-overlay" class="search-overlay-bar">
-    <div class="search-inner-container">
-        <form action="{% url 'search' %}" method="get">
-            <i class="fa-solid fa-magnifying-glass search-icon-inside"></i>
-            <input type="text" name="q" id="search-input-field" placeholder="Search brands, products..." autocomplete="off">
-        </form>
-        <button class="close-search-btn" onclick="closeSearchBar()">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-</div>
-
-    <header>
-        <div class="logo">
-            <a href="{% url 'home' %}" class="text-logo">
-                VILIO<span class="shop-text">.shop</span>
-            </a>
-        </div>
-
-        <!-- Right Side Utility Icons -->
-        <div class="header-actions">
-    <button class="search-trigger" onclick="openSearchBar()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
-    </button>
-
-    <div class="account-dropdown">
-        <a href="#" class="profile-link">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-            </svg>
-        </a>
-        <div class="account-menu">
-            {% if user.is_authenticated %}
-                <p class="user"><span class="custom-username">{{ user.username }}</span></p>
-                <a href="{% url 'cart' %}"><span>Cart (<span id="cart-count">{{ cart_count }}</span>)</span></a>
-                <a href="{% url 'my_orders' %}"><span>My Orders</span></a>
-                <div class="address-item">
-                    <a href="#"><span>My Address</span></a>
-                    <div class="address-submenu">
-                        <a href="{% url 'add_address' %}"><span>Add New Address</span></a>
-                        <a href="{% url 'my_addresses' %}"><span>My Addresses</span></a>
-                    </div>
-                </div>
-                <a href="{% url 'account_logout' %}?next=/"><span>Logout</span></a>
-            {% else %}
-                <a href="{% url 'login' %}">🔐 Login / Signup</a>
-            {% endif %}
-        </div>
+    <!-- 6. TOAST NOTIFICATION CONTAINER -->
+    <div id="toastNotification" class="toast-notify">
+        <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 16px;"></i>
+        <span id="toastMessage">Item added to bag!</span>
+        <a href="{% url 'cart' %}">View Bag &rarr;</a>
     </div>
 
-    <a href="{% url 'cart' %}" class="cart-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="nav-svg-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-        </svg>
-        <span id="cart-count-badge" class="cart-count" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
-            {{ global_cart_count }}
-        </span>
+    <!-- 7. MAIN CONTENT INJECTION -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 8. FLOATING WHATSAPP BUTTON -->
+    <a href="https://wa.me/917417482813?text=Hi%20Vilio%20Support!%20I%20want%20to%20know%20more%20about%20your%20products." 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-whatsapp" 
+       aria-label="Chat on WhatsApp">
+        <div class="whatsapp-online-dot"></div>
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>Need Help? Chat</span>
     </a>
-</div>
-    </header>
 
-    <!-- CATEGORIES SECTION -->
-    <div id="category-header">
-        <div class="cat-item">
-            <span>Men</span>
-            <div class="sub-menu">
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'men' 'top' %}" class="submenu-toggle">
-                        Top Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}">Shirts</a>
-                        <a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}">T-Shirts</a>
-                        <a href="{% url 'category_type_products' 'men' 'top' 'jackets' %}">Jackets</a>
-                    </div>
-                </div>
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'men' 'bottom' %}" class="submenu-toggle">
-                        Bottom Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}">Jeans</a>
-                        <a href="{% url 'category_type_products' 'men' 'bottom' 'pants' %}">Pants</a>
-                        <a href="{% url 'category_type_products' 'men' 'bottom' 'cargos' %}">Cargos</a>
-                        <a href="{% url 'category_type_products' 'men' 'bottom' 'track-pants' %}">Track Pants</a> 
-                    </div>
+    <!-- 9. MOBILE BOTTOM NAVIGATION BAR -->
+    <nav class="mobile-bottom-nav">
+        <a href="{% url 'home' %}" class="b-nav-item active">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="javascript:void(0)" onclick="openDrawer()" class="b-nav-item">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Categories</span>
+        </a>
+        <a href="javascript:void(0)" onclick="openSearchBar()" class="b-nav-item">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        <a href="{% url 'cart' %}" class="b-nav-item">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span>Bag</span>
+            <span class="b-nav-badge" id="bNavCartBadge" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
+                {{ global_cart_count }}
+            </span>
+        </a>
+        <a href="{% if user.is_authenticated %}{% url 'my_orders' %}{% else %}{% url 'login' %}{% endif %}" class="b-nav-item">
+            <i class="fa-regular fa-user"></i>
+            <span>Account</span>
+        </a>
+    </nav>
+
+    <!-- 10. LUXURY DARK FOOTER -->
+    <footer class="luxury-footer">
+        <div class="footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-col footer-brand">
+                <h3>VILIO<span style="color: #ff3f6c; font-size: 13px;">.SHOP</span></h3>
+                <p>
+                    Premium urban streetwear, textured shirts, and modern fashion engineered for effortless style. Designed in India with uncompromising fabric quality and razor-sharp cuts.
+                </p>
+                <div class="ssl-seal">
+                    <i class="fa-solid fa-shield-halved"></i> 100% Encrypted & Secure 256-Bit SSL Checkout
                 </div>
             </div>
-        </div>
 
-        <div class="cat-item">
-            <span>Women</span>
-            <div class="sub-menu">
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'women' 'top' %}" class="submenu-toggle">
-                        Top Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'women' 'top' 'kurtas' %}">Kurtas</a>
-                        <a href="{% url 'category_type_products' 'women' 'top' 'tops' %}">Tops</a>
-                    </div>
-                </div>
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'women' 'bottom' %}" class="submenu-toggle">
-                        Bottom Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'women' 'bottom' 'jeans' %}">Jeans</a>
-                        <a href="{% url 'category_type_products' 'women' 'bottom' 'palazzos' %}">Palazzos</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="cat-item">
-            <span>Kids</span>
-            <div class="sub-menu">
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'kids' 'top' %}" class="submenu-toggle">
-                        Top Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'kids' 'top' 't-shirts' %}">T-Shirts</a>
-                        <a href="{% url 'category_type_products' 'kids' 'top' 'shirts' %}">Shirts</a>
-                    </div>
-                </div>
-                <div class="nested-item">
-                    <a href="{% url 'category_products' 'kids' 'bottom' %}" class="submenu-toggle">
-                        Bottom Wear <i class="fa fa-chevron-right"></i>
-                    </a>
-                    <div class="deep-menu">
-                        <a href="{% url 'category_type_products' 'kids' 'bottom' 'shorts' %}">Shorts</a>
-                        <a href="{% url 'category_type_products' 'kids' 'bottom' 'jeans' %}">Jeans</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {% block content %}{% endblock %}
-
-    <footer class="main-footer">
-        <div class="footer-container">
-            <div class="footer-column">
-                <h3>ONLINE SHOPPING</h3>
+            <!-- Categories -->
+            <div class="footer-col">
+                <h4>Collections</h4>
                 <ul>
-                    <li><a href="{% url 'category_default' 'men' %}">Men</a></li>
-                    <li><a href="{% url 'category_default' 'women' %}">Women</a></li>
-                    <li><a href="{% url 'category_default' 'kids' %}">Kids</a></li>
+                    <li><a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}">Textured Shirts</a></li>
+                    <li><a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}">Oversized T-Shirts</a></li>
+                    <li><a href="{% url 'category_type_products' 'men' 'bottom' 'jeans' %}">Denim & Jeans</a></li>
+                    <li><a href="{% url 'category_type_products' 'men' 'bottom' 'track-pant' %}">Track Pants & Cargos</a></li>
+                    <li><a href="{% url 'category_default' 'men' %}">Trending Drops 🔥</a></li>
                 </ul>
             </div>
 
-            <div class="footer-column">
-                <h3>USEFUL LINKS</h3>
+            <!-- Quick Links / Policies -->
+            <div class="footer-col">
+                <h4>Customer Service</h4>
                 <ul>
-                    <li><a href="{% url 'about_us' %}">About Us</a></li>
-                    <li><a href="{% url 'careers' %}">Careers</a></li>
-                    <li><a href="{% url 'blog_list' %}">Blog</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>CUSTOMER POLICIES</h3>
-                <ul>
-                    <li><a href="{% url 'contact_us' %}">Contact Us</a></li>
-                    <li><a href="{% url 'faq' %}">FAQ</a></li>
-                    <li><a href="{% url 'terms' %}">T&C</a></li>
-                    <li><a href="{% url 'terms_use' %}">Terms Of Use</a></li>
-                    <li><a href="{% url 'shipping_policy' %}">Shipping</a></li>
+                    <li><a href="{% url 'track_orders' %}">Track Your Order</a></li>
                     <li><a href="{% url 'return_policy' %}">Cancellation & Returns</a></li>
+                    <li><a href="{% url 'shipping_policy' %}">Shipping & Delivery</a></li>
+                    <li><a href="{% url 'faq' %}">Frequently Asked Questions</a></li>
+                    <li><a href="{% url 'contact_us' %}">Contact Us</a></li>
                     <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
+                    <li><a href="{% url 'terms' %}">Terms & Conditions</a></li>
                 </ul>
             </div>
 
-            <div class="footer-column">
-                <h3>EXPERIENCE VILIO APP</h3>
-                <div class="app-links" style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
-                        <i class="fab fa-google-play" style="font-size: 1.8rem;"></i>
-                        <div style="line-height: 1.2;">
-                            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Get it on</span>
-                            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">Google Play</span>
-                        </div>
-                    </div>
-                    <div style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; cursor: default; width: 160px; user-select: none;">
-                        <i class="fab fa-apple" style="font-size: 2rem;"></i>
-                        <div style="line-height: 1.2;">
-                            <span style="font-size: 10px; text-transform: uppercase; display: block; opacity: 0.8;">Download on the</span>
-                            <span style="font-size: 16px; font-weight: 600; font-family: sans-serif;">App Store</span>
-                        </div>
-                    </div>
+            <!-- Payments & Trust -->
+            <div class="footer-col">
+                <h4>Accepted Payments</h4>
+                <p style="font-size: 12px; margin-bottom: 10px; color: #a1a1aa;">Safe & Instant UPI, Net Banking, Cards & COD.</p>
+                <div class="payment-badges-row">
+                    <span class="pay-badge"><i class="fa-solid fa-mobile-screen"></i> UPI / GPay</span>
+                    <span class="pay-badge"><i class="fa-solid fa-bolt"></i> PhonePe</span>
+                    <span class="pay-badge"><i class="fa-solid fa-wallet"></i> Paytm</span>
+                    <span class="pay-badge"><i class="fa-brands fa-cc-visa"></i> Visa</span>
+                    <span class="pay-badge"><i class="fa-brands fa-cc-mastercard"></i> Mastercard</span>
+                    <span class="pay-badge"><i class="fa-solid fa-money-bill-wave"></i> Cash on Delivery</span>
                 </div>
-                <h3>KEEP IN TOUCH</h3>
-                <div class="social-icons">
-                    <a href="javascript:void(0)"><i class="fa-brands fa-facebook-square"></i></a>
-                    <a href="javascript:void(0)"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="javascript:void(0)"><i class="fa-brands fa-youtube"></i></a>
-                    <a href="javascript:void(0)"><i class="fa-brands fa-instagram"></i></a>
+
+                <h4 style="margin-top: 24px; margin-bottom: 12px;">Connect With Us</h4>
+                <div class="social-links">
+                    <a href="javascript:void(0)" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="javascript:void(0)" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="javascript:void(0)" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="javascript:void(0)" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
                 </div>
             </div>
         </div>
-        <div class="footer-bottom">
-            <p>© 2026 www.vilio.shop. All rights reserved.</p>
-            <p style="font-size: 11px; opacity: 0.6;">A Passionate Developer Company</p>
+
+        <div class="footer-bottom-bar">
+            <p>© 2026 www.vilio.shop. All rights reserved. Crafted with passion for modern streetwear.</p>
+            <p style="color: #52525b;">Cash on Delivery Available • 7-Day Hassle-Free Exchange</p>
         </div>
     </footer>
 
-    <!-- SCROLL SCRIPT -->
+    <!-- 11. GLOBAL SCRIPTS -->
     <script>
-        let lastScrollTop = 0;
-        const categoryHeader = document.getElementById("category-header");
-        const searchOverlay = document.getElementById("search-overlay");
-
-        window.addEventListener("scroll", function () {
-            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
-            // Agar search bar active nahi hai tabhi headers hide/show honge
-            if (!searchOverlay.classList.contains('active')) {
-                if (scrollTop > lastScrollTop && scrollTop > 50) {
-                    categoryHeader.style.transform = "translateY(-100%)";
-                } else {
-                    categoryHeader.style.transform = "translateY(0)";
-                }
-            }
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-        });
-    </script>
-
-    <!-- SEARCH & MOBILE DROPDOWN INTERACTION SCRIPT -->
-    <script>
+        // Search Bar Toggle
         function openSearchBar() {
-            const searchOverlay = document.getElementById("search-overlay");
-            const categoryHeader = document.getElementById("category-header");
-            
-            searchOverlay.classList.add("active");
-            // Search bar open hote hi category header thoda neeche shift hoga taaki design overlap na kare
-            categoryHeader.style.top = "55px"; 
-            
+            const overlay = document.getElementById('search-overlay');
+            overlay.classList.add('active');
             setTimeout(() => {
-                document.getElementById("search-input-field").focus();
-            }, 300);
+                document.getElementById('search-input-field').focus();
+            }, 250);
         }
 
         function closeSearchBar() {
-            const searchOverlay = document.getElementById("search-overlay");
-            const categoryHeader = document.getElementById("category-header");
-            
-            searchOverlay.classList.remove("active");
-            categoryHeader.style.top = "48px";
+            document.getElementById('search-overlay').classList.remove('active');
         }
 
-        // ESC key dabane par search close ho jaye
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                closeSearchBar();
-            }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeSearchBar();
         });
 
-        // Mobile submenu click behavior
-        document.querySelectorAll('.submenu-toggle').forEach(item => {
-            item.addEventListener('click', function (e) {
-                if (window.innerWidth <= 768) {
-                    const deepMenu = this.nextElementSibling;
-                    if (deepMenu && !deepMenu.classList.contains('is-open')) {
-                        e.preventDefault();
-                        document.querySelectorAll('.deep-menu').forEach(m => m.classList.remove('is-open'));
-                        deepMenu.classList.add('is-open');
+        // Mobile Drawer Toggle
+        function openDrawer() {
+            document.getElementById('mobileDrawer').classList.add('active');
+            document.getElementById('drawerBackdrop').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            document.getElementById('mobileDrawer').classList.remove('active');
+            document.getElementById('drawerBackdrop').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Global Toast Notification Helper
+        function showToast(message, viewBagLink = true) {
+            const toast = document.getElementById('toastNotification');
+            const msgEl = document.getElementById('toastMessage');
+            if (toast && msgEl) {
+                msgEl.innerText = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3500);
+            }
+        }
+
+        // Global Cart Badge Updater
+        function updateGlobalCartBadge(count) {
+            const badges = [
+                document.getElementById('cart-count-badge'),
+                document.getElementById('bNavCartBadge'),
+                document.querySelector('.drawer-cart-count'),
+                document.querySelector('.cart-num-text')
+            ];
+
+            badges.forEach(b => {
+                if (b) {
+                    b.innerText = count;
+                    if (count > 0) {
+                        b.style.display = 'flex';
+                    } else {
+                        b.style.display = 'none';
                     }
                 }
             });
-        });
-
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.nested-item')) {
-                document.querySelectorAll('.deep-menu').forEach(m => m.classList.remove('is-open'));
-            }
-        });
+        }
     </script>
 </body>
 </html>

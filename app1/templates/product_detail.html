@@ -334,8 +334,8 @@ margin-left:8px;
 } 
 
 
-/* --- Header Cleanup --- */
-#category-header { 
+/* --- Header & Bottom Nav Cleanup on Product Detail --- */
+#category-header, .mobile-bottom-nav { 
     display: none !important; 
 }
 
@@ -1407,15 +1407,17 @@ function validatedAddToCart(productId) {
     fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
     .then(r => r.json())
     .then(data => {
-        if (data.login_required) { window.location.href = data.login_url; }
-        else if (data.success) {
-            showPopup("Added to bag! ✅");
-            const badge = document.getElementById('cart-count-badge');
-            if (badge) { 
-                badge.innerText = data.global_cart_count; 
-                badge.style.display = "block"; 
+        if (data.success) {
+            showPopup("Added to Bag! ✅");
+            if (typeof updateGlobalCartBadge === 'function') {
+                updateGlobalCartBadge(data.global_cart_count);
             }
-        } else { showPopup("❌ " + data.message); }
+            if (typeof showToast === 'function') {
+                showToast("🛍️ Added to your bag!");
+            }
+        } else { 
+            showPopup("❌ " + (data.message || "Could not add to bag")); 
+        }
     })
     .catch(err => { showPopup("❌ Something went wrong!"); });
 }

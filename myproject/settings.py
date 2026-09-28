@@ -42,8 +42,9 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Security Settings
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+IS_PROD = os.getenv('RENDER', '') != '' or os.getenv('DJANGO_ENV', '') == 'production'
+CSRF_COOKIE_SECURE = IS_PROD
+SESSION_COOKIE_SECURE = IS_PROD
 CSRF_COOKIE_HTTPONLY = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -105,6 +106,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'app1.context_processors.cart_count_processor',
+                'app1.context_processors.menu_categories',
             ],
         },
     },

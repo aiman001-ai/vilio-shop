@@ -309,7 +309,9 @@ class Blog(models.Model):
 
 @receiver(post_save, sender=Product)
 def clear_home_product_cache(sender, instance, **kwargs):
-    cache.delete('home_display_products_v2')        
+    cache.delete('home_display_products_v2')
+    cache.delete('home_display_products_v3')
+    cache.delete('home_banners')
 
 # ===== LEAD CAPTURE MODEL =====
 class Lead(models.Model):
@@ -326,4 +328,29 @@ class Lead(models.Model):
         verbose_name_plural = 'Leads'
 
     def __str__(self):
-        return f"{self.name} — {self.email or self.phone or 'No contact'} ({self.created_at.strftime('%d %b %Y')})"    
+        return f"{self.name} — {self.email or self.phone or 'No contact'} ({self.created_at.strftime('%d %b %Y')})"
+
+# ===== HERO BANNER MODEL =====
+class Banner(models.Model):
+    title = models.CharField(max_length=200, blank=True, null=True, help_text="e.g. URBAN LUXURY & OVERSIZED HOODIES")
+    subtitle = models.CharField(max_length=300, blank=True, null=True, help_text="Short description or tagline")
+    badge = models.CharField(max_length=100, blank=True, default="EXCLUSIVE DROP", help_text="e.g. NEW ARRIVAL, 40% OFF")
+    button_text = models.CharField(max_length=50, default="SHOP COLLECTION")
+    button_link = models.CharField(max_length=255, default="/category/men/")
+    image = CloudinaryField('image', folder='villi-shop/banners/', null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text="Lower numbers appear first")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', '-id']
+        verbose_name = 'Hero Banner'
+        verbose_name_plural = 'Hero Banners'
+
+    def __str__(self):
+        return self.title or f"Banner #{self.id}"
+
+@receiver(post_save, sender=Banner)
+def clear_banner_cache(sender, instance, **kwargs):
+    cache.delete('home_banners')
+    

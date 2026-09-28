@@ -1,30 +1,131 @@
 {% extends 'base.html' %}
-{% block title %}Edit Address{% endblock %}
+{% block title %}Edit Address | VILIO{% endblock %}
 
 {% block content %}
 <style>
-    /* Styling bilkul wahi rahegi jo Add Address mein thi */
-    .address-wrapper { background: #f8f9fa; padding: 40px 10px; min-height: 80vh; }
+    .address-wrapper { 
+        padding: 50px 15px 80px; 
+        min-height: calc(100vh - 220px);
+    }
+
     .address-container { 
-        max-width: 700px; margin: 0 auto; background: #fff; 
-        padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+        max-width: 650px; 
+        margin: 0 auto; 
+        background: #141418; 
+        padding: 40px; 
+        border-radius: 20px; 
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    .address-container h1 { 
+        font-weight: 800; 
+        font-size: 24px;
+        margin: 0 0 6px; 
+        color: #fff; 
+        text-align: center;
+        letter-spacing: -0.5px;
+    }
+
+    .sub-text {
+        text-align: center;
+        color: #8c8c9a;
+        font-size: 13.5px;
+        margin-bottom: 32px;
+    }
+
+    /* Grid Layout */
+    .form-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 20px; 
+    }
+
     .full-width { grid-column: span 2; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 14px; margin-bottom: 5px; color: #666; }
-    .address-container input, .address-container textarea {
-        width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;
+
+    .form-group { position: relative; }
+
+    .form-group label { 
+        display: block; 
+        font-size: 11.5px; 
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px; 
+        color: #b0b0bc; 
     }
+    
+    .address-container input, 
+    .address-container textarea {
+        width: 100%; 
+        padding: 13px 16px; 
+        border: 1.5px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px; 
+        font-size: 14.5px; 
+        background-color: #191920;
+        transition: all 0.25s ease;
+        color: #fff;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .address-container input::placeholder,
+    .address-container textarea::placeholder { color: #5a5a68; }
+
+    .address-container input:focus, 
+    .address-container textarea:focus { 
+        border-color: rgba(255, 255, 255, 0.4); 
+        background-color: #1f1f28;
+        outline: none; 
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Pincode Specific Styles */
+    .pincode-wrapper { position: relative; }
+    #pin-loader { 
+        position: absolute; 
+        right: 15px; 
+        top: 36px; 
+        font-size: 12px; 
+        font-weight: 600;
+    }
+
+    /* Button Styling */
     .btn-update { 
-        background: #000; color: #fff; width: 100%; padding: 14px; 
-        border: none; border-radius: 4px; font-weight: 600; cursor: pointer; 
+        background: #ffffff; 
+        color: #0c0c0e; 
+        width: 100%; 
+        padding: 15px; 
+        border: none; 
+        border-radius: 12px; 
+        font-weight: 700; 
+        font-size: 15px;
+        cursor: pointer; 
+        margin-top: 24px;
+        transition: transform 0.2s, background 0.2s;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-update:hover {
+        background: #e8e8ed;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 600px) { 
+        .address-wrapper { padding: 20px 12px; }
+        .address-container { padding: 24px 18px; border-radius: 16px; }
+        .form-grid { grid-template-columns: 1fr; gap: 15px; } 
+        .full-width { grid-column: span 1; } 
+        .address-container h1 { font-size: 20px; text-align: left; }
+        .sub-text { text-align: left; margin-bottom: 22px; }
     }
 </style>
 
 <div class="address-wrapper">
     <div class="address-container">
-        <h2>Edit Address</h2>
+        <h1>Edit Shipping Address</h1>
+        <p class="sub-text">Update your delivery address details below.</p>
+        
         <form method="POST">
             {% csrf_token %}
             <div class="form-grid">
@@ -36,23 +137,28 @@
                     <label>Last Name</label>
                     <input type="text" name="last_name" value="{{ address.last_name }}" required>
                 </div>
+
                 <div class="form-group full-width">
-                    <label>Mobile Number</label>
-                    <input type="text" name="mobile" value="{{ address.mobile }}" required>
+                    <label>Mobile Number (For Courier Updates)</label>
+                    <input type="tel" name="mobile" value="{{ address.mobile }}" pattern="[0-9]{10}" required>
                 </div>
-                <div class="form-group full-width">
+
+                <div class="form-group full-width pincode-wrapper">
                     <label>Pincode</label>
                     <input type="text" name="pincode" id="pincode" value="{{ address.pincode }}" maxlength="6" required>
                     <span id="pin-loader"></span>
                 </div>
+
                 <div class="form-group full-width">
-                    <label>Address (House No, Building, Street)</label>
-                    <textarea name="address" rows="2" required>{{ address.address }}</textarea>
+                    <label>Flat, House no., Building, Apartment</label>
+                    <input type="text" name="address" value="{{ address.address }}" required>
                 </div>
+
                 <div class="form-group full-width">
-                    <label>Locality / Area (Optional)</label>
-                    <input type="text" name="address_2" value="{{ address.address_2 }}">
+                    <label>Area, Street, Landmark</label>
+                    <textarea name="address_2" rows="2">{{ address.address_2 }}</textarea>
                 </div>
+
                 <div class="form-group">
                     <label>City</label>
                     <input type="text" name="city" id="city" value="{{ address.city }}" required>
@@ -62,12 +168,38 @@
                     <input type="text" name="state" id="state" value="{{ address.state }}" required>
                 </div>
             </div>
-            <button type="submit" class="btn-update">UPDATE ADDRESS</button>
+
+            <button type="submit" class="btn-update">SAVE CHANGES</button>
         </form>
     </div>
 </div>
 
 <script>
-    // Pincode fetching script yahan bhi laga dena taaki edit karte waqt bhi kaam kare
+    document.getElementById('pincode').addEventListener('input', function() {
+        const pincode = this.value;
+        const loader = document.getElementById('pin-loader');
+        if (pincode.length === 6) {
+            loader.innerText = "🔍 Checking...";
+            loader.style.color = "#888";
+            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data[0].Status === "Success") {
+                    document.getElementById('city').value = data[0].PostOffice[0].District;
+                    document.getElementById('state').value = data[0].PostOffice[0].State;
+                    loader.innerText = "✅ Found"; 
+                    loader.style.color = "#00d084";
+                } else { 
+                    loader.innerText = "❌ Invalid"; 
+                    loader.style.color = "#ff4757"; 
+                }
+            })
+            .catch(err => {
+                loader.innerText = "";
+            });
+        } else {
+            loader.innerText = "";
+        }
+    });
 </script>
 {% endblock %}
