@@ -10,7 +10,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Product, ProductImage, Category, SubCategory, ProductType,
     ProductColor, ColorSizeStock, SimpleProductSizeStock,
-    Cart, CartItem, Order, OrderItem, Address, Profile, Lead, Banner
+    Cart, CartItem, Order, OrderItem, Address, Profile, Lead, Banner, CustomerReview
 )
 
 # --- Autocomplete Mandatory Registration Engine ---
@@ -372,4 +372,12 @@ class BannerAdmin(admin.ModelAdmin):
     list_editable = ('order', 'is_active')
     list_filter = ('is_active', 'created_at')
     search_fields = ('title', 'subtitle', 'badge')
+
+@admin.register(CustomerReview)
+class CustomerReviewAdmin(admin.ModelAdmin):
+    list_display = ('name', 'city', 'product_name', 'rating', 'is_verified', 'is_approved', 'created_at')
+    list_filter = ('rating', 'is_verified', 'is_approved', 'created_at')
+    search_fields = ('name', 'city', 'product_name', 'comment')
+    list_editable = ('is_approved', 'is_verified')
+
     

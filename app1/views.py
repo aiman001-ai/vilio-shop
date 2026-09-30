@@ -28,7 +28,7 @@ from django.utils import timezone
 # Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
 from .models import (
     Address, Profile, Product, Cart, CartItem, 
-    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead, Banner
+    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead, Banner, CustomerReview
 )
 
 # ================= HOME =================
@@ -36,6 +36,7 @@ def home(request):
     # Smart caching: cached for 180 seconds in memory for instant ~15ms response
     display_products = cache.get('home_display_products_v3')
     banners = cache.get('home_banners')
+    reviews = cache.get('home_reviews_v1')
 
     if not display_products:
         queryset = Product.objects.filter(is_active=True).select_related(
@@ -57,10 +58,76 @@ def home(request):
             banners = []
         cache.set('home_banners', banners, 300)
 
+    if reviews is None:
+        try:
+            reviews = list(CustomerReview.objects.filter(is_approved=True).order_by('-created_at')[:30])
+        except Exception:
+            reviews = []
+        cache.set('home_reviews_v1', reviews, 180)
+
     return render(request, 'home.html', {
         'products': display_products,
         'banners': banners,
+        'reviews': reviews,
     })
+
+# ================= SUBMIT CUSTOMER REVIEW =================
+@csrf_exempt
+def submit_review(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+    name = request.POST.get('name', '').strip()
+    city = request.POST.get('city', '').strip() or "India"
+    product_name = request.POST.get('product_name', '').strip()
+    rating = request.POST.get('rating', '5').strip()
+    review_title = request.POST.get('review_title', '').strip()
+    comment = request.POST.get('comment', '').strip()
+
+    if not name:
+        return JsonResponse({"success": False, "error": "Please enter your name."}, status=400)
+    if not comment:
+        return JsonResponse({"success": False, "error": "Please enter your review feedback."}, status=400)
+
+    try:
+        rating_int = int(rating)
+        rating_int = max(1, min(5, rating_int))
+    except (ValueError, TypeError):
+        rating_int = 5
+
+    try:
+        review = CustomerReview.objects.create(
+            name=name,
+            city=city,
+            product_name=product_name if product_name else "Vilio Premium Wear",
+            rating=rating_int,
+            review_title=review_title,
+            comment=comment,
+            is_verified=True,
+            is_approved=True
+        )
+
+        # Invalidate cache so new review appears immediately
+        cache.delete('home_reviews_v1')
+
+        return JsonResponse({
+            "success": True,
+            "message": "Thank you! Your review has been submitted successfully.",
+            "review": {
+                "id": review.id,
+                "name": review.name,
+                "city": review.city,
+                "product_name": review.product_name,
+                "rating": review.rating,
+                "review_title": review.review_title,
+                "comment": review.comment,
+                "is_verified": review.is_verified,
+                "created_at": "Just now",
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Failed to save review: {str(e)}"}, status=500)
+
 # ================= SHOP NOW (BUY NOW) =================
 def shop_now(request, product_id):
     color = request.GET.get('color', 'Default')
@@ -698,24 +765,26 @@ def product_detail(request, id):
                 total_stock += s.stock
 
             variants_json_data[str(prod.id)] = {
-    "color_name": color_var.color_name,
-    "color_image": color_var.color_image.url if color_var.color_image else (
-        prod.image.url if prod.image else ""
-    ),
+                "color_name": color_var.color_name,
+                "color_image": color_var.color_image.url if color_var.color_image else (
+                    prod.image.url if prod.image else ""
+                ),
 
-    "price": float(prod.current_price),
-    "original_price": float(prod.original_price) if prod.original_price else float(prod.price),
-    "offer_active": prod.offer_active,
-    "discount": prod.discount_percentage,
-    "offer_end_time": prod.current_offer_end_time.isoformat() if prod.current_offer_end_time else None,
+                "price": float(prod.current_price),
+                "original_price": float(prod.original_price) if prod.original_price else float(prod.price),
+                "has_discount": prod.has_discount,
+                "offer_active": prod.offer_active,
+                "discount": prod.discount_percentage,
+                "save_amount": prod.save_amount,
+                "offer_end_time": prod.current_offer_end_time.isoformat() if prod.current_offer_end_time else None,
 
-    "sizes": size_list,
-    "total_stock": total_stock,
-}
+                "sizes": size_list,
+                "total_stock": total_stock,
+            }
 
     # 4. Suggestions Engine (Optimized with only necessary fields to reduce database load)
     all_suggestions = []
-    suggestion_fields = ['id', 'name', 'brand', 'price', 'original_price', 'image']
+    suggestion_fields = ['id', 'name', 'brand', 'price', 'original_price', 'image', 'offer_enabled', 'offer_started_at']
 
     if current_product.sub_category:
         all_suggestions = list(
@@ -723,7 +792,7 @@ def product_detail(request, id):
                 sub_category=current_product.sub_category,
                 is_active=True
             ).exclude(name=current_product.name).only(
-                'id', 'name', 'price', 'original_price', 'image'
+                *suggestion_fields
             )[:15]
         )
 
@@ -736,7 +805,7 @@ def product_detail(request, id):
                 category=current_product.category,
                 is_active=True
             ).exclude(id__in=existing_ids).only(
-                'id', 'name', 'price', 'original_price', 'image'
+                *suggestion_fields
             )[:extra_count]
         )
 
@@ -1082,13 +1151,15 @@ def get_product_data(request, product_id):
             "name": product.name,
             "price": product.current_price,
             "original_price": product.original_price,
+            "has_discount": product.has_discount,
             "offer_active": product.offer_active,
             "discount": product.discount_percentage,
+            "save_amount": product.save_amount,
             "offer_end_time": (
-    product.current_offer_end_time.isoformat()
-    if product.current_offer_end_time
-    else None
-),
+                product.current_offer_end_time.isoformat()
+                if product.current_offer_end_time
+                else None
+            ),
             "next_change_time": product.next_offer_change_time.isoformat() if product.next_offer_change_time else None,
             "color_name": color_variant.color_name if color_variant else "",
 

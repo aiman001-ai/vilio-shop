@@ -343,7 +343,7 @@
              onmouseleave="stopCardSlider(this)">
             
             <a href="{% url 'product_detail' product.id %}" class="card-media-box">
-                {% if product.original_price > product.price %}
+                {% if product.has_discount and product.discount_percentage > 0 %}
                     <div class="badge-discount badge-deal-hot">
                         {{ product.discount_percentage }}% OFF
                     </div>
@@ -386,9 +386,11 @@
 
                 <div class="card-price-row">
                     <span class="price-current">₹{{ product.current_price }}</span>
-                    {% if product.original_price > product.current_price %}
+                    {% if product.has_discount %}
                         <span class="price-mrp">₹{{ product.original_price }}</span>
-                        <span class="price-save">Save ₹{{ product.original_price|add:"-product.current_price" }}</span>
+                        {% if product.save_amount > 0 %}
+                            <span class="price-save">Save ₹{{ product.save_amount }}</span>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

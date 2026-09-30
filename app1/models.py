@@ -79,10 +79,26 @@ class Product(models.Model):
         ]
 
     @property
+    def has_discount(self):
+        """Returns True if the product currently has a genuine active discount"""
+        if not self.original_price or self.original_price <= 0:
+            return False
+        if self.offer_enabled and not self.offer_active:
+            return False
+        return self.original_price > self.current_price
+
+    @property
     def discount_percentage(self):
-        if self.original_price and self.original_price > self.price:
-            return int(((self.original_price - self.price) / self.original_price) * 100)
+        if self.has_discount and self.original_price > 0:
+            return int(((self.original_price - self.current_price) / self.original_price) * 100)
         return 0
+
+    @property
+    def save_amount(self):
+        """Calculates rupee savings between MRP and selling price"""
+        if not self.has_discount:
+            return 0
+        return max(0, self.original_price - self.current_price)
 
     @property
     def offer_active(self):
@@ -353,4 +369,23 @@ class Banner(models.Model):
 @receiver(post_save, sender=Banner)
 def clear_banner_cache(sender, instance, **kwargs):
     cache.delete('home_banners')
-    
+
+# ===== CUSTOMER REVIEW & TESTIMONIAL MODEL =====
+class CustomerReview(models.Model):
+    name = models.CharField(max_length=120)
+    city = models.CharField(max_length=120, default="India")
+    product_name = models.CharField(max_length=200, blank=True, null=True, help_text="e.g. Linen-Blend Striped Shirt")
+    rating = models.PositiveSmallIntegerField(default=5)
+    review_title = models.CharField(max_length=250, blank=True, null=True)
+    comment = models.TextField()
+    is_verified = models.BooleanField(default=True, verbose_name="Verified Buyer")
+    is_approved = models.BooleanField(default=True, verbose_name="Approved for display")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Customer Review'
+        verbose_name_plural = 'Customer Reviews'
+
+    def __str__(self):
+        return f"{self.name} ({self.city}) - {self.rating}★"

@@ -7,7 +7,7 @@ from .views import (
     post_login_redirect, increase_quantity, decrease_quantity,
     checkout, place_order, my_orders, search, 
     category_default, category_products, # Category views
-    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order, razorpay_webhook, get_product_data, cancel_razorpay_order, order_success, product_feed_json
+    cancel_order, privacy_policy, shipping_policy, about_us, return_policy, cheapify_insider, careers_page, blog_list, blog_detail, sitemap_page, corporate_info, contact_us, faq_page, terms_conditions, terms_of_use, track_orders, shipping_policy, return_policy, privacy_policy, edit_address, verify_payment, create_razorpay_order, razorpay_webhook, get_product_data, cancel_razorpay_order, order_success, product_feed_json, submit_review
 )
 
 sitemaps = {
@@ -19,6 +19,7 @@ sitemaps = {
 urlpatterns = [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('get-product-data/<int:product_id>/', get_product_data, name='get_product_data'),
+    path('api/submit-review/', submit_review, name='submit_review'),
     path('', home, name='home'),
     path('login/', login_page, name='login'),
     path('logout/', logout_page, name='logout'),

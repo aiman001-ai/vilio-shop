@@ -19,3 +19,20 @@ env/
 # 5. OS specific files
 .DS_Store
 Thumbs.db
+
+# 6. Root temporary test and scratch files
+/*.jpg
+/*.png
+/*.webp
+/*.wav
+/*.mp4
+/*.json
+/product_reference_images/
+/product_summary.txt
+/analyze_images.py
+/check_*.py
+/inspect_*.py
+/create_*.py
+/download_refs.py
+/generate_*.py
+/static/

@@ -43,7 +43,7 @@
             --radius-lg: 14px;
             --radius-full: 9999px;
             --header-height: 52px;
-            --announcement-height: 32px;
+            --announcement-height: 24px;
             --bottom-nav-height: 60px;
         }
 
@@ -94,9 +94,10 @@
             height: var(--announcement-height);
             background: #000000;
             color: #ffffff;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.6px;
+            line-height: var(--announcement-height);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -149,7 +150,17 @@
             justify-content: space-between;
             padding: 0 24px;
             z-index: 1001;
-            transition: transform 0.3s ease, background 0.3s ease;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+            will-change: transform;
+        }
+
+        .site-header.header-hidden {
+            transform: translateY(calc(-100% - var(--announcement-height)));
+            pointer-events: none;
+        }
+
+        .site-header.header-scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
         }
 
         .header-left {
@@ -630,36 +641,36 @@
         /* ===== 7. FLOATING WHATSAPP SUPPORT BUTTON ===== */
         .floating-whatsapp {
             position: fixed;
-            bottom: 74px;
-            right: 16px;
+            bottom: 70px;
+            right: 14px;
             z-index: 999;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background: #25D366;
             color: #ffffff;
-            padding: 10px 14px;
+            padding: 7px 11px;
             border-radius: var(--radius-full);
-            box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
-            font-size: 12px;
+            box-shadow: 0 3px 12px rgba(37, 211, 102, 0.35);
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             text-decoration: none;
         }
 
         .floating-whatsapp:hover {
-            transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 5px 16px rgba(37, 211, 102, 0.45);
         }
 
         .floating-whatsapp i {
-            font-size: 19px;
+            font-size: 15px;
         }
 
         .whatsapp-online-dot {
-            width: 7px;
-            height: 7px;
+            width: 5px;
+            height: 5px;
             background: #ffffff;
             border-radius: 50%;
             animation: pulseDot 1.5s infinite;
@@ -673,10 +684,14 @@
 
         @media (min-width: 769px) {
             .floating-whatsapp {
-                bottom: 24px;
-                right: 24px;
-                padding: 12px 18px;
-                font-size: 13px;
+                bottom: 20px;
+                right: 20px;
+                padding: 8px 14px;
+                font-size: 12px;
+                gap: 7px;
+            }
+            .floating-whatsapp i {
+                font-size: 16px;
             }
         }
 
@@ -1020,7 +1035,7 @@
             <div><i class="fa-solid fa-truck-fast"></i> Free Delivery on ₹499+</div>
             <div><i class="fa-solid fa-wallet"></i> Cash on Delivery Available</div>
             <div><i class="fa-solid fa-rotate-left"></i> 7 Days Easy Returns</div>
-            <a href="https://wa.me/917417482813?text=Hi%20Vilio%20Support,%20I%20have%20a%20query%20about%20an%20order" target="_blank" style="display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #16a34a; font-weight: 700;">
+            <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support,%20I%20have%20a%20query%20about%20an%20order" target="_blank" style="display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #16a34a; font-weight: 700;">
                 <i class="fa-brands fa-whatsapp" style="font-size: 17px; color: #22c55e;"></i> WhatsApp Live Support
             </a>
         </div>
@@ -1051,7 +1066,7 @@
     </main>
 
     <!-- 8. FLOATING WHATSAPP BUTTON -->
-    <a href="https://wa.me/917417482813?text=Hi%20Vilio%20Support!%20I%20want%20to%20know%20more%20about%20your%20products." 
+    <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support!%20I%20am%20visiting%20your%20website%20and%20need%20help%20with%20products%20/%20orders." 
        target="_blank" 
        rel="noopener noreferrer" 
        class="floating-whatsapp" 
@@ -1222,6 +1237,64 @@
                 }
             });
         }
+
+        // ===== SMART SCROLL HEADER (Hidable on scroll down, Reveal on scroll up) =====
+        (function() {
+            const header = document.querySelector('.site-header');
+            if (!header) return;
+
+            let lastScrollY = Math.max(0, window.pageYOffset || document.documentElement.scrollTop);
+            let ticking = false;
+            const SCROLL_THRESHOLD = 6;
+            const MIN_SCROLL_HIDE = 50;
+
+            function onScrollUpdate() {
+                const currentScrollY = Math.max(0, window.pageYOffset || document.documentElement.scrollTop);
+
+                // Near very top: always reveal and reset
+                if (currentScrollY <= 15) {
+                    header.classList.remove('header-hidden');
+                    header.classList.remove('header-scrolled');
+                    lastScrollY = currentScrollY;
+                    ticking = false;
+                    return;
+                }
+
+                header.classList.add('header-scrolled');
+
+                // If mobile drawer or search overlay is open, keep header visible
+                const drawer = document.getElementById('mobileDrawer');
+                const search = document.getElementById('search-overlay');
+                if ((drawer && drawer.classList.contains('active')) || (search && search.classList.contains('active'))) {
+                    header.classList.remove('header-hidden');
+                    lastScrollY = currentScrollY;
+                    ticking = false;
+                    return;
+                }
+
+                const diff = currentScrollY - lastScrollY;
+
+                if (Math.abs(diff) >= SCROLL_THRESHOLD) {
+                    if (diff > 0 && currentScrollY > MIN_SCROLL_HIDE) {
+                        // Scrolling DOWN -> Hide the header
+                        header.classList.add('header-hidden');
+                    } else if (diff < 0) {
+                        // Scrolling UP -> Reveal the header
+                        header.classList.remove('header-hidden');
+                    }
+                    lastScrollY = currentScrollY;
+                }
+
+                ticking = false;
+            }
+
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(onScrollUpdate);
+                    ticking = true;
+                }
+            }, { passive: true });
+        })();
     </script>
 </body>
 </html>

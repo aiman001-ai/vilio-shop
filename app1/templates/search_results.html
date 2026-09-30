@@ -198,7 +198,7 @@
         {% for product in products %}
         <div class="product-card">
             <a href="{% url 'product_detail' product.id %}" class="card-media-box">
-                {% if product.original_price > product.price %}
+                {% if product.has_discount and product.discount_percentage > 0 %}
                     <div class="badge-discount">{{ product.discount_percentage }}% OFF</div>
                 {% endif %}
 
@@ -221,8 +221,11 @@
 
                 <div class="card-price-row">
                     <span class="price-current">₹{{ product.current_price }}</span>
-                    {% if product.original_price > product.current_price %}
+                    {% if product.has_discount %}
                         <span class="price-mrp">₹{{ product.original_price }}</span>
+                        {% if product.save_amount > 0 %}
+                            <span class="price-save" style="font-size: 11px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">Save ₹{{ product.save_amount }}</span>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

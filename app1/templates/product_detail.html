@@ -12,187 +12,271 @@
 {% block title %}{{ product.name }} | Vilio{% endblock %}
 
 {% block content %}
-<div class="product-container">
-    <div class="gallery-section">
-        <div class="main-img-card" id="imageSlider">
-
-    {% if product.image %}
-    {% cloudinary product.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" alt=product.name %}
-{% endif %}
-
-{% if product.cached_first_variant and product.cached_first_variant.color_image and product.cached_first_variant.color_image.url != product.image.url %}
-    {% cloudinary product.cached_first_variant.color_image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=product.cached_first_variant.color_name %}
-{% endif %}
-
-{% for img in clean_gallery %}
-    {% cloudinary img.image width=800 height=1000 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
-{% endfor %}
-
-</div>
-        
-        <div class="slider-dots" id="sliderDots"></div>
-        
-        <div class="thumbnail-row">
-    {% if product.image %}
-        {% cloudinary product.image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" %}
+<!-- Top Breadcrumbs Navigation to prevent any header overlap -->
+<div class="pdp-breadcrumbs-bar">
+    <a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> Home</a>
+    <span class="bc-sep">/</span>
+    <a href="{% url 'category_default' 'men' %}">Men</a>
+    <span class="bc-sep">/</span>
+    {% if product.category %}
+        <a href="{% url 'category_type_products' 'men' 'top' product.category.slug|default:'shirts' %}">{{ product.category.name }}</a>
+        <span class="bc-sep">/</span>
     {% endif %}
-    
-    {% for variant in variants %}
-        {% cloudinary variant.color_image width=120 height=150 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" %}
-    {% endfor %}
+    <span class="bc-curr">{{ product.name }}</span>
 </div>
+
+<div class="product-container">
+    <!-- 1. LEFT GALLERY: Thumbnails Vertically Stacked on Left, Main Image on Right -->
+    <div class="gallery-section">
+        <!-- Vertical Thumbnails Column (Desktop: Left, Mobile: Bottom row) -->
+        <div class="thumbnail-row" id="galleryThumbnails">
+            {% if product.image %}
+                {% cloudinary product.image width=150 height=200 quality="auto" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" alt=product.name %}
+            {% endif %}
+            
+            {% for variant in variants %}
+                {% cloudinary variant.color_image width=150 height=200 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" alt=variant.color_name %}
+            {% endfor %}
+        </div>
+
+        <!-- Main Showcase Image Card -->
+        <div class="main-img-card-wrap">
+            <div class="main-img-card" id="imageSlider">
+                {% if product.image %}
+                    {% cloudinary product.image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" alt=product.name %}
+                {% endif %}
+
+                {% if product.cached_first_variant and product.cached_first_variant.color_image and product.cached_first_variant.color_image.url != product.image.url %}
+                    {% cloudinary product.cached_first_variant.color_image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=product.cached_first_variant.color_name %}
+                {% endif %}
+
+                {% for img in clean_gallery %}
+                    {% cloudinary img.image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
+                {% endfor %}
+            </div>
+            <div class="slider-dots" id="sliderDots"></div>
+        </div>
     </div>
 
+    <!-- 2. RIGHT DETAILS: Typography, Price, Variants, Buttons & Specs -->
     <div class="details-section">
+        <!-- Top Badges -->
+        <div class="prod-badge-row">
+            <span class="brand-sub-badge"><i class="fa-solid fa-sparkles"></i> VILIO EXCLUSIVE</span>
+            <span class="sale-badge-pill" id="main-sale-badge-pill" style="{% if not product.has_discount %}display:none;{% endif %}"><i class="fa-solid fa-fire"></i> SALE LIVE</span>
+        </div>
+
         <h1 class="prod-title">{{ product.name }}</h1>
         
+        <!-- Price Box -->
         <div class="price-box" id="main-price-box">
+            <span class="discount-price" id="main-discount-price">₹{{ product.current_price }}</span>
+            <span class="original-price" id="main-original-price" style="{% if not product.has_discount %}display:none;{% endif %}">
+                ₹{{ product.original_price }}
+            </span>
+            <span class="discount-percentage" id="main-discount-pct" style="{% if not product.has_discount %}display:none;{% endif %}">
+                ({{ product.discount_percentage }}% OFF)
+            </span>
+            <span class="price-save-badge" id="main-save-badge" style="background:#ecfdf5; color:#16a34a; font-weight:700; font-size:12px; padding:3px 8px; border-radius:4px; margin-left:4px; {% if not product.has_discount or product.save_amount <= 0 %}display:none;{% endif %}">
+                Save ₹{{ product.save_amount }}
+            </span>
 
-    <span class="discount-price" id="main-discount-price">
-        ₹{{ product.current_price }}
-    </span>
-
-    <span class="original-price" id="main-original-price"
-      style="{% if not product.offer_active %}display:none;{% endif %}">
-    ₹{{ product.original_price }}
-</span>
-<span class="discount-percentage" id="main-discount-pct"
-      style="{% if not product.offer_active %}display:none;{% endif %}">
-    ({{ product.discount_percentage }}% OFF)
-</span>
-
-{% if product.offer_enabled and product.original_price > product.price %}
-<div class="offer-timer-detail" id="offer-timer-detail"
-     data-active="{{ product.offer_active|yesno:'true,false' }}"
-     data-change="{{ product.next_offer_change_time|date:'c' }}"
-     data-price="{{ product.price }}"
-     data-original-price="{{ product.original_price }}">
-    ⏳ Offer Ends In: <span class="offer-countdown">--:--:--</span>
-</div>
-{% endif %}
-
-</div>
-
-
-
-        {% if product.has_variants and variants %}
-        <div class="selection-box">
-            <h4 class="section-title">SELECT COLOR</h4>
-            <div class="color-options">
-                {% for prod in sibling_products %}
-    {% with col=prod.cached_first_variant %}
-        {% if col %}
-        <div class="color-item-wrapper {% if prod.id == product.id %}active{% endif %} swap-color-btn" 
-             data-product-id="{{ prod.id }}"
-             onclick="handleColorChange('{{ prod.id }}', this)"
-             style="cursor: pointer;">
-            <div class="color-item" title="{{ col.color_name }}">
-                <img src="{{ col.color_image.url }}">
+            {% if product.offer_enabled and product.original_price > product.price %}
+            <div class="offer-timer-detail" id="offer-timer-detail"
+                 style="{% if not product.has_discount %}display:none;{% endif %}"
+                 data-active="{{ product.offer_active|yesno:'true,false' }}"
+                 data-change="{{ product.next_offer_change_time|date:'c' }}"
+                 data-price="{{ product.price }}"
+                 data-original-price="{{ product.original_price }}">
+                ⏳ Offer Ends In: <span class="offer-countdown">--:--:--</span>
             </div>
-        </div>
-        {% endif %}
-    {% endwith %}
-{% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="size-header-row">
-            <h4 class="section-title" style="margin: 0;">SELECT SIZE</h4>
-            <a href="javascript:void(0)" onclick="openSizeChart()" class="size-chart-link">
-                <i class="fa-solid fa-ruler-combined"></i> SIZE CHART
-            </a>
-        </div>
-
-        <div class="size-container" id="size-container">
-            {% if not product.has_variants %}
-                {% for s in simple_sizes_list %}
-                    <button type="button" 
-                            class="size-btn {% if s.stock <= 0 %}out-of-stock{% endif %}" 
-                            {% if s.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ s.size_name }}', this)"{% endif %}
-                            data-stock="{{ s.stock }}">
-                        {{ s.size_name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                {% for v in variants %}
-                    <button type="button" 
-                            class="size-btn variant-size-btn {% if v.stock <= 0 %}out-of-stock{% endif %}"
-                            data-color="{{ v.color_name }}"
-                            {% if v.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ v.size_name }}', this)"{% endif %}
-                            data-stock="{{ v.stock }}">
-                        {{ v.size_name }}
-                    </button>
-                {% endfor %}
-                
-                <p id="color-msg" style="color: #94969f; font-size: 13px; margin: 0; display: none;">Please select a color first.</p>
             {% endif %}
-        </div>
-
-        <p class="size-recommendation">
-            <i class="fa-solid fa-circle-info"></i> We recommend one size larger.
-        </p>
-
-        <p class="description">{{ product.description }}</p>
-
-
-        <input type="hidden" id="selectedColor" value="{% if product.cached_first_variant %}{{ product.cached_first_variant.color_name }}{% endif %}">
-<input type="hidden" id="selectedSize" value="">
-<input type="hidden" id="current-active-id" value="{{ product.id }}">
-
-{{ variants_json|json_script:"variants-data-json" }}
-
-        <div class="sticky-btn-placeholder">
-            <div class="action-btns">
-    <button id="cartBtn" onclick="validatedAddToCart(document.getElementById('current-active-id').value)" class="btn-cart">
-        <i class="fa-solid fa-cart-shopping"></i> ADD TO BAG
-    </button>
-    <button id="buyBtn" onclick="validatedBuyNow(document.getElementById('current-active-id').value)" class="btn-buy">
-        <i class="fa-solid fa-bolt"></i> BUY NOW
-    </button>
-</div>
         </div>
         
+        <div class="tax-info-tag">
+            <i class="fa-solid fa-check-double"></i> Inclusive of all taxes & free shipping on ₹499+
+        </div>
+
+        <!-- Color Selection -->
+        {% if product.has_variants and variants %}
+        <div class="selection-box color-section">
+            <div class="selection-label-row">
+                <span class="section-title">SELECT COLOR</span>
+                <span class="selected-color-name" id="selectedColorDisplay">
+                    {% if product.cached_first_variant %}{{ product.cached_first_variant.color_name }}{% endif %}
+                </span>
+            </div>
+            <div class="color-options">
+                {% for prod in sibling_products %}
+                    {% with col=prod.cached_first_variant %}
+                        {% if col %}
+                        <div class="color-item-wrapper {% if prod.id == product.id %}active{% endif %} swap-color-btn" 
+                             data-product-id="{{ prod.id }}"
+                             onclick="handleColorChange('{{ prod.id }}', this)"
+                             title="{{ col.color_name }}"
+                             style="cursor: pointer;">
+                            <div class="color-item">
+                                <img src="{{ col.color_image.url }}" alt="{{ col.color_name }}">
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Size Selection -->
+        <div class="size-section">
+            <div class="size-header-row">
+                <span class="section-title">SELECT SIZE</span>
+                <a href="javascript:void(0)" onclick="openSizeChart()" class="size-chart-link">
+                    <i class="fa-solid fa-ruler-combined"></i> SIZE GUIDE
+                </a>
+            </div>
+
+            <div class="size-container" id="size-container">
+                {% if not product.has_variants %}
+                    {% for s in simple_sizes_list %}
+                        <button type="button" 
+                                class="size-btn {% if s.stock <= 0 %}out-of-stock{% endif %}" 
+                                {% if s.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ s.size_name }}', this)"{% endif %}
+                                data-stock="{{ s.stock }}">
+                            {{ s.size_name }}
+                        </button>
+                    {% endfor %}
+                {% else %}
+                    {% for v in variants %}
+                        <button type="button" 
+                                class="size-btn variant-size-btn {% if v.stock <= 0 %}out-of-stock{% endif %}"
+                                data-color="{{ v.color_name }}"
+                                {% if v.stock <= 0 %}disabled{% else %}onclick="setChosenSize('{{ v.size_name }}', this)"{% endif %}
+                                data-stock="{{ v.stock }}">
+                            {{ v.size_name }}
+                        </button>
+                    {% endfor %}
+                    <p id="color-msg" style="color: #94969f; font-size: 13px; margin: 0; display: none;">Please select a color first.</p>
+                {% endif %}
+            </div>
+
+            <div class="size-recommendation">
+                <i class="fa-solid fa-circle-info"></i> Standard fit. If you prefer a relaxed oversized drape, size up.
+            </div>
+        </div>
+
+        <input type="hidden" id="selectedColor" value="{% if product.cached_first_variant %}{{ product.cached_first_variant.color_name }}{% endif %}">
+        <input type="hidden" id="selectedSize" value="">
+        <input type="hidden" id="current-active-id" value="{{ product.id }}">
+
+        {{ variants_json|json_script:"variants-data-json" }}
+
+        <!-- Dynamic Responsive Action Buttons -->
+        <div class="sticky-btn-placeholder">
+            <div class="action-btns">
+                <button id="cartBtn" onclick="validatedAddToCart(document.getElementById('current-active-id').value)" class="btn-cart">
+                    <i class="fa-solid fa-bag-shopping"></i> ADD TO BAG
+                </button>
+                <button id="buyBtn" onclick="validatedBuyNow(document.getElementById('current-active-id').value)" class="btn-buy">
+                    <i class="fa-solid fa-bolt-lightning"></i> BUY NOW
+                </button>
+            </div>
+        </div>
+
+        <!-- Interactive Pincode Delivery Estimator -->
+        <div class="delivery-check-box">
+            <div class="delivery-header">
+                <span class="delivery-title"><i class="fa-solid fa-location-dot"></i> DELIVERY OPTIONS</span>
+            </div>
+            <div class="pincode-input-wrap">
+                <input type="text" id="pincodeInput" placeholder="Enter 6-digit Pincode" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <button type="button" class="btn-check-pin" onclick="checkPincodeDelivery()">CHECK</button>
+            </div>
+            <div id="pincodeResult" class="pincode-result" style="display: none;"></div>
+        </div>
+        
+        <!-- Trust Assurance Badges Grid -->
         <div class="trust-badges">
-            <span><i class="fa-solid fa-truck"></i> Free Delivery</span>
-            <span><i class="fa-solid fa-rotate-left"></i> 7 Days Return</span>
-            <span><i class="fa-solid fa-shield-halved"></i> 100% Authentic</span>
+            <div class="trust-badge-item">
+                <i class="fa-solid fa-truck-fast"></i>
+                <div>
+                    <strong>Free Shipping</strong>
+                    <span>On orders above ₹499</span>
+                </div>
+            </div>
+            <div class="trust-badge-item">
+                <i class="fa-solid fa-rotate-left"></i>
+                <div>
+                    <strong>7 Days Return</strong>
+                    <span>Hassle-free pickup</span>
+                </div>
+            </div>
+            <div class="trust-badge-item">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>100% Genuine</strong>
+                    <span>Direct from Vilio</span>
+                </div>
+            </div>
+            <div class="trust-badge-item">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+                <div>
+                    <strong>COD Available</strong>
+                    <span>Cash on delivery</span>
+                </div>
+            </div>
         </div>
 
-        <div class="product-specs">
-            <h4 class="section-title">PRODUCT DETAILS</h4>
-            
-            {% if product.additional_info %}
-            <p style="font-size: 14px; color: #535766; line-height: 1.6; margin-bottom: 15px;">
-                {{ product.additional_info }}
-            </p>
-            {% endif %}
-            
-            <div class="specs-grid">
-                {% if product.fabric %}
-                <div class="spec-item">
-                    <span class="spec-label">Fabric</span>
-                    <span class="spec-value">{{ product.fabric }}</span>
+        <!-- Collapsible Product Details & Specifications -->
+        <div class="product-accordion">
+            <details class="pdp-details-item" open>
+                <summary>
+                    <span><i class="fa-solid fa-circle-info"></i> Product Description & Details</span>
+                    <i class="fa-solid fa-chevron-down accord-icon"></i>
+                </summary>
+                <div class="accord-content">
+                    <p class="description">{{ product.description }}</p>
+                    {% if product.additional_info %}
+                    <p class="additional-info" style="color: #64748b; font-size: 13.5px; margin-top: 6px;">{{ product.additional_info }}</p>
+                    {% endif %}
+                    
+                    <div class="specs-grid">
+                        {% if product.fabric %}
+                        <div class="spec-item">
+                            <span class="spec-label">Fabric</span>
+                            <span class="spec-value">{{ product.fabric }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.fit %}
+                        <div class="spec-item">
+                            <span class="spec-label">Fit</span>
+                            <span class="spec-value">{{ product.fit }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.care_instructions %}
+                        <div class="spec-item" style="grid-column: 1 / -1;">
+                            <span class="spec-label">Care Instructions</span>
+                            <span class="spec-value">{{ product.care_instructions }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
+            </details>
 
-                {% if product.fit %}
-                <div class="spec-item">
-                    <span class="spec-label">Fit</span>
-                    <span class="spec-value">{{ product.fit }}</span>
+            <details class="pdp-details-item">
+                <summary>
+                    <span><i class="fa-solid fa-truck-ramp-box"></i> Shipping & Easy Returns Policy</span>
+                    <i class="fa-solid fa-chevron-down accord-icon"></i>
+                </summary>
+                <div class="accord-content">
+                    <p>• Dispatched within 24 hours of placing the order.</p>
+                    <p>• Fast delivery in 2–5 business days across India.</p>
+                    <p>• 7-day hassle-free returns from delivery date.</p>
+                    <p>• Doorstep reverse pickup available in 19,000+ pincodes.</p>
                 </div>
-                {% endif %}
-            </div>
-
-            {% if product.care_instructions %}
-            <div style="margin-top: 15px;">
-                <span class="spec-label">Care Instructions</span>
-                <span class="spec-value" style="font-weight: 400;">{{ product.care_instructions }}</span>
-            </div>
-            {% endif %}
+            </details>
         </div>
 
-        <p style="font-size: 12px; color: #94969f; margin-top: 20px; padding-bottom: 20px;">Product ID: {{ product.id }}</p>
+        <p class="prod-id-label">Product SKU: VILIO-{{ product.id }}</p>
     </div>
 </div>
 
@@ -225,8 +309,8 @@
                     <div class="suggest-info">
                         <p class="suggest-name">{{ item.name|truncatechars:22 }}</p>
                         <div class="suggest-price-row">
-                            <span class="curr-price">₹{{ item.price }}</span>
-                            {% if item.original_price > item.price %}
+                            <span class="curr-price">₹{{ item.current_price }}</span>
+                            {% if item.has_discount %}
                                 <span class="old-price">₹{{ item.original_price }}</span>
                             {% endif %}
                         </div>
@@ -301,75 +385,167 @@
         </p>
     </div>
 </div>
-
 <style>
-
-    .suggest-img-box .suggest-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+/* ===== 1. CORE RESET & HEADER CLEARANCE FIX ===== */
+body {
+    padding-top: calc(var(--header-height, 52px) + var(--announcement-height, 24px)) !important;
+    background-color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #18181b;
 }
 
-    /* ===== OFFER TIMER (Product Detail) ===== */
-.offer-timer-detail {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #111;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 4px;
-    margin:0;
-margin-left:8px;
-    letter-spacing: 0.3px;
-}
-
-.offer-timer-detail .offer-countdown {
-    color: #ff9f00;
-    font-size: 13px;
-    font-family: monospace;
-} 
-
-
-/* --- Header & Bottom Nav Cleanup on Product Detail --- */
 #category-header, .mobile-bottom-nav { 
     display: none !important; 
 }
 
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', sans-serif; /* Clean modern font base */
+/* ===== FLOATING WHATSAPP REPOSITION & COMPACT SIZING ===== */
+.floating-whatsapp {
+    left: 20px !important;
+    right: auto !important;
+    bottom: 20px !important;
+    padding: 8px 13px !important;
+    font-size: 11.5px !important;
+    gap: 6px !important;
+    z-index: 998 !important;
 }
 
-/* --- Core Layout & Desktop Styles --- */
+.floating-whatsapp i {
+    font-size: 16px !important;
+}
+
+.floating-whatsapp .whatsapp-online-dot {
+    width: 5px !important;
+    height: 5px !important;
+}
+
+/* ===== 2. BREADCRUMBS BAR (Prevents header overlap) ===== */
+.pdp-breadcrumbs-bar {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 18px 32px 6px 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #71717a;
+    font-weight: 500;
+}
+
+.pdp-breadcrumbs-bar a {
+    color: #71717a;
+    text-decoration: none;
+    transition: color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pdp-breadcrumbs-bar a:hover {
+    color: #09090b;
+}
+
+.bc-sep {
+    color: #d4d4d8;
+    font-size: 11px;
+}
+
+.bc-curr {
+    color: #09090b;
+    font-weight: 600;
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== 3. PRODUCT CONTAINER GRID ===== */
 .product-container { 
     display: grid; 
-    grid-template-columns: 55% 45%; 
-    gap: 40px; 
-    max-width: 100%; 
-    margin: 20px auto 0 auto; /* Margin thoda kam kiya */     
-    padding: 40px 40px 0 40px; /* Padding-top ko 80px se ghata kar 40px kar diya */
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); 
+    gap: 36px; 
+    max-width: 1320px; 
+    width: 100%;
+    margin: 0 auto; 
+    padding: 14px 28px 60px 28px;
+    box-sizing: border-box;
 }
 
+/* ===== 4. LEFT GALLERY: VERTICAL THUMBNAILS ON LEFT, MAIN SHOWCASE ON RIGHT ===== */
 .gallery-section { 
     position: sticky; 
-    top: 100px; 
+    top: calc(var(--header-height, 52px) + var(--announcement-height, 24px) + 16px); 
     height: fit-content; 
     width: 100%;
+    display: flex;
+    flex-direction: row; /* Thumbnails on LEFT, main showcase image on RIGHT */
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.thumbnail-row { 
+    display: flex; 
+    flex-direction: column; /* VERTICAL STACK */
+    gap: 12px; 
+    width: 82px;
+    flex-shrink: 0;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    padding: 2px;
+    margin: 0;
+}
+
+.thumbnail-row::-webkit-scrollbar {
+    width: 4px;
+}
+
+.thumbnail-row::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 4px;
+}
+
+.thumb { 
+    width: 78px; 
+    height: 102px; 
+    object-fit: cover; 
+    border-radius: 8px;
+    border: 2px solid #e4e4e7; 
+    cursor: pointer; 
+    flex-shrink: 0; 
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.75;
+    background: #f4f4f5;
+}
+
+.thumb:hover {
+    opacity: 1;
+    border-color: #71717a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.thumb.active { 
+    opacity: 1;
+    border-color: #09090b; 
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.main-img-card-wrap {
+    flex: 1;
+    min-width: 0;
+    position: relative;
 }
 
 .main-img-card { 
-    border: 1px solid #f0f0f0; 
-    background: #fff; 
+    border: 1px solid #e4e4e7; 
+    background: #ffffff; 
     width: 100%;
-    max-width: 510px;
     aspect-ratio: 3 / 4;
+    border-radius: 14px;
     display: flex; 
-    overflow-x: auto;          /* hidden ki jagah auto */
+    overflow-x: auto;
     overflow-y: hidden;
     margin: 0 auto; 
     scroll-behavior: smooth;
@@ -377,12 +553,12 @@ body, html {
     scroll-snap-stop: always;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;     /* Firefox scrollbar hide */
-    -ms-overflow-style: none;  /* IE/Edge scrollbar hide */
+    scrollbar-width: none;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .main-img-card::-webkit-scrollbar {
-    display: none;             /* Chrome/Safari scrollbar hide */
+    display: none;
 }
 
 .main-img-card img { 
@@ -390,632 +566,837 @@ body, html {
     height: 100%; 
     object-fit: cover; 
     flex-shrink: 0;
+    scroll-snap-align: start;
+    cursor: zoom-in;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.slider-dots { display: none; } 
+.main-img-card img:hover {
+    transform: scale(1.025);
+}
 
-.thumbnail-row { 
-    display: flex; 
-    gap: 10px; 
-    margin-top: 15px; 
-    overflow-x: auto; 
+.slider-dots { 
+    display: none; 
+}
+
+/* ===== 5. RIGHT DETAILS SECTION & TYPOGRAPHY ===== */
+.details-section {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     width: 100%;
-    max-width: 580px; 
-    justify-content: center;
+    box-sizing: border-box;
+    padding-right: 4px;
 }
 
-.thumb { 
-    width: 60px; 
-    height: 75px; 
-    object-fit: cover; 
-    border: 1px solid #eee; 
-    cursor: pointer; 
-    flex-shrink: 0; 
+.prod-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
-.thumb.active { border: 2px solid #282c3f; }
 
-/* --- Snitch Styled Typography --- */
+.brand-sub-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #4f46e5;
+    background: #eef2ff;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
+.sale-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #e11d48;
+    background: #ffe4e6;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
 .prod-title { 
-    font-size: 24px; 
-    color: #1a1a1a; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    letter-spacing: 0.5px; 
-    margin-top: 10px;
-    margin-bottom: 8px; 
+    font-size: clamp(22px, 2.3vw, 28px); 
+    color: #09090b; 
+    font-weight: 800; 
+    letter-spacing: -0.4px; 
+    line-height: 1.25;
+    margin: 4px 0 14px 0; 
 }
 
 .price-box { 
-    margin-bottom: 25px; 
+    margin-bottom: 6px; 
     display: flex; 
     align-items: baseline; 
-    gap: 10px; 
+    gap: 12px; 
+    flex-wrap: wrap;
 }
 
 .discount-price { 
-    font-size: 22px; 
-    font-weight: 800; 
-    color: #000; 
+    font-size: clamp(24px, 2.5vw, 32px); 
+    font-weight: 900; 
+    color: #09090b; 
+    letter-spacing: -0.6px;
 }
 
 .original-price { 
-    font-size: 16px; 
-    color: #94969f; 
+    font-size: 17px; 
+    color: #71717a; 
     text-decoration: line-through; 
     font-weight: 500;
 }
 
 .discount-percentage { 
-    font-size: 15px; 
-    color: #ff3f6c; 
+    font-size: 13px; 
+    color: #15803d; 
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
     font-weight: 700; 
+    padding: 4px 10px;
+    border-radius: 999px;
 }
 
-.section-title { font-size: 13px; font-weight: 700; color: #282c3f; letter-spacing: 0.5px; margin-bottom: 12px; }
-.size-header-row { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 12px; }
-.size-chart-link { color: #282c3f; font-size: 11px; font-weight: 700; text-decoration: underline; letter-spacing: 0.5px; }
+.tax-info-tag {
+    font-size: 12.5px;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 22px;
+}
+.tax-info-tag i {
+    color: #16a34a;
+    font-size: 12px;
+}
+
+/* Offer Countdown Pill */
+.offer-timer-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #09090b;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    margin: 0;
+    margin-left: 8px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.offer-timer-detail .offer-countdown {
+    color: #ffaa00;
+    font-size: 13px;
+    font-family: monospace;
+}
 
 /* Color Options */
-.color-options { display: flex; gap: 12px; flex-wrap: wrap; }
-.color-item-wrapper { cursor: pointer; text-align: center; border: 1px solid #eaeaec; padding: 2px; border-radius: 0px; transition: 0.2s; }
-.color-item { width: 45px; height: 55px; overflow: hidden; border-radius: 2px; }
-.color-item img { width: 100%; height: 100%; object-fit: cover; }
-.color-label { display: block; font-size: 11px; margin-top: 4px; text-transform: capitalize; color: #535766; }
-.color-item-wrapper.active { border-color: #282c3f; box-shadow: 0 0 0 1px #282c3f; }
+.color-section {
+    margin-bottom: 22px;
+}
 
-/* --- Snitch Styled Rectangle Sizes --- */
+.selection-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.section-title { 
+    font-size: 12px; 
+    font-weight: 700; 
+    color: #18181b; 
+    letter-spacing: 0.8px; 
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.selected-color-name {
+    font-size: 12.5px;
+    color: #71717a;
+    font-weight: 600;
+}
+
+.color-options { 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+}
+
+.color-item-wrapper { 
+    cursor: pointer; 
+    padding: 2px; 
+    border-radius: 8px; 
+    border: 2px solid transparent;
+    transition: all 0.2s ease; 
+}
+
+.color-item { 
+    width: 48px; 
+    height: 60px; 
+    overflow: hidden; 
+    border-radius: 6px; 
+}
+
+.color-item img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+.color-item-wrapper:hover {
+    border-color: #a1a1aa;
+}
+
+.color-item-wrapper.active { 
+    border-color: #09090b; 
+    box-shadow: 0 0 0 1px #09090b; 
+}
+
+/* Size Selection */
+.size-section {
+    margin-bottom: 8px;
+}
+
+.size-header-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 12px; 
+}
+
+.size-chart-link { 
+    color: #09090b; 
+    font-size: 11.5px; 
+    font-weight: 700; 
+    text-decoration: underline; 
+    letter-spacing: 0.4px; 
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
 .size-container { 
     display: flex; 
-    gap: 8px; /* Snitch tight grid spacing use karta hai */
+    gap: 10px; 
     flex-wrap: wrap; 
-    margin-top: 10px; 
+    margin-top: 4px; 
 }
 
 .size-btn { 
-    min-width: 44px; /* Default square base size */
-    height: 30px; 
-    border-radius: 0px; /* Perfect modern micro-rounded rectangle */
-    border: 1px solid #000; /* Subtle neutral border */
-    background: #fff; 
+    min-width: 52px; 
+    height: 44px; 
+    border-radius: 8px; 
+    border: 1.5px solid #d4d4d8; 
+    background: #ffffff; 
     cursor: pointer; 
-    font-weight: 600; 
-    font-size: 13px; 
+    font-weight: 700; 
+    font-size: 13.5px; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    transition: all 0.15s ease-in-out; 
-    padding: 0 14px; /* T-Shirt sizes (M, L, XL) ya regular numbers dono ke liye perfect dynamic rectangular adjust */
-    color: #000;
-    position: relative;      /* Cross line placement ke liye zaroori hai */
-    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+    padding: 0 16px; 
+    color: #18181b;
 }
 
 .size-btn:hover:not(:disabled) {
-    background: #f5f5f5;
+    border-color: #09090b;
+    background: #f4f4f5;
+    transform: translateY(-1px);
 }
 
 .size-btn.active { 
-    border: 1px solid #000 !important; 
-    color: #fff !important; 
-    background: #000 !important; 
+    border-color: #09090b !important; 
+    color: #ffffff !important; 
+    background: #09090b !important; 
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    transform: translateY(-1px);
 }
 
 .size-btn.out-of-stock { 
-    color: #8e8e93 !important; 
+    color: #a1a1aa !important; 
     cursor: not-allowed !important; 
-    border: 1px solid #8e8e93 !important; 
-    background: #f2f2f7 !important;
-    opacity: 0.6;
+    border: 1.5px dashed #d4d4d8 !important; 
+    background: #f4f4f5 !important;
+    text-decoration: line-through;
+    opacity: 0.65;
 }
 
-.size-btn.out-of-stock::after {
-    display: none; /* Cross line hatane ke liye isko none rakhein, Snitch styles me clear texts zyada visual lagte hain */
+.size-recommendation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #52525b;
+    margin-top: 8px;
+    margin-bottom: 0;
+    padding: 7px 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    border-left: 3px solid #18181b;
+}
+.size-recommendation i {
+    color: #18181b;
+    font-size: 13px;
 }
 
-.description {
-    font-size: 14.5px;
-    color: #4a4d57;
-    line-height: 1.75;
-    margin-top: 25px;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 18px;
-    font-weight: 400;
-    letter-spacing: 0.1px;
+/* ===== 6. DYNAMIC RESPONSIVE ACTION BUTTONS ===== */
+.sticky-btn-placeholder {
+    margin: 6px 0 18px 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* Desktop Buttons */
-.action-btns { display: flex; gap: 15px; margin-top: 30px; }
-.btn-cart { flex: 1; background: #fff; color: #282c3f; border: 1px solid #282c3f; padding: 16px; font-weight: 700; font-size: 15px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-.btn-buy { flex: 1; background: #ff3f6c; color: #fff; border: none; padding: 16px; font-weight: 700; font-size: 15px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-cart:hover { background: #f9f9f9; }
-
-.trust-badges { margin-top: 10px; display: flex; gap: 20px; font-size: 12px; font-weight: 600; color: #535766; border-top: 1px solid #f5f5f6; padding-top: 10px; margin-bottom: 10px !important;
-    padding-bottom: 5px !important; }
-.trust-badges i { color: #14958f; }
-
-/* Specs Style */
-.product-specs {
-    margin-top: 10px !important;
-    padding-top: 5px !important;
+.action-btns { 
+    display: flex; 
+    gap: 12px; 
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-.spec-label { color: #94969f; font-size: 12px; display: block; margin-bottom: 2px; }
-.spec-value { color: #282c3f; font-size: 14px; font-weight: 500; }
+.btn-cart { 
+    flex: 1 1 0; 
+    min-width: 0;
+    background: #ffffff; 
+    color: #09090b; 
+    border: 2px solid #09090b; 
+    padding: 15px 16px; 
+    font-weight: 800; 
+    font-size: 14px; 
+    letter-spacing: 0.5px; 
+    cursor: pointer; 
+    border-radius: 10px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px; 
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-sizing: border-box;
+}
 
-/* Slider Suggestion Logic */
-.suggestions-wrapper { max-width: 100%; margin: 50px auto; padding: 0 20px; overflow: hidden; }
-.slider-container { position: relative; width: 100%; }
-.suggestion-slider { display: flex; gap: 1px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
-.suggestion-slider::-webkit-scrollbar { display: none; }
-.suggestion-card { flex: 0 0 210px; background: #fff; border: 1px solid #f9f9f9; }
-.suggestion-card a { text-decoration: none; color: inherit; }
-.suggest-img-box { position: relative; width: 100%; height: 280px; overflow: hidden; }
-.suggest-img-box img { width: 100%; height: 100%; object-fit: cover; }
-.suggest-info { padding: 10px 5px; }
-.suggest-name { font-size: 13px; font-weight: 500; color: #282c3f; margin: 0 0 5px 0; }
-.suggest-price-row { display: flex; gap: 8px; font-size: 13px; }
-.curr-price { font-weight: 700; color: #282c3f; }
-.old-price { color: #7e818c; text-decoration: line-through; }
-.slide-btn { position: absolute; width: 40px; height: 40px; background: #fff; border: 1px solid #d4d5d9; border-radius: 50%; cursor: pointer; z-index: 10; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.slide-btn.prev { left: -20px; }
-.slide-btn.next { right: -20px; }
+.btn-cart:hover { 
+    background: #09090b; 
+    color: #ffffff; 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 24px rgba(0,0,0,0.16); 
+}
+
+.btn-cart:active { 
+    transform: scale(0.98); 
+}
+
+.btn-buy { 
+    flex: 1 1 0; 
+    min-width: 0;
+    background: linear-gradient(135deg, #ff3366 0%, #ff5e3a 100%); 
+    color: #ffffff; 
+    border: none; 
+    padding: 15px 16px; 
+    font-weight: 800; 
+    font-size: 14px; 
+    letter-spacing: 0.5px; 
+    cursor: pointer; 
+    border-radius: 10px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px; 
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+    box-shadow: 0 4px 16px rgba(255, 51, 102, 0.35); 
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.btn-buy:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 26px rgba(255, 51, 102, 0.45); 
+    filter: brightness(1.06); 
+}
+
+.btn-buy:active { 
+    transform: scale(0.98); 
+}
+
+/* ===== 7. DELIVERY CHECKER & TRUST BADGES ===== */
+.delivery-check-box {
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+}
+.delivery-header {
+    margin-bottom: 10px;
+}
+.delivery-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #18181b;
+}
+.pincode-input-wrap {
+    display: flex;
+    gap: 8px;
+    max-width: 380px;
+}
+.pincode-input-wrap input {
+    flex: 1;
+    border: 1.5px solid #d4d4d8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+    background: #ffffff;
+}
+.pincode-input-wrap input:focus {
+    border-color: #09090b;
+}
+.btn-check-pin {
+    background: #09090b;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-check-pin:hover {
+    background: #27272a;
+}
+.pincode-result {
+    margin-top: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+.pin-success-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* Trust Badges Grid */
+.trust-badges { 
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 18px 0;
+    margin-bottom: 22px;
+    border-top: 1px solid #f4f4f5;
+    border-bottom: 1px solid #f4f4f5;
+}
+.trust-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.trust-badge-item i {
+    font-size: 16px;
+    color: #09090b;
+    background: #f4f4f5;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.trust-badge-item strong {
+    display: block;
+    font-size: 12.5px;
+    color: #18181b;
+}
+.trust-badge-item span {
+    display: block;
+    font-size: 11px;
+    color: #71717a;
+}
+
+/* ===== 8. PRODUCT ACCORDION ===== */
+.product-accordion {
+    margin-bottom: 18px;
+}
+.pdp-details-item {
+    border-bottom: 1px solid #f4f4f5;
+    padding: 14px 0;
+}
+.pdp-details-item summary {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #18181b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style: none;
+    user-select: none;
+}
+.pdp-details-item summary::-webkit-details-marker {
+    display: none;
+}
+.accord-icon {
+    font-size: 11px;
+    color: #71717a;
+    transition: transform 0.25s ease;
+}
+.pdp-details-item[open] .accord-icon {
+    transform: rotate(180deg);
+}
+.accord-content {
+    padding-top: 12px;
+    font-size: 13.5px;
+    color: #52525b;
+    line-height: 1.65;
+}
+.accord-content p {
+    margin-bottom: 8px;
+}
+.specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+    background: #fafafa;
+    padding: 12px 16px;
+    border-radius: 8px;
+}
+.spec-item {
+    display: flex;
+    flex-direction: column;
+}
+.spec-label {
+    font-size: 11px;
+    color: #71717a;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.spec-value {
+    font-size: 13px;
+    color: #18181b;
+    font-weight: 600;
+}
+.prod-id-label {
+    font-size: 11px;
+    color: #a1a1aa;
+    margin-top: 8px;
+}
+
+/* ===== 9. SIMILAR PRODUCTS CAROUSEL ===== */
+.suggestions-wrapper { 
+    max-width: 1360px; 
+    margin: 40px auto; 
+    padding: 0 32px; 
+    overflow: hidden; 
+}
+.slider-container { 
+    position: relative; 
+    width: 100%; 
+}
+.suggestion-slider { 
+    display: flex; 
+    gap: 16px; 
+    overflow-x: auto; 
+    scroll-behavior: smooth; 
+    padding: 12px 0; 
+}
+.suggestion-slider::-webkit-scrollbar { 
+    display: none; 
+}
+.suggestion-card { 
+    flex: 0 0 220px; 
+    background: #fff; 
+    border: 1px solid #f0f0f0; 
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.suggestion-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+}
+.suggestion-card a { 
+    text-decoration: none; 
+    color: inherit; 
+}
+.suggest-img-box { 
+    position: relative; 
+    width: 100%; 
+    height: 290px; 
+    overflow: hidden; 
+}
+.suggest-img-box img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+.suggest-info { 
+    padding: 12px; 
+}
+.suggest-name { 
+    font-size: 13.5px; 
+    font-weight: 600; 
+    color: #18181b; 
+    margin: 0 0 6px 0; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.suggest-price-row { 
+    display: flex; 
+    gap: 8px; 
+    align-items: baseline;
+    font-size: 13.5px; 
+}
+.curr-price { 
+    font-weight: 700; 
+    color: #18181b; 
+}
+.old-price { 
+    color: #71717a; 
+    text-decoration: line-through; 
+    font-size: 12px;
+}
+.slide-btn { 
+    position: absolute; 
+    width: 40px; 
+    height: 40px; 
+    background: #fff; 
+    border: 1px solid #d4d5d9; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    z-index: 10; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12); 
+    transition: all 0.2s ease;
+}
+.slide-btn:hover {
+    background: #09090b;
+    color: #fff;
+    border-color: #09090b;
+}
+.slide-btn.prev { left: -16px; }
+.slide-btn.next { right: -16px; }
 
 .rating-badge {
     position: absolute;
-    bottom: 12px;
-    left: 12px;
-    z-index: 50;
-
+    bottom: 10px;
+    left: 10px;
+    z-index: 5;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 8px;
-
-    background: rgba(255,255,255,0.35) !important;
-
-    backdrop-filter: blur(12px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
-
-    border: 1px solid rgba(255,255,255,0.5);
-    border-radius: 2px;
-
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(8px) saturate(160%) !important;
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 700;
-    color: #282c3f;
-
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    color: #18181b;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 .star-svg {
     width: 10px;
     height: 10px;
-    fill: #ff9f00;
+    fill: #ffaa00;
 }
 .separator {
-    color: rgba(40,44,63,0.3);
+    color: #a1a1aa;
     font-weight: 400;
     margin: 0 1px;
 }
 .user-count {
     font-size: 10px;
-    color: #3e4152;
+    color: #52525b;
     font-weight: 600;
 }
-.product-ribbon { position: absolute; top: 10px; left: 0; font-size: 9px; font-weight: 700; color: #fff; padding: 2px 6px; display: none; }
-
-.brand-service-section { background: #f9f9f9; padding: 40px 0; margin-top: 50px; }
-.service-container { max-width: 1250px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 0 20px; }
-.service-item { text-decoration: none; display: flex; align-items: center; gap: 15px; }
-.service-icon { font-size: 24px; color: #ff3f6c; background: #fff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.service-text h4 { margin: 0; font-size: 13px; color: #282c3f; }
-.service-text p { margin: 2px 0 0 0; font-size: 11px; color: #7e818c; }
-
-/* Full Screen Image Viewer */
-
-.image-modal{
-    display:none;
-    position:fixed;
-    z-index:100000;
-    left:0;
-    top:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.95);
-    justify-content:center;
-    align-items:center;
+.product-ribbon { 
+    position: absolute; 
+    top: 10px; 
+    left: 0; 
+    font-size: 9px; 
+    font-weight: 700; 
+    color: #fff; 
+    padding: 3px 8px; 
+    display: none; 
+    border-radius: 0 4px 4px 0;
 }
 
-.image-modal-content{
-    max-width:95%;
-    max-height:90%;
-    object-fit:contain;
+/* ===== 10. BRAND SERVICE STRIP ===== */
+.brand-service-section { 
+    background: #fafafa; 
+    border-top: 1px solid #f0f0f0;
+    padding: 36px 0; 
+    margin-top: 40px; 
+}
+.service-container { 
+    max-width: 1360px; 
+    margin: 0 auto; 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px; 
+    padding: 0 32px; 
+}
+.service-item { 
+    text-decoration: none; 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
+.service-icon { 
+    font-size: 20px; 
+    color: #09090b; 
+    background: #fff; 
+    width: 48px; 
+    height: 48px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border-radius: 50%; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
+}
+.service-text h4 { 
+    margin: 0; 
+    font-size: 12.5px; 
+    font-weight: 700;
+    color: #18181b; 
+}
+.service-text p { 
+    margin: 2px 0 0 0; 
+    font-size: 11.5px; 
+    color: #71717a; 
 }
 
-.modal-slider{
-    width:100%;
-    height:100%;
-    display:flex;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-    scroll-behavior:smooth;
+/* Full Screen Image Viewer Modal */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.96);
+    justify-content: center;
+    align-items: center;
 }
-
-.modal-slider::-webkit-scrollbar{
-    display:none;
+.image-modal-content {
+    max-width: 95%;
+    max-height: 90%;
+    object-fit: contain;
 }
-
-.modal-slide{
-    min-width:100%;
-    height:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    scroll-snap-align:start;
+.modal-slider {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
 }
-
-.modal-slide img{
-    max-width:95%;
-    max-height:90%;
-    object-fit:contain;
+.modal-slider::-webkit-scrollbar {
+    display: none;
 }
-
-.download-btn{
-    position:absolute;
-    top:29px;
-    right:65px; /* Cross ke just left */
-    background:transparent;
-    color:#fff;
-    border:none;
-    padding:0;
-    cursor:pointer;
-    font-size:17px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    
+.modal-slide {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: start;
 }
-
-
-.image-close{
-    position:absolute;
-    top:20px;
-    right:30px;
-    color:#fff;
-    font-size:32px;
-    font-weight:300;
-    line-height:1;
-    cursor:pointer;
+.modal-slide img {
+    max-width: 95%;
+    max-height: 90%;
+    object-fit: contain;
+}
+.download-btn {
+    position: absolute;
+    top: 24px;
+    right: 70px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.image-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
 }
 
 /* Modals */
-.modal-overlay { display: none; position: fixed; z-index: 10002; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-.modal-content { background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
-.close-modal { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #333; }
-
-/* --- Desktop view me gap kam karne ke liye --- */
-@media (min-width: 769px) {
-    .product-container { 
-        padding-top: 40px !important; /* Pura container upar shift hoga */
-    }
-    .size-recommendation {
-        margin-bottom: 5px !important; /* Recommendation ke niche ka gap kam */
-    }
-    .description {
-    margin-top: 5px !important;
-    margin-bottom: 10px !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+.modal-overlay { 
+    display: none; 
+    position: fixed; 
+    z-index: 10002; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.6); 
+    backdrop-filter: blur(4px); 
 }
-    .action-btns { 
-        margin-top: 20px !important; /* ADD TO BAG aur BUY NOW buttons upar shift honge */
-    }
-    .trust-badges { 
-        margin-top: 20px !important; /* Badges ka gap kam hoga */
-        padding-top: 15px !important; 
-    }
+.modal-content { 
+    background-color: #fff; 
+    margin: 10% auto; 
+    padding: 24px; 
+    border-radius: 12px; 
+    width: 90%; 
+    max-width: 500px; 
+    position: relative; 
+}
+.close-modal { 
+    position: absolute; 
+    right: 16px; 
+    top: 14px; 
+    font-size: 26px; 
+    cursor: pointer; 
+    color: #333; 
 }
 
-/* --- Responsive Overhaul --- */
-@media (max-width: 768px) {
-    .product-container { 
-        display: block !important; 
-        padding: 0 !important; 
-        margin: 0 !important; 
-        width: 100vw !important;
-        overflow-x: hidden;
-    }
-    
-    .gallery-section { 
-        position: relative; 
-        top: 0; 
-        margin-top: 48px !important;   
-        padding-top: 0 !important;
-        margin-bottom: 15px; 
-        width: 100% !important;
-    }
-    .main-img-card { 
-        height: auto !important;     /* Fixed 520px height ko override karke auto kiya */
-        aspect-ratio: 3 / 4 !important; /* Mobile screen ke width ke hisab se automatic 3:4 height pakad lega */
-        max-width: 100% !important; 
-        width: 100vw !important;   
-        border: none !important;
-        border-bottom: 1px solid #f5f5f6;
-        overflow-x: auto !important; 
-        scroll-snap-type: x mandatory !important;
-        scroll-behavior: smooth;
-        display: flex !important;
-        justify-content: flex-start !important;
-        margin: 0 !important;      
-        padding: 0 !important;     
-    }
-    .main-img-card::-webkit-scrollbar { display: none; } 
-    
-    .slide-img { 
-        width: 100vw !important; 
-        height: 100% !important;     /* FIXED 520px KO HATA KAR 100% KIYA TAQI YEH CONTAINER KA 3:4 RATIO PAKAD LE */
-        object-fit: cover !important; 
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-        flex-shrink: 0 !important;
-        margin: 0 !important;
-        cursor: zoom-in;
-        touch-action: pan-x pan-y;
-    }
-    
-    .thumbnail-row { display: none !important; }
-    .slider-dots { 
-        display: flex; 
-        justify-content: center; 
-        gap: 6px; 
-        position: absolute; 
-        bottom: 30px; 
-        width: 100%; 
-        z-index: 5; 
-    }
-    .dot { 
-        width: 7px; 
-        height: 7px; 
-        border-radius: 50%; 
-        background: rgba(0, 0, 0, 0.2); 
-        transition: 0.2s; 
-    }
-    .dot.active { 
-        background: #282c3f; 
-        width: 16px; 
-        border-radius: 4px; 
-    }
-    .details-section p[style*="padding-bottom"], 
-    .details-section p:last-of-type {
-        margin-bottom: 0 !important;
-        padding-bottom: 15px !important; /* Line ke upar ka gap */
-        border-bottom: 1px solid #eaeaec !important; /* Nayi divider line */
-    }
-
-    /* 3. SIMILAR PRODUCTS ke main wrapper ka top margin/padding zero */
-    .suggestions-wrapper {
-        margin-top: 15px !important;      /* Default 50px laga tha, usko zero kiya */
-        padding-top: 0 !important;
-        margin-bottom: 20px !important;
-    }
-
-    /* 4. Slider container aur actual list ke upar ka space nichodein */
-    .suggestions-wrapper .slider-container,
-    .suggestions-wrapper .suggestion-slider,
-    .similar-products-container, 
-    .similar-products,
-    #similar-products {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-
-    /* 5. "SIMILAR PRODUCTS" ki h3 heading ka margin-top ekdum zero */
-    .suggestions-wrapper h3.section-title,
-    .similar-products-container h3, 
-    .similar-products h2 {
-        margin-top: 0 !important;
-        padding-top: 5px !important; /* Ekdum halka sa space visual refinement ke liye */
-        margin-bottom: 5px !important;
-    }
-
-    .details-section { 
-        padding: 0 16px !important; 
-        margin-top: 5px !important;
-        padding-bottom: 0 !important;
-        margin-bottom: 0 !important;
-        height: auto !important;
-    }
-
-    /* 3. Similar Products section ke upar jo extra spacing (margin/padding) hai usko kam karein */
-    .similar-products-container, 
-    .similar-products,
-    #similar-products {
-        margin-top: 1px !important;
-        padding-top: 1px !important;
-    }
-
-    /* 4. Similar Products ki heading ke upar ka extra space hatayein */
-    .similar-products-container h3, 
-    .similar-products h2,
-    .similar-products .section-title {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-
-    /* --- MOBILE: DOUBLE LINE KO SINGLE LINE ME BADLEIN --- */
-    
-    /* 1. Size recommendation ke niche ka gap set karein */
-    .details-section .size-recommendation {
-        margin-bottom: 5px !important;
-    }
-
-    /* 2. Description ki top border (pehli line) ko rehne dein aur spacing tight karein */
-    .details-section .description {
-        margin-top: 1px !important;
-        margin-bottom: 1px !important;
-        padding-top: 10px !important; /* Line aur text ke beech ka gap */
-        padding-bottom: 0 !important;
-        border-top: none !important;
-    }
-
-    /* 3. Placeholder ko zero karein taaki beech ka gap khatam ho */
-    .details-section .sticky-btn-placeholder {
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* 4. Trust Badges ki top border (doosri line) ko BILKUL HATAYEIN */
-    .details-section .trust-badges {
-        margin-top: 10px !important;    /* Upr wali line aur text ke beech space ke liye */
-        padding-top: 12px !important;   /* Line ke andar ka space */
-        
-        /* --- AB UPR AUR NICHE DONO JAGAH LINE AA JAYEGI --- */
-        border-top: 1px solid #eaeaec !important;    /* Trust badges ke UPR single line */
-        border-bottom: 1px solid #eaeaec !important; /* Trust badges ke NICHE single line */
-        
-        padding-bottom: 12px !important; /* Niche wali line aur text ke beech ka space */
-        margin-bottom: 10px !important;
-    }
-
-
-    .prod-title { font-size: 19px !important; margin-bottom: 6px !important; }
-    .price-box { margin-bottom: 15px !important; gap: 10px; align-items: baseline !important; }
-    .discount-price { font-size: 19px !important; }
-    .original-price { font-size: 14px !important; }
-    .discount-percentage { font-size: 13px !important; }
-
-    .selection-box { margin-bottom: 20px !important; }
-    .size-header-row { margin-top: 15px !important; }
-    
-    .sticky-btn-placeholder {
-        height: 75px; 
-    }
-    .action-btns { 
-        position: fixed !important; 
-        bottom: 0 !important; 
-        left: 0 !important; 
-        width: 100% !important; 
-        background: #fff !important; 
-        box-shadow: 0 -4px 12px rgba(0,0,0,0.08) !important; 
-        padding: 10px 16px !important; 
-        margin: 0 !important; 
-        gap: 12px !important; 
-        z-index: 9999 !important;
-        box-sizing: border-box;
-    }
-    .btn-cart { 
-        flex: 1 !important; 
-        padding: 14px 8px !important; 
-        font-size: 14px !important; 
-        background: #fff !important;
-        color: #282c3f !important;
-        border: 1px solid #282c3f !important;
-        border-radius: 4px !important;
-    }
-    .btn-buy { 
-        flex: 1 !important; 
-        padding: 14px 8px !important; 
-        font-size: 14px !important; 
-        background: #ff3f6c !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: 4px !important;
-    }
-
-    .trust-badges { gap: 10px !important; font-size: 11px !important; margin-top: 20px !important; padding-top: 15px !important; }
-    .service-container { grid-template-columns: 1fr !important; gap: 15px !important; }
-    .slide-btn { display: none !important; }
-    .suggestion-card { flex: 0 0 170px !important; }
-    .suggest-img-box { height: 220px !important; }
-}
-/* =======================================================
-       MOBILE: BRAND SERVICE BOX HEIGHT REDUCTION (SLIM LOOK)
-       ======================================================= */
-
-    /* Container ka top-bottom padding kam kiya */
-    .brand-service-section {
-        padding: 20px 0 !important; /* Default 40px se ghata kar 20px kiya */
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
-    }
-
-    .brand-service-section .service-container {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 8px 8px !important; /* Boxes ke beech ka gap aur kam kiya */
-        padding: 0 12px !important;
-    }
-
-    /* Box ki height (top to bottom size) kam karne ke liye padding kam ki */
-    .brand-service-section .service-item {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        background: #ffffff;
-        
-        /* --- CRITICAL HEIGHT FIX --- */
-        padding: 6px 4px !important; /* Top-bottom padding 12px se ghata kar 6px kar di */
-        
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-
-    /* Icon ka size aur uske niche ka space chota kiya taaki height kam ho */
-    .brand-service-section .service-icon {
-        width: 32px !important;  /* 40px se chota kiya */
-        height: 32px !important; /* 40px se chota kiya */
-        font-size: 14px !important;
-        margin-bottom: 4px !important; /* Space kam kiya */
-    }
-
-    /* Titles aur description ke beech ka gap bilkul minimum kiya */
-    .brand-service-section .service-text h4 {
-        font-size: 10px !important;
-        font-weight: 700 !important;
-        margin-top: 0 !important;
-        margin-bottom: 1px !important; /* Ekdum tight gap */
-    }
-
-    .brand-service-section .service-text p {
-        font-size: 9px !important;
-        line-height: 1.2 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-    }
-
-    /* =======================================================
-       MOBILE FOOTER GAP FIX (DIRECT ATTACK)
-       ======================================================= */
-
-    /* 1. Footer ke upar ka saara faltu space khatam karein */
-    footer, 
-    .footer, 
-    .site-footer, 
-    #footer {
-        margin-top: 0 !important;
-        padding-top: 10px !important; /* Default 40px/60px se ghata kar ekdum tight kiya */
-    }
-
-    /* 2. Footer ke andar agar koi pehla child wrapper ya container hai, toh uska bhi top space zero karein */
-    footer .container, 
-    .footer .footer-content, 
-    .footer .footer-top {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-
-    /* 3. Brand service aur footer ke beech ka connection ekdum fit karne ke liye */
-    .brand-service-section {
-        margin-bottom: 0 !important;
-        padding-bottom: 15px !important; /* Taki thoda sa clean look bana rahe */
-    }
-
-    /* Snitch Style Shaking Alert */
+/* Snitch Style Shaking Alert on Validation Error */
 .validation-error {
-    border: 1.5px solid #ff3f6c !important; /* Branded Red/Pink Border */
-    box-shadow: 0 0 5px rgba(255, 63, 108, 0.3) !important;
-    border-radius: 6px;
+    border: 2px solid #ff3366 !important;
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.35) !important;
+    border-radius: 8px;
     padding: 6px;
     animation: snitchShake 0.4s ease-in-out;
 }
@@ -1026,39 +1407,222 @@ body, html {
     40%, 80% { transform: translateX(6px); }
 }
 
-.price-box{
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:8px;
-    flex-wrap:wrap;
+/* ===== 11. RESPONSIVE MOBILE OVERHAUL (max-width: 768px) ===== */
+@media (max-width: 768px) {
+    body {
+        padding-top: calc(var(--header-height, 52px) + var(--announcement-height, 24px)) !important;
+    }
+    
+    .pdp-breadcrumbs-bar {
+        padding: 10px 16px 8px 16px !important;
+        background: #fafafa;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 11px !important;
+    }
+    
+    .product-container { 
+        display: block !important; 
+        padding: 0 0 110px 0 !important; 
+        margin: 0 !important; 
+        width: 100vw !important;
+        overflow-x: hidden;
+    }
+    
+    .gallery-section { 
+        display: flex !important;
+        flex-direction: column !important; /* On mobile: Main Image first, thumbs below */
+        position: relative !important; 
+        top: 0 !important; 
+        margin-top: 0 !important;   
+        padding-top: 0 !important;
+        margin-bottom: 16px !important; 
+        width: 100vw !important;
+    }
+    
+    .main-img-card-wrap {
+        order: 1 !important;
+        width: 100vw !important;
+    }
+    
+    .main-img-card { 
+        aspect-ratio: 3 / 4 !important; 
+        max-width: 100vw !important; 
+        width: 100vw !important;   
+        border-radius: 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #f4f4f5 !important;
+        box-shadow: none !important;
+    }
+    
+    .slide-img { 
+        width: 100vw !important; 
+        height: 100% !important; 
+        object-fit: cover !important; 
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .thumbnail-row { 
+        order: 2 !important;
+        display: flex !important;
+        flex-direction: row !important; /* Horizontal on mobile */
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: auto !important; 
+        overflow-y: hidden !important;
+        padding: 10px 16px !important;
+        gap: 8px !important;
+        box-sizing: border-box;
+    }
+    
+    .thumb { 
+        width: 52px !important; 
+        height: 68px !important; 
+        border-radius: 6px !important;
+    }
+    
+    .slider-dots { 
+        display: flex; 
+        justify-content: center; 
+        gap: 6px; 
+        position: absolute; 
+        bottom: 20px; 
+        width: 100%; 
+        z-index: 5; 
+    }
+    .dot { 
+        width: 6px; 
+        height: 6px; 
+        border-radius: 50%; 
+        background: rgba(0, 0, 0, 0.25); 
+        transition: 0.2s; 
+    }
+    .dot.active { 
+        background: #09090b; 
+        width: 16px; 
+        border-radius: 4px; 
+    }
+
+    .details-section { 
+        padding: 0 16px !important; 
+    }
+
+    .prod-title { 
+        font-size: 19px !important; 
+        margin-bottom: 8px !important; 
+    }
+
+    .price-box { 
+        margin-bottom: 12px !important; 
+        gap: 8px !important; 
+    }
+    
+    .discount-price { 
+        font-size: 21px !important; 
+    }
+    
+    .original-price { 
+        font-size: 14px !important; 
+    }
+    
+    .discount-percentage { 
+        font-size: 11.5px !important; 
+        padding: 2px 7px !important;
+    }
+
+    .sticky-btn-placeholder {
+        height: 75px; 
+    }
+
+    /* Fixed Sticky Buy/Cart Footer on Mobile */
+    .action-btns { 
+        position: fixed !important; 
+        bottom: 0 !important; 
+        left: 0 !important; 
+        right: 0 !important;
+        width: 100% !important; 
+        max-width: 100% !important;
+        background: rgba(255, 255, 255, 0.96) !important; 
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        box-shadow: 0 -4px 18px rgba(0,0,0,0.1) !important; 
+        padding: 10px 14px !important; 
+        margin: 0 !important; 
+        gap: 10px !important; 
+        z-index: 9999 !important;
+        box-sizing: border-box !important;
+    }
+
+    .btn-cart { 
+        flex: 1 !important; 
+        padding: 13px 8px !important; 
+        font-size: 13px !important; 
+        border-radius: 8px !important;
+    }
+
+    .btn-buy { 
+        flex: 1 !important; 
+        padding: 13px 8px !important; 
+        font-size: 13px !important; 
+        border-radius: 8px !important;
+    }
+
+    /* Floating WhatsApp Button on Mobile - Shift to Left & Compact 36px Icon */
+    .floating-whatsapp {
+        left: 12px !important;
+        right: auto !important;
+        bottom: 68px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        justify-content: center !important;
+        align-items: center !important;
+        box-shadow: 0 3px 10px rgba(37, 211, 102, 0.4) !important;
+        z-index: 998 !important;
+    }
+
+    .floating-whatsapp span,
+    .floating-whatsapp .whatsapp-online-dot {
+        display: none !important;
+    }
+
+    .floating-whatsapp i {
+        font-size: 18px !important;
+        margin: 0 !important;
+    }
+
+    .trust-badges { 
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important; 
+        padding: 12px 0 !important;
+    }
+
+    .service-container { 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 10px !important; 
+        padding: 0 16px !important;
+    }
+
+    .slide-btn { 
+        display: none !important; 
+    }
+
+    .suggestion-card { 
+        flex: 0 0 170px !important; 
+    }
+
+    .suggest-img-box { 
+        height: 220px !important; 
+    }
+
+    .suggestions-wrapper { 
+        padding: 0 16px !important; 
+        margin: 24px auto !important; 
+    }
 }
-
-    .discount-price{
-        font-size:18px !important;
-    }
-
-    .original-price{
-        font-size:13px !important;
-    }
-
-    .discount-percentage{
-        font-size:12px !important;
-    }
-
-    .offer-timer-detail{
-        margin-left:8px !important;
-        padding:3px 6px !important;
-        font-size:10px !important;
-        white-space:nowrap;
-    }
-
-    .offer-timer-detail .offer-countdown{
-        font-size:11px !important;
-    }
-
-
-
 </style>
 
 <script>
@@ -1142,6 +1706,7 @@ if (thumbRow) {
         if (desktopThumbs[activeIndex]) {
             desktopThumbs.forEach(t => t.classList.remove('active'));
             desktopThumbs[activeIndex].classList.add('active');
+            desktopThumbs[activeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }
     }
 
@@ -1166,14 +1731,35 @@ function goToSlide(index) {
         slider.scrollTo({ left: width * index, behavior: 'smooth' });
     }
     const thumbs = document.querySelectorAll(".thumbnail-row .thumb");
-
     thumbs.forEach(t => t.classList.remove("active"));
-
     if (thumbs[index]) {
-
         thumbs[index].classList.add("active");
-
+        thumbs[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
+}
+
+// --- INTERACTIVE PINCODE DELIVERY CHECKER ---
+function checkPincodeDelivery() {
+    const pinInput = document.getElementById('pincodeInput');
+    const result = document.getElementById('pincodeResult');
+    if (!pinInput || !result) return;
+    const pin = pinInput.value.trim();
+    if (!pin || pin.length < 6) {
+        result.style.display = 'block';
+        result.style.color = '#ef4444';
+        result.innerHTML = '<span style="display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-circle-exclamation"></i> Please enter a valid 6-digit pincode</span>';
+        return;
+    }
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    const dateStr = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    result.style.display = 'block';
+    result.style.color = '#15803d';
+    result.innerHTML = `
+        <div class="pin-success-item"><i class="fa-solid fa-truck-fast"></i> Guaranteed Delivery by <strong>${dateStr}</strong></div>
+        <div class="pin-success-item"><i class="fa-solid fa-money-bill-wave"></i> Cash on Delivery available at pincode ${pin}</div>
+        <div class="pin-success-item"><i class="fa-solid fa-arrow-rotate-left"></i> 7 Days Doorstep Return & Exchange</div>
+    `;
 }
 
 // --- AJX VARIANT PICKER CONTROLLER ---
@@ -1263,10 +1849,12 @@ requestAnimationFrame(() => {
 const discountPriceEl = document.getElementById('main-discount-price');
 const originalPriceEl = document.getElementById('main-original-price');
 const discountPctEl   = document.getElementById('main-discount-pct');
+const saveBadgeEl     = document.getElementById('main-save-badge');
+const salePillEl      = document.getElementById('main-sale-badge-pill');
 const timerEl         = document.getElementById('offer-timer-detail');
 
-// Check karo kya offer timer expire ho chuka hai
-if (data.offer_active) {
+// Check karo kya product ka active discount hai
+if (data.has_discount) {
 
     if (discountPriceEl)
         discountPriceEl.innerText = "₹" + data.price;
@@ -1281,23 +1869,43 @@ if (data.offer_active) {
         discountPctEl.innerText = "(" + data.discount + "% OFF)";
     }
 
+    if (saveBadgeEl) {
+        const saveDiff = (data.save_amount !== undefined) ? data.save_amount : ((data.original_price || 0) - (data.price || 0));
+        if (saveDiff > 0) {
+            saveBadgeEl.style.display = "";
+            saveBadgeEl.innerText = "Save ₹" + saveDiff;
+        } else {
+            saveBadgeEl.style.display = "none";
+        }
+    }
+
+    if (salePillEl) salePillEl.style.display = "";
+
     if (timerEl) {
         timerEl.style.display = "";
-        timerEl.dataset.end = data.current_offer_end_time;
-        timerEl.dataset.originalPrice = data.original_price;
+        timerEl.setAttribute('data-active', 'true');
+        if (data.next_change_time) timerEl.setAttribute('data-change', data.next_change_time);
+        timerEl.setAttribute('data-price', data.price);
+        timerEl.setAttribute('data-original-price', data.original_price);
         startDetailTimer();
     }
 
 } else {
 
     if (discountPriceEl)
-        discountPriceEl.innerText = "₹" + data.price;
+        discountPriceEl.innerText = "₹" + (data.original_price || data.price);
 
     if (originalPriceEl)
         originalPriceEl.style.display = "none";
 
     if (discountPctEl)
         discountPctEl.style.display = "none";
+
+    if (saveBadgeEl)
+        saveBadgeEl.style.display = "none";
+
+    if (salePillEl)
+        salePillEl.style.display = "none";
 
     if (timerEl)
         timerEl.style.display = "none";
@@ -1606,24 +2214,34 @@ function startDetailTimer() {
 
     const price          = timer.getAttribute('data-price');
     const originalPrice  = timer.getAttribute('data-original-price');
-    let isActive          = timer.getAttribute('data-active') === 'true';
-    let changeAt           = new Date(timer.getAttribute('data-change')).getTime();
+    let isActive         = timer.getAttribute('data-active') === 'true';
+    const changeAtAttr   = timer.getAttribute('data-change');
+    if (!changeAtAttr) return;
+    let changeAt         = new Date(changeAtAttr).getTime();
 
     const discountEl = document.getElementById('main-discount-price');
     const originalEl = document.getElementById('main-original-price');
-    const pctEl        = document.getElementById('main-discount-pct');
-    const countdownEl = timer.querySelector('.offer-countdown');
+    const pctEl      = document.getElementById('main-discount-pct');
+    const saveEl     = document.getElementById('main-save-badge');
+    const salePill   = document.getElementById('main-sale-badge-pill');
+    const countdownEl= timer.querySelector('.offer-countdown');
 
     function applyState(active) {
         timer.style.display    = active ? '' : 'none';
         if (originalEl) originalEl.style.display = active ? '' : 'none';
-        if (pctEl)        pctEl.style.display     = active ? '' : 'none';
-        if (discountEl)  discountEl.innerText     = '₹' + (active ? price : originalPrice);
+        if (pctEl)      pctEl.style.display     = active ? '' : 'none';
+        if (saveEl)     saveEl.style.display    = active ? '' : 'none';
+        if (salePill)   salePill.style.display  = active ? '' : 'none';
+        if (discountEl) discountEl.innerText    = '₹' + (active ? price : originalPrice);
     }
 
     applyState(isActive);
 
-    setInterval(function () {
+    if (window._detailTimerInterval) {
+        clearInterval(window._detailTimerInterval);
+    }
+
+    window._detailTimerInterval = setInterval(function () {
         const diff = changeAt - Date.now();
 
         if (diff <= 0) {
@@ -1634,11 +2252,11 @@ function startDetailTimer() {
         }
 
         if (countdownEl && isActive) {
-    const hrs  = Math.floor(diff / 3600000);
-    const mins = Math.floor((diff % 3600000) / 60000);
-    const secs = Math.floor((diff % 60000) / 1000);
-    countdownEl.innerText = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-}
+            const hrs  = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            countdownEl.innerText = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
     }, 1000);
 }
 
