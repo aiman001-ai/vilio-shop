@@ -308,74 +308,78 @@
     .trust-item:nth-child(4) .trust-icon-box { color: #e11d48; background: #fff1f2; }
 
     .trust-text-box h5 {
-        font-size: 12px;
-        font-weight: 700;
-        color: #18181b;
+        font-size: 11px;
+        font-weight: 600;
+        color: #3f3f46;
         margin-bottom: 2px;
         text-transform: uppercase;
         letter-spacing: 0.3px;
     }
 
     .trust-text-box p {
-        font-size: 11px;
-        color: #71717a;
+        font-size: 10px;
+        font-weight: 300;
+        color: #a1a1aa;
         margin: 0;
     }
 
     @media (max-width: 900px) {
         .trust-strip-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            gap: 12px;
         }
     }
 
     @media (max-width: 500px) {
         .trust-strip-grid {
             grid-template-columns: 1fr 1fr;
-            padding: 12px 10px;
-            gap: 10px;
+            padding: 10px 8px;
+            gap: 8px;
         }
         .trust-icon-box {
-            width: 32px;
-            height: 32px;
-            font-size: 13px;
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
         }
         .trust-text-box h5 {
-            font-size: 10.5px;
+            font-size: 10px;
+            font-weight: 500;
         }
         .trust-text-box p {
-            font-size: 9.5px;
+            font-size: 9px;
+            font-weight: 300;
         }
     }
 
     /* ===== 4. SECTION HEADINGS & FILTER TABS ===== */
     .section-header-wrap {
-        max-width: 1360px;
-        margin: 0 auto 18px;
+        max-width: 1440px;
+        margin: 0 auto 16px;
         padding: 0 16px;
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 14px;
+        gap: 12px;
     }
 
     .section-title-group h2 {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 22px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        color: #0d0d0f;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        color: #27272a;
         text-transform: uppercase;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
     .section-title-group p {
-        font-size: 13px;
-        color: var(--text-muted);
+        font-size: 11.5px;
+        font-weight: 300;
+        color: #a1a1aa;
         margin: 0;
     }
 
@@ -395,21 +399,21 @@
 
     .filter-btn {
         background: #ffffff;
-        border: 1px solid var(--border-light);
-        color: #3f3f46;
-        padding: 8px 16px;
+        border: 1px solid #e4e4e7;
+        color: #71717a;
+        padding: 6px 14px;
         border-radius: var(--radius-full);
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.2px;
         cursor: pointer;
         white-space: nowrap;
         transition: all 0.2s ease;
     }
 
     .filter-btn:hover {
-        border-color: #000;
-        color: #000;
+        border-color: #18181b;
+        color: #18181b;
     }
 
     .filter-btn.active {
@@ -418,9 +422,9 @@
         border-color: #0d0d0f;
     }
 
-    /* ===== 5. PRODUCT GRID ===== */
+    /* ===== 5. PRODUCT GRID (Wider container to highlight & enlarge images) ===== */
     .catalog-wrapper {
-        max-width: 1360px;
+        max-width: 1440px;
         margin: 0 auto;
         padding: 0 16px;
     }
@@ -428,50 +432,50 @@
     .product-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
+        gap: 14px;
         grid-auto-flow: dense;
     }
 
     @media (max-width: 992px) {
         .product-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
     }
 
     @media (max-width: 600px) {
         .catalog-wrapper {
-            padding: 0 8px;
+            padding: 0 6px;
         }
         .product-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 7px;
         }
     }
 
     /* Product Item / Card */
     .product-card {
         background: #ffffff;
-        border-radius: var(--radius-md);
+        border-radius: 10px;
         overflow: hidden;
-        border: 1px solid #f0f0f2;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        border: 1px solid #ededf0;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         display: flex;
         flex-direction: column;
         position: relative;
     }
 
     .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-        border-color: #e4e4e7;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.07);
+        border-color: #d4d4d8;
     }
 
-    /* Image Container (3:4 ratio) */
+    /* Image Container (Taller, elegant fashion ratio that maximizes image prominence) */
     .card-media-box {
         position: relative;
         width: 100%;
-        aspect-ratio: 3 / 4;
+        aspect-ratio: 3 / 4.15;
         background: #f4f4f5;
         overflow: hidden;
         display: block;
@@ -496,36 +500,39 @@
         transform: scale(1.04);
     }
 
-    /* Badges on Image */
+    /* Badges on Image: Minimalist & Sleek */
     .badge-discount {
         position: absolute;
-        top: 10px;
-        left: 10px;
-        background: #000000;
+        top: 8px;
+        left: 8px;
+        background: rgba(15, 15, 18, 0.78);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         color: #ffffff;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 3px 8px;
-        border-radius: var(--radius-sm);
-        letter-spacing: 0.5px;
+        font-size: 8.5px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        letter-spacing: 0.3px;
         z-index: 5;
         text-transform: uppercase;
     }
 
     .badge-deal-hot {
-        background: #e11d48;
+        background: rgba(225, 29, 72, 0.88);
     }
 
     /* Urgency Tag (Top Right) */
     .badge-urgency {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(245, 158, 11, 0.95);
+        top: 8px;
+        right: 8px;
+        background: rgba(245, 158, 11, 0.9);
+        backdrop-filter: blur(4px);
         color: #000000;
-        font-size: 9px;
-        font-weight: 800;
-        padding: 2px 7px;
+        font-size: 8px;
+        font-weight: 600;
+        padding: 1.5px 6px;
         border-radius: var(--radius-full);
         z-index: 5;
         display: flex;
@@ -536,27 +543,26 @@
     /* Glassmorphism Rating Badge (Bottom Left) */
     .rating-pill {
         position: absolute;
-        bottom: 10px;
-        left: 10px;
+        bottom: 8px;
+        left: 8px;
         z-index: 6;
         display: flex;
         align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
+        gap: 3px;
+        padding: 2px 6px;
         background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.6);
-        border-radius: var(--radius-sm);
-        font-size: 10.5px;
-        font-weight: 700;
-        color: #18181b;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        font-size: 9px;
+        font-weight: 500;
+        color: #27272a;
     }
 
     .rating-pill i {
         color: #f59e0b;
-        font-size: 10px;
+        font-size: 9px;
     }
 
     .rating-pill .divider {
@@ -565,32 +571,33 @@
     }
 
     .rating-pill .orders-count {
-        color: #52525b;
-        font-size: 9.5px;
-        font-weight: 600;
+        color: #71717a;
+        font-size: 8.5px;
+        font-weight: 500;
     }
 
     /* Quick Add Hover Button */
     .quick-add-btn {
         position: absolute;
-        bottom: 10px;
-        right: 10px;
+        bottom: 8px;
+        right: 8px;
         z-index: 7;
-        background: #0d0d0f;
+        background: rgba(13, 13, 15, 0.88);
+        backdrop-filter: blur(8px);
         color: #ffffff;
         border: none;
-        padding: 6px 12px;
-        border-radius: var(--radius-sm);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
         text-transform: uppercase;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
         transition: all 0.2s ease;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
@@ -604,31 +611,29 @@
         .quick-add-btn {
             opacity: 1;
             transform: translateY(0);
-            padding: 5px 8px;
-            font-size: 10px;
-            background: rgba(13, 13, 15, 0.92);
-        }
-        .badge-discount {
-            top: 6px;
-            left: 6px;
-            font-size: 8.5px;
-            padding: 2px 6px;
-        }
-        .rating-pill {
-            bottom: 6px;
-            left: 6px;
+            padding: 4px 7px;
             font-size: 9px;
-            padding: 2px 5px;
-        }
-        .quick-add-btn {
+            background: rgba(13, 13, 15, 0.85);
             bottom: 6px;
             right: 6px;
         }
+        .badge-discount {
+            top: 5px;
+            left: 5px;
+            font-size: 8px;
+            padding: 1.5px 5px;
+        }
+        .rating-pill {
+            bottom: 5px;
+            left: 5px;
+            font-size: 8px;
+            padding: 1.5px 5px;
+        }
     }
 
-    /* Card Details Body */
+    /* Card Details Body: Slim, subtle, thin, and light */
     .card-body {
-        padding: 12px 14px 16px;
+        padding: 7px 9px 9px;
         display: flex;
         flex-direction: column;
         flex: 1;
@@ -638,81 +643,86 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .card-brand-name {
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 9px;
+        font-weight: 500;
         text-transform: uppercase;
-        color: #71717a;
-        letter-spacing: 0.8px;
+        color: #a1a1aa;
+        letter-spacing: 0.5px;
     }
 
     .card-delivery-tag {
-        font-size: 10px;
-        color: var(--success);
-        font-weight: 700;
+        font-size: 8.5px;
+        color: #10b981;
+        font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 3px;
+        gap: 2px;
     }
 
     .card-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #18181b;
-        margin-bottom: 8px;
-        line-height: 1.4;
+        font-size: 11.5px;
+        font-weight: 400;
+        color: #52525b;
+        margin-bottom: 3px;
+        line-height: 1.32;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
-        min-height: 38px;
+        min-height: 29px;
+        text-decoration: none;
+    }
+
+    .card-title:hover {
+        color: #18181b;
     }
 
     .card-price-row {
         display: flex;
         align-items: baseline;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
         margin-top: auto;
     }
 
     .price-current {
-        font-size: 16px;
-        font-weight: 800;
-        color: #09090b;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #18181b;
     }
 
     .price-mrp {
-        font-size: 12.5px;
+        font-size: 10.5px;
         color: #a1a1aa;
         text-decoration: line-through;
-        font-weight: 500;
+        font-weight: 300;
     }
 
     .price-save {
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 9px;
+        font-weight: 400;
         color: #16a34a;
     }
 
     @media (max-width: 768px) {
         .card-body {
-            padding: 8px 10px 12px;
+            padding: 5px 7px 7px;
         }
         .card-title {
-            font-size: 12.5px;
-            min-height: 34px;
-            margin-bottom: 6px;
+            font-size: 10.5px;
+            min-height: 26px;
+            margin-bottom: 2px;
         }
         .price-current {
-            font-size: 14px;
+            font-size: 12.5px;
         }
         .price-mrp {
-            font-size: 11px;
+            font-size: 10px;
         }
     }
 
@@ -748,28 +758,32 @@
     }
 
     /* ===== 5B. IN-GRID MOTIVATIONAL MEDIA CARDS & FULL-WIDTH BREAK BANNERS ===== */
-    .motivational-grid-card {
-        background: #0d0d12;
-        border-radius: var(--radius-md);
+    .motivational-card {
+        background: #09090c;
+        border-radius: 10px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border: 1px solid #ededf0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         display: flex;
         flex-direction: column;
         position: relative;
+        text-decoration: none;
         transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        height: 100%;
     }
 
-    .motivational-grid-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
-        border-color: #ffaa00;
+    .motivational-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
+        border-color: #d4d4d8;
     }
 
     .motivational-media-box {
         position: relative;
         width: 100%;
-        aspect-ratio: 3 / 4;
+        height: 100%;
+        min-height: 100%;
+        aspect-ratio: 3 / 4.15;
         overflow: hidden;
         background: #09090c;
         display: block;
@@ -781,82 +795,40 @@
         height: 100%;
         object-fit: cover;
         display: block;
-        transition: transform 0.5s ease;
+        transition: transform 0.4s ease;
     }
 
-    .motivational-grid-card:hover .motivational-media-box video,
-    .motivational-grid-card:hover .motivational-media-box img {
-        transform: scale(1.04);
+    .motivational-card:hover .motivational-media-box video,
+    .motivational-card:hover .motivational-media-box img {
+        transform: scale(1.03);
     }
 
-    .motivational-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(10, 10, 14, 0.6) 0%, rgba(10, 10, 14, 0.05) 35%, rgba(10, 10, 14, 0.8) 70%, rgba(10, 10, 14, 0.98) 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 14px;
-        z-index: 2;
-        pointer-events: none;
-    }
-
-    .motivational-tag-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(255, 170, 0, 0.95);
-        color: #000000;
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        padding: 4px 10px;
-        border-radius: var(--radius-full);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-        width: fit-content;
-    }
-
-    .motivational-tag-pill.badge-emerald {
-        background: #10b981;
-        color: #ffffff;
-    }
-
-    .motivational-tag-pill.badge-rose {
-        background: #e11d48;
-        color: #ffffff;
-    }
-
-    .motivational-tag-pill.badge-purple {
-        background: #8b5cf6;
-        color: #ffffff;
-    }
-
+    /* Minimalist floating sound button for video reels */
     .motivational-sound-btn {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
         z-index: 8;
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
-        background: rgba(0, 0, 0, 0.65);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 11px;
+        font-size: 10px;
         transition: background 0.2s ease, transform 0.2s ease;
     }
 
     .motivational-sound-btn:hover {
-        background: #ffaa00;
+        background: #ffffff;
         color: #000000;
-        transform: scale(1.1);
+        transform: scale(1.08);
     }
 
     .motivational-card-body {
@@ -2491,65 +2463,27 @@
         </div>
 
         {% if forloop.counter == 3 %}
-        <!-- 1. IN-GRID MOTIVATIONAL VIDEO CARD 1 (3:4 Ratio) - Completes Row 1 (4 items) -->
+        <!-- 1. IN-GRID STREETWEAR VIDEO REEL 1 -->
         <div class="product-item motivational-item" data-type="all">
             <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <video id="motivationalVid1" class="motivational-video" autoplay loop muted playsinline preload="metadata">
                         <source src="{% static 'ads/vilio_ingrid_loop.mp4' %}" type="video/mp4">
                     </video>
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge gold">
-                                <i class="fa-solid fa-fire"></i> STREETWEAR REEL
-                            </span>
-                            <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid1')" title="Toggle Sound" aria-label="Toggle Sound">
-                                <i class="fa-solid fa-volume-xmark"></i>
-                            </button>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">⚡ ELEVATE YOUR AURA</span>
-                            <h4 class="motivational-headline">Ditch Ordinary. <span>Wear The Fit</span> That Leads.</h4>
-                            <p class="motivational-subtext">Over 10,000+ fashion rebels upgraded to Vilio this season.</p>
-                            <span class="motivational-cta-btn">
-                                Explore Trending Fits <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-star"></i> 4.9 Rating (1,840+ Sold)</span>
-                    <span class="footer-stat"><i class="fa-solid fa-truck-fast"></i> Fast COD</span>
+                    <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid1')" title="Toggle Sound" aria-label="Toggle Sound">
+                        <i class="fa-solid fa-volume-xmark"></i>
+                    </button>
                 </div>
             </a>
         </div>
         {% endif %}
 
         {% if forloop.counter == 6 %}
-        <!-- 2. IN-GRID EDITORIAL IMAGE MOTIVATION CARD 2 (Confidence) - Completes Row 2 (4 items) -->
+        <!-- 2. IN-GRID EDITORIAL IMAGE POSTER (Confidence) -->
         <div class="product-item motivational-item" data-type="all">
             <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_confidence.jpg' %}" alt="Vilio Confidence Edit" class="motivational-img" loading="lazy">
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge">
-                                <i class="fa-solid fa-sparkles"></i> EDITORIAL DROP
-                            </span>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">✨ UNTOLD CONFIDENCE</span>
-                            <h4 class="motivational-headline">Style Speaks <span>Before You</span> Say A Word.</h4>
-                            <p class="motivational-subtext">Sculpted drapes & tailored cuts that give you effortless authority.</p>
-                            <span class="motivational-cta-btn">
-                                Shop Luxury Shirts <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-circle-check"></i> 98.4% Fit Satisfaction</span>
-                    <span class="footer-stat"><i class="fa-solid fa-bolt"></i> Dispatches in 24h</span>
                 </div>
             </a>
         </div>
@@ -2587,65 +2521,27 @@
         {% endif %}
 
         {% if forloop.counter == 9 %}
-        <!-- 3. IN-GRID MOTIVATIONAL IMAGE CARD 3 (Zero Compromise Quality) - Completes Row 4 (4 items) -->
+        <!-- 3. IN-GRID EDITORIAL IMAGE POSTER (Zero Compromise Quality) -->
         <div class="product-item motivational-item" data-type="all">
             <a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_quality.jpg' %}" alt="Vilio Quality Benchmark" class="motivational-img" loading="lazy">
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge gold">
-                                <i class="fa-solid fa-gem"></i> ULTRA HIGH DENSITY
-                            </span>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">💎 ZERO COMPROMISE</span>
-                            <h4 class="motivational-headline">Dense 380 GSM Cotton. <span>Zero Shrinkage.</span></h4>
-                            <p class="motivational-subtext">Tested across 50+ wash cycles. Color-lock guarantee with breathability.</p>
-                            <span class="motivational-cta-btn">
-                                Experience Heavyweight <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-shield-halved"></i> 50+ Wash Tested</span>
-                    <span class="footer-stat"><i class="fa-solid fa-wind"></i> 100% Breathable</span>
                 </div>
             </a>
         </div>
         {% endif %}
 
         {% if forloop.counter == 12 %}
-        <!-- 4. IN-GRID MOTIVATIONAL VIDEO CARD 4 (Signature Texture Reel) - Completes Row 5 (4 items) -->
+        <!-- 4. IN-GRID EDITORIAL VIDEO REEL (Signature Texture) -->
         <div class="product-item motivational-item" data-type="all">
             <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <video id="motivationalVid2" class="motivational-video" autoplay loop muted playsinline preload="metadata">
                         <source src="{% static 'ads/vilio_waffle_shirt_ad_9x16.mp4' %}" type="video/mp4">
                     </video>
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge gold">
-                                <i class="fa-solid fa-crown"></i> SIGNATURE WEAVE
-                            </span>
-                            <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid2')" title="Toggle Sound" aria-label="Toggle Sound">
-                                <i class="fa-solid fa-volume-xmark"></i>
-                            </button>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">👑 BESPOKE TEXTURE</span>
-                            <h4 class="motivational-headline">Crafted For Those Who <span>Lead, Not Follow</span>.</h4>
-                            <p class="motivational-subtext">3D waffle weave & structured resort drapes.</p>
-                            <span class="motivational-cta-btn">
-                                Shop Signature Drops <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-fire"></i> High Demand</span>
-                    <span class="footer-stat"><i class="fa-solid fa-star"></i> 4.95 Rating</span>
+                    <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid2')" title="Toggle Sound" aria-label="Toggle Sound">
+                        <i class="fa-solid fa-volume-xmark"></i>
+                    </button>
                 </div>
             </a>
         </div>
@@ -2696,88 +2592,31 @@
         {% endif %}
 
         {% if forloop.counter == 15 %}
-        <!-- 5. IN-GRID MOTIVATIONAL IMAGE CARD 5 (The Manifesto) - Completes Row 7 (4 items) -->
+        <!-- 5. IN-GRID EDITORIAL IMAGE POSTER (The Manifesto) -->
         <div class="product-item motivational-item" data-type="all">
             <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_manifesto.jpg' %}" alt="Vilio Manifesto" class="motivational-img" loading="lazy">
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge">
-                                <i class="fa-solid fa-quote-left"></i> THE MANIFESTO
-                            </span>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">⚡ VILIO STREET ETHOS</span>
-                            <h4 class="motivational-headline">Dress Like You Own <span>The Entire Room</span>.</h4>
-                            <p class="motivational-subtext">Engineered for urban night outs, cafe work, and spontaneous road trips.</p>
-                            <span class="motivational-cta-btn">
-                                Explore All Collections <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-shield-check"></i> 100% Genuine</span>
-                    <span class="footer-stat"><i class="fa-solid fa-truck-fast"></i> Same Day Dispatch</span>
                 </div>
             </a>
         </div>
         {% endif %}
 
         {% if forloop.last %}
-        <!-- 6. IN-GRID BONUS CARD 6 (VIP Access) - Completes End of Catalog Grid -->
+        <!-- 6. IN-GRID BONUS POSTER 6 (VIP Access) -->
         <div class="product-item motivational-item hidden-item" data-type="all">
             <a href="{% url 'login' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_vip.jpg' %}" alt="Vilio VIP" class="motivational-img" loading="lazy">
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge gold">
-                                <i class="fa-solid fa-crown"></i> VIP CLUB ACCESS
-                            </span>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">👑 EXCLUSIVE PRIVILEGE</span>
-                            <h4 class="motivational-headline">Get <span>Extra 15% Off</span> Next Order.</h4>
-                            <p class="motivational-subtext">Early access to every limited drop & member-only prices.</p>
-                            <span class="motivational-cta-btn">
-                                Join VIP Club <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-gift"></i> Instant 15% Off</span>
-                    <span class="footer-stat"><i class="fa-solid fa-gem"></i> Lifetime Perks</span>
                 </div>
             </a>
         </div>
 
-        <!-- 7. IN-GRID BONUS CARD 7 (Express Pan-India Delivery) - Completes Final Row -->
+        <!-- 7. IN-GRID BONUS POSTER 7 (Express Pan-India Delivery) -->
         <div class="product-item motivational-item hidden-item" data-type="all">
             <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_express.jpg' %}" alt="Pan India Delivery" class="motivational-img" loading="lazy">
-                    <div class="motivational-overlay">
-                        <div class="motivational-top-row">
-                            <span class="motivational-badge">
-                                <i class="fa-solid fa-truck-fast"></i> EXPRESS PAN-INDIA
-                            </span>
-                        </div>
-                        <div class="motivational-content">
-                            <span class="motivational-tagline">⚡ ZERO RISK SHOPPING</span>
-                            <h4 class="motivational-headline">Delivering Across <span>26,000+ Pincodes</span>.</h4>
-                            <p class="motivational-subtext">Open-box inspection on delivery. Pay safely via Cash or UPI.</p>
-                            <span class="motivational-cta-btn">
-                                Shop All Collections <i class="fa-solid fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="motivational-card-footer">
-                    <span class="footer-stat"><i class="fa-solid fa-check"></i> 100% Genuine</span>
-                    <span class="footer-stat"><i class="fa-solid fa-hand-holding-dollar"></i> Free COD</span>
                 </div>
             </a>
         </div>

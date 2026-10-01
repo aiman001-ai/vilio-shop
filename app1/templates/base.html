@@ -182,13 +182,14 @@
         .brand-logo {
             display: inline-flex;
             align-items: baseline;
-            gap: 3px;
+            gap: 2px;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 23px;
             font-weight: 800;
-            letter-spacing: 2.5px;
+            letter-spacing: 2px;
             color: #ffffff;
             text-transform: uppercase;
+            text-decoration: none;
             transition: opacity 0.2s;
         }
 
@@ -197,10 +198,10 @@
         }
 
         .brand-logo .dot-shop {
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 700;
             color: var(--accent);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         /* Desktop Nav Menu */
@@ -606,14 +607,42 @@
         }
 
         @media (max-width: 768px) {
-            .mobile-bottom-nav {
-                display: flex;
+            .site-header {
+                height: 54px !important;
+                padding: 0 16px !important;
+                justify-content: center !important;
+                background: rgba(10, 10, 13, 0.96) !important;
+                backdrop-filter: blur(20px) !important;
+                -webkit-backdrop-filter: blur(20px) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            }
+            .header-left {
+                width: 100% !important;
+                justify-content: center !important;
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+            /* Hide search, profile, bag & hamburger from top header on mobile - present in bottom nav */
+            .header-actions {
+                display: none !important;
             }
             .mobile-menu-trigger {
-                display: block;
+                display: none !important;
             }
             .desktop-nav {
-                display: none;
+                display: none !important;
+            }
+            .mobile-bottom-nav {
+                display: flex !important;
+                z-index: 1005 !important;
+            }
+            .brand-logo {
+                font-size: 21px !important;
+                letter-spacing: 2px !important;
+            }
+            .brand-logo .dot-shop {
+                font-size: 11px !important;
             }
         }
 
@@ -632,6 +661,18 @@
             letter-spacing: 0.3px;
             position: relative;
             transition: color 0.15s ease;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .b-nav-btn {
+            background: none;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+            padding: 6px 0;
         }
 
         .b-nav-item i {
@@ -662,6 +703,316 @@
             align-items: center;
             justify-content: center;
             padding: 0 2px;
+        }
+
+        /* ===== 6.1 MOBILE ACCOUNT BOTTOM SHEET ===== */
+        .account-sheet-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .account-sheet-backdrop.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .mobile-account-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 86vh;
+            background: #111115;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.7);
+            z-index: 2101;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(105%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .mobile-account-sheet.active {
+            transform: translateY(0);
+        }
+
+        .account-sheet-dragger {
+            width: 38px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            margin: 10px auto 4px;
+            cursor: pointer;
+        }
+
+        .account-sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .sheet-title-wrap h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .sheet-brand-tag {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .close-sheet-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #d4d4d8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .close-sheet-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            color: #fff;
+        }
+
+        .account-sheet-body {
+            padding: 18px 20px 30px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sheet-user-profile-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff3f6c 0%, #ff6b4a 100%);
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(255, 63, 108, 0.35);
+            flex-shrink: 0;
+        }
+
+        .user-meta-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-display-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-contact-sub {
+            font-size: 12px;
+            color: #a1a1aa;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #22c55e;
+            margin-top: 4px;
+            background: rgba(34, 197, 94, 0.12);
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        .sheet-menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sheet-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 13px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .sheet-menu-item:active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sheet-item-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .orders-ico { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .address-ico { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+        .bag-ico { background: rgba(255, 63, 108, 0.15); color: #ff3f6c; }
+        .support-ico { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+        .sheet-item-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sheet-item-text strong {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .sheet-item-text span {
+            font-size: 11px;
+            color: #71717a;
+            margin-top: 1px;
+        }
+
+        .sheet-arrow {
+            font-size: 11px;
+            color: #52525b;
+        }
+
+        .sheet-footer-actions {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .sheet-logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 12px;
+            color: #f87171;
+            font-size: 13.5px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .sheet-logout-btn:active {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .sheet-guest-hero {
+            text-align: center;
+            padding: 10px 10px 20px;
+        }
+
+        .guest-avatar-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #a1a1aa;
+        }
+
+        .sheet-guest-hero h5 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .sheet-guest-hero p {
+            margin: 0 0 18px;
+            font-size: 12.5px;
+            color: #82828e;
+            line-height: 1.45;
+        }
+
+        .sheet-login-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #ff3f6c 0%, #ff6b4a 100%);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            border-radius: 14px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(255, 63, 108, 0.35);
+            transition: transform 0.15s;
+        }
+
+        .sheet-login-cta-btn:active {
+            transform: scale(0.98);
         }
 
         /* ===== 7. FLOATING WHATSAPP SUPPORT BUTTON ===== */
@@ -973,7 +1324,7 @@
                 <i class="fa-solid fa-bars-staggered"></i>
             </button>
 
-            <a href="{% url 'home' %}" class="brand-logo">
+            <a href="{% url 'home' %}" class="brand-logo" aria-label="VILIO Home">
                 VILIO<span class="dot-shop">.shop</span>
             </a>
         </div>
@@ -1009,7 +1360,7 @@
                         <a href="{% url 'my_addresses' %}"><i class="fa-solid fa-location-dot"></i> Delivery Addresses</a>
                         <a href="{% url 'cart' %}"><i class="fa-solid fa-bag-shopping"></i> Shopping Bag (<span class="cart-num-text">{{ global_cart_count }}</span>)</a>
                         <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 4px 0;">
-                        <a href="{% url 'account_logout' %}?next=/" style="color: #ef4444;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                        <a href="{% url 'logout' %}" style="color: #ef4444;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
                     {% else %}
                         <div class="user-greeting">
                             <div class="user-name">Welcome to Vilio</div>
@@ -1051,7 +1402,7 @@
             <li><a href="{% url 'my_orders' %}"><span>📦 My Orders</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
             <li><a href="{% url 'cart' %}"><span>🛍️ Shopping Bag (<span class="drawer-cart-count">{{ global_cart_count }}</span>)</span> <i class="fa-solid fa-chevron-right" style="font-size: 11px; opacity: 0.5;"></i></a></li>
             {% if user.is_authenticated %}
-                <li><a href="{% url 'account_logout' %}?next=/" style="color: #ef4444;"><span>🚪 Logout ({{ user.username }})</span></a></li>
+                <li><a href="{% url 'logout' %}" style="color: #ef4444;"><span>🚪 Logout ({{ user.username }})</span></a></li>
             {% else %}
                 <li><a href="{% url 'login' %}" style="color: #2563eb; font-weight: 700;"><span>🔐 Login / Register</span></a></li>
             {% endif %}
@@ -1102,31 +1453,162 @@
         <span>Need Help? Chat</span>
     </a>
 
+    <!-- 8.1 MOBILE ACCOUNT BOTTOM SHEET -->
+    <div class="account-sheet-backdrop" id="accountSheetBackdrop" onclick="closeAccountSheet()"></div>
+    <div class="mobile-account-sheet" id="mobileAccountSheet" role="dialog" aria-modal="true" aria-label="Account Menu">
+        <div class="account-sheet-dragger" onclick="closeAccountSheet()"></div>
+        <div class="account-sheet-header">
+            <div class="sheet-title-wrap">
+                <span class="sheet-brand-tag">VILIO ACCOUNT</span>
+                <h4>Profile & Orders</h4>
+            </div>
+            <button type="button" class="close-sheet-btn" onclick="closeAccountSheet()" aria-label="Close Account Sheet">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="account-sheet-body">
+            {% if user.is_authenticated %}
+                <!-- Logged In User Card -->
+                <div class="sheet-user-profile-card">
+                    <div class="user-avatar-circle">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                    <div class="user-meta-info">
+                        <div class="user-display-name">
+                            {{ user.get_full_name|default:user.username }}
+                        </div>
+                        <div class="user-contact-sub">
+                            {% if user.profile.phone %}
+                                <i class="fa-solid fa-phone" style="font-size: 10px;"></i> {{ user.profile.phone }}
+                            {% elif user.email %}
+                                <i class="fa-regular fa-envelope" style="font-size: 10px;"></i> {{ user.email }}
+                            {% else %}
+                                @{{ user.username }}
+                            {% endif %}
+                        </div>
+                        <span class="verified-badge">
+                            <i class="fa-solid fa-circle-check"></i> Verified Member
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Account Links List -->
+                <div class="sheet-menu-list">
+                    <a href="{% url 'my_orders' %}" class="sheet-menu-item">
+                        <div class="sheet-item-icon orders-ico"><i class="fa-solid fa-box"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>My Orders</strong>
+                            <span>Track shipments & view order history</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'my_addresses' %}" class="sheet-menu-item">
+                        <div class="sheet-item-icon address-ico"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>Delivery Addresses</strong>
+                            <span>Manage saved shipping addresses</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'cart' %}" class="sheet-menu-item">
+                        <div class="sheet-item-icon bag-ico"><i class="fa-solid fa-bag-shopping"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>Shopping Bag</strong>
+                            <span>{{ global_cart_count }} items in cart</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+
+                    <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support,%20I%20need%20help%20with%20my%20account%20or%20orders" target="_blank" class="sheet-menu-item">
+                        <div class="sheet-item-icon support-ico"><i class="fa-brands fa-whatsapp"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>WhatsApp Live Support</strong>
+                            <span>Instant customer service</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+                </div>
+
+                <div class="sheet-footer-actions">
+                    <a href="{% url 'logout' %}" class="sheet-logout-btn">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                    </a>
+                </div>
+
+            {% else %}
+                <!-- Guest / Not Logged In -->
+                <div class="sheet-guest-hero">
+                    <div class="guest-avatar-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <h5>Welcome to Vilio</h5>
+                    <p>Sign in to track orders, manage delivery addresses, and enjoy fast 1-click checkout.</p>
+                    
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="sheet-login-cta-btn">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In / Register
+                    </a>
+                </div>
+
+                <div class="sheet-menu-list guest-links">
+                    <a href="{% url 'my_orders' %}" class="sheet-menu-item">
+                        <div class="sheet-item-icon orders-ico"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>Track an Order</strong>
+                            <span>Check delivery status</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'cart' %}" class="sheet-menu-item">
+                        <div class="sheet-item-icon bag-ico"><i class="fa-solid fa-bag-shopping"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>Shopping Bag</strong>
+                            <span>{{ global_cart_count }} items in cart</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+
+                    <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support,%20I%20have%20a%20query%20about%20an%20order" target="_blank" class="sheet-menu-item">
+                        <div class="sheet-item-icon support-ico"><i class="fa-brands fa-whatsapp"></i></div>
+                        <div class="sheet-item-text">
+                            <strong>Need Help? Chat on WhatsApp</strong>
+                            <span>Direct brand assistance</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right sheet-arrow"></i>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- 9. MOBILE BOTTOM NAVIGATION BAR -->
     <nav class="mobile-bottom-nav">
-        <a href="{% url 'home' %}" class="b-nav-item active">
+        <a href="{% url 'home' %}" class="b-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-label="Home">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <a href="javascript:void(0)" onclick="openDrawer()" class="b-nav-item">
+        <a href="javascript:void(0)" onclick="openDrawer()" class="b-nav-item" aria-label="Categories">
             <i class="fa-solid fa-layer-group"></i>
             <span>Categories</span>
         </a>
-        <a href="javascript:void(0)" onclick="openSearchBar()" class="b-nav-item">
+        <a href="javascript:void(0)" onclick="openSearchBar()" class="b-nav-item" aria-label="Search">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search</span>
         </a>
-        <a href="{% url 'cart' %}" class="b-nav-item">
+        <a href="{% url 'cart' %}" class="b-nav-item {% if request.resolver_match.url_name == 'cart' %}active{% endif %}" aria-label="Bag">
             <i class="fa-solid fa-bag-shopping"></i>
             <span>Bag</span>
             <span class="b-nav-badge" id="bNavCartBadge" style="display: {% if global_cart_count > 0 %}flex{% else %}none{% endif %};">
                 {{ global_cart_count }}
             </span>
         </a>
-        <a href="{% if user.is_authenticated %}{% url 'my_orders' %}{% else %}{% url 'login' %}{% endif %}" class="b-nav-item">
+        <button type="button" onclick="openAccountSheet()" class="b-nav-item b-nav-btn {% if request.resolver_match.url_name in 'my_orders,my_addresses,login' %}active{% endif %}" id="bNavAccountItem" aria-label="Account">
             <i class="fa-regular fa-user"></i>
             <span>Account</span>
-        </a>
+        </button>
     </nav>
 
     <!-- 10. LUXURY DARK FOOTER -->
@@ -1251,6 +1733,27 @@
             document.getElementById('mobileDrawer').classList.remove('active');
             document.getElementById('drawerBackdrop').classList.remove('active');
             document.body.style.overflow = '';
+        }
+
+        // Mobile Account Sheet Toggle & Close
+        function openAccountSheet() {
+            const sheet = document.getElementById('mobileAccountSheet');
+            const backdrop = document.getElementById('accountSheetBackdrop');
+            if (sheet && backdrop) {
+                sheet.classList.add('active');
+                backdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeAccountSheet() {
+            const sheet = document.getElementById('mobileAccountSheet');
+            const backdrop = document.getElementById('accountSheetBackdrop');
+            if (sheet && backdrop) {
+                sheet.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
 
         // Global Toast Notification Helper

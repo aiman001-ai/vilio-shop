@@ -7,12 +7,13 @@
 {% block extra_css %}
 <style>
     .auth-page-wrapper {
-        min-height: calc(100vh - 220px);
+        min-height: calc(100vh - 160px);
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 50px 20px 80px;
-        background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.04) 0%, transparent 60%);
+        background: radial-gradient(circle at 50% 20%, rgba(255, 63, 108, 0.06) 0%, transparent 60%);
+        box-sizing: border-box;
     }
 
     .auth-card {
@@ -20,12 +21,13 @@
         max-width: 440px;
         background: #141418;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 44px 36px;
+        border-radius: 22px;
+        padding: 44px 34px;
         text-align: center;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.06);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.06);
         position: relative;
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     .auth-card::before {
@@ -35,7 +37,7 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: linear-gradient(90deg, #ff3366, #ff6b4a, #ffaa00);
+        background: linear-gradient(90deg, #ff3f6c, #ff6b4a, #f59e0b);
     }
 
     .auth-brand-badge {
@@ -49,8 +51,8 @@
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 2px;
-        color: #e8e8ed;
-        margin-bottom: 22px;
+        color: #e4e4e7;
+        margin-bottom: 20px;
         text-transform: uppercase;
     }
 
@@ -58,73 +60,80 @@
         font-size: 26px;
         font-weight: 800;
         letter-spacing: -0.5px;
-        color: #fff;
+        color: #ffffff;
         margin: 0 0 8px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
     .auth-subtitle {
         font-size: 13.5px;
-        color: #8c8c9a;
+        color: #94a3b8;
         margin: 0 0 32px;
-        line-height: 1.5;
+        line-height: 1.55;
     }
 
+    /* Google 1-Click Button */
     .google-signin-btn {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
         width: 100%;
-        padding: 14px 20px;
+        padding: 15px 22px;
         background: #ffffff;
-        color: #1f1f23;
+        color: #0f172a;
         font-family: inherit;
-        font-size: 14.5px;
-        font-weight: 600;
-        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        border-radius: 14px;
         text-decoration: none;
         border: none;
         cursor: pointer;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+        box-sizing: border-box;
     }
 
-    .google-signin-btn:hover {
-        background: #f4f4f6;
+    .google-signin-btn:hover,
+    .google-signin-btn:active {
+        background: #f8fafc;
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.18);
     }
 
-    .google-signin-btn img {
-        width: 20px;
-        height: 20px;
+    .google-signin-btn svg {
+        flex-shrink: 0;
     }
 
+    /* Auth Perks */
     .auth-perks {
         margin-top: 32px;
         padding-top: 24px;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         text-align: left;
     }
 
     .auth-perk-item {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         font-size: 12.5px;
-        color: #9e9ea8;
+        color: #94a3b8;
     }
 
     .auth-perk-item i {
-        color: #00d084;
-        font-size: 13px;
+        color: #22c55e;
+        font-size: 14px;
+        flex-shrink: 0;
     }
 
     .auth-footer-nav {
-        margin-top: 26px;
+        margin-top: 28px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -132,13 +141,13 @@
     }
 
     .auth-footer-nav a {
-        color: #8c8c9a;
+        color: #64748b;
         text-decoration: none;
         transition: color 0.2s;
     }
 
     .auth-footer-nav a:hover {
-        color: #fff;
+        color: #ffffff;
     }
 
     @media (max-width: 480px) {
@@ -147,7 +156,7 @@
         }
         .auth-card {
             padding: 32px 22px;
-            border-radius: 16px;
+            border-radius: 18px;
         }
         .auth-title {
             font-size: 22px;
@@ -163,10 +172,11 @@
             <i class="fa-solid fa-crown" style="color:#ffaa00;"></i> VILIO CLUB
         </div>
 
-        <h1 class="auth-title">Welcome Back</h1>
-        <p class="auth-subtitle">Sign in to track orders, access exclusive streetwear drops, and manage your cart.</p>
+        <h1 class="auth-title">Welcome to VILIO</h1>
+        <p class="auth-subtitle">Sign in with Google to access exclusive streetwear drops, track your orders, and manage your cart.</p>
 
-        <a href="{% provider_login_url 'google' next=next|default:request.GET.next %}" class="google-signin-btn">
+        <!-- GOOGLE ONE-CLICK SIGN IN -->
+        <a href="{% provider_login_url 'google' next=next %}" class="google-signin-btn" id="googleSignInButton">
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -193,7 +203,7 @@
 
         <div class="auth-footer-nav">
             <a href="/"><i class="fa-solid fa-arrow-left"></i> Return to Store</a>
-            <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support,%20I%20need%20help%20logging%20in%20to%20my%20account." target="_blank" rel="noopener">Need Help? <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i></a>
+            <a href="https://wa.me/919528959169?text=Hello%20Vilio%20Support,%20I%20need%20help%20signing%20in%20to%20my%20account." target="_blank" rel="noopener">Need Help? <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i></a>
         </div>
     </div>
 </div>

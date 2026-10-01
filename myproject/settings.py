@@ -16,8 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING
 SECRET_KEY = 'django-insecure-xr1kibek!kpjz(z)3-vj%7yrhbqx0%3lthlnk))=u*&=o(mn*+'
 
-# DEBUG: Error check karne ke liye True rakha hai
-DEBUG = False
+IS_PROD = os.getenv('RENDER', '') != '' or os.getenv('DJANGO_ENV', '') == 'production'
+DEBUG = not IS_PROD
 
 ALLOWED_HOSTS = [
     '*',
@@ -28,7 +28,9 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '0.0.0.0',
     '192.168.1.63',
+    '192.168.1.45',
     '192.168.1.12',
+    '192.168.1.11',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -39,10 +41,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://192.168.1.134:8000',
     'http://192.168.1.12:8000',
+    'http://192.168.1.11:8000',
+    'http://192.168.1.45:8000',
+    'http://192.168.1.63:8000',
 ]
 
 # Security Settings
-IS_PROD = os.getenv('RENDER', '') != '' or os.getenv('DJANGO_ENV', '') == 'production'
 CSRF_COOKIE_SECURE = IS_PROD
 SESSION_COOKIE_SECURE = IS_PROD
 CSRF_COOKIE_HTTPONLY = True
@@ -209,18 +213,38 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
-ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = False
+ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+ACCOUNT_SESSION_REMEMBER = True
+
+# Allauth redirects
 LOGIN_REDIRECT_URL = '/post-login/'
 LOGOUT_REDIRECT_URL = '/'
-
-# settings.py mein ye teen lines dhyan se update karo:
-
-LOGIN_REDIRECT_URL = '/post-login/' # Ye sahi hai
-ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False # 🚀 YE SABSE ZAROORI HAI. Isse Allauth next parameter ko bypass nahi karega.
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# Google OAuth2 Provider Configuration
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+        'FETCH_USERINFO': True,
+    }
+}
+
+# Live site requires HTTPS protocol for OAuth callbacks; local uses HTTP
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if IS_PROD else 'http'
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
