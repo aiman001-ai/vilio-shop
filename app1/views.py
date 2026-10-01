@@ -174,6 +174,9 @@ def login_page(request):
 # ================= POST LOGIN REDIRECT =================
 @login_required
 def post_login_redirect(request):
+    # Ensure guest cart items are merged into user's DB cart first
+    merge_cart(request)
+
     # ==========================================================
     # 📦 LAYER 1: PURE SESSION CHECK (Sabse safe aur tez)
     # ==========================================================
@@ -276,44 +279,112 @@ def post_login_redirect(request):
     return redirect('cart')  # Kuch samajh na aaye toh login ke baad cart dikhao
 
 def merge_cart(request):
+    """
+    Merges any guest/session cart items into the authenticated user's Cart in the database.
+    Idempotent and safe: handles guest_cart list/dict, legacy cart, buy_now, and pending items.
+    """
+    if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
+        return
+
+    try:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    except Exception:
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart:
+            return
+
     # 1. Merge legacy session 'cart' if exists
     session_cart = request.session.pop('cart', None)
-    if session_cart and request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
+    if session_cart and isinstance(session_cart, dict):
         for pid, qty in session_cart.items():
             try:
-                product = Product.objects.get(id=pid)
-                item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-                if not created:
+                product = Product.objects.filter(id=int(pid)).first()
+                if not product:
+                    continue
+                qty = max(1, int(qty))
+                item = CartItem.objects.filter(cart=cart, product=product).first()
+                if item:
                     item.quantity += qty
+                    item.save()
                 else:
-                    item.quantity = qty
-                item.save()
-            except Product.DoesNotExist:
+                    CartItem.objects.create(
+                        cart=cart, product=product, color="Default", size="S", quantity=qty
+                    )
+            except Exception:
                 pass
 
-    # 2. Merge guest_cart list if exists
+    # 2. Merge guest_cart (list or dict) if exists
     guest_cart = request.session.pop('guest_cart', None)
-    if guest_cart and request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        for g_item in guest_cart:
-            pid = g_item.get('product_id')
-            p_color = g_item.get('color', 'Default')
-            p_size = g_item.get('size', 'S')
-            p_qty = g_item.get('quantity', 1)
+    if guest_cart:
+        items_list = []
+        if isinstance(guest_cart, list):
+            items_list = guest_cart
+        elif isinstance(guest_cart, dict):
+            if 'product_id' in guest_cart or 'id' in guest_cart:
+                items_list = [guest_cart]
+            else:
+                for k, v in guest_cart.items():
+                    if isinstance(v, dict):
+                        items_list.append(v)
+                    else:
+                        items_list.append({'product_id': k, 'quantity': v})
+
+        for g_item in items_list:
+            if not isinstance(g_item, dict):
+                continue
+            pid = g_item.get('product_id') or g_item.get('id')
+            if not pid:
+                continue
+            p_color = str(g_item.get('color') or 'Default').strip()
+            if not p_color:
+                p_color = 'Default'
+            p_size = str(g_item.get('size') or 'S').strip()
+            if not p_size:
+                p_size = 'S'
             try:
-                product = Product.objects.get(id=pid)
-                item, created = CartItem.objects.get_or_create(
-                    cart=cart, product=product, color=p_color, size=p_size
-                )
-                if not created:
+                p_qty = max(1, int(g_item.get('quantity', 1)))
+            except (ValueError, TypeError):
+                p_qty = 1
+
+            try:
+                product = Product.objects.filter(id=int(pid)).first()
+                if not product:
+                    continue
+
+                item = CartItem.objects.filter(
+                    cart=cart, product=product, color__iexact=p_color, size__iexact=p_size
+                ).first()
+                if item:
                     item.quantity += p_qty
+                    item.save()
                 else:
-                    item.quantity = p_qty
-                item.save()
-            except Product.DoesNotExist:
+                    CartItem.objects.create(
+                        cart=cart, product=product, color=p_color, size=p_size, quantity=p_qty
+                    )
+            except Exception:
                 pass
+
+    # 3. Merge buy_now_product / pending_cart_product from session
+    buy_now_pid = request.session.pop('buy_now_product', None)
+    if buy_now_pid:
+        b_color = request.session.pop('buy_now_color', 'Default')
+        b_size = request.session.pop('buy_now_size', 'S')
+        try:
+            add_product_to_cart(request, int(buy_now_pid), color=b_color, size=b_size)
+        except Exception:
+            pass
+
+    pending_pid = request.session.pop('pending_cart_product', None)
+    if pending_pid:
+        p_color = request.session.pop('pending_color', 'Default')
+        p_size = request.session.pop('pending_size', 'S')
+        try:
+            add_product_to_cart(request, int(pending_pid), color=p_color, size=p_size)
+        except Exception:
+            pass
+
     request.session.modified = True
+
 
 # ================= LOGOUT =================
 def logout_page(request):
@@ -451,6 +522,9 @@ def add_product_to_cart(request, product_id, color=None, size=None):
         request.session.modified = True
 
 def cart(request):
+    if request.user.is_authenticated:
+        merge_cart(request)
+
     cart_items = []
     total = 0
     if request.user.is_authenticated:
@@ -466,7 +540,7 @@ def cart(request):
                 if item.product.image:
                     display_img = item.product.image.url
             else:
-                variant = item.product.color_variants.filter(color_name=item.color).first()
+                variant = item.product.color_variants.filter(color_name__iexact=item.color).first()
                 if variant and variant.color_image:
                     display_img = variant.color_image.url
                 elif item.product.image:
@@ -665,17 +739,98 @@ def calculate_total(user):
     return total_price
 
 # ================= ADDRESS & OTP =================
+def sync_user_address_data(request, user):
+    """
+    Zero-Click Address Engine:
+    Auto-populates and binds complete shipping address & mobile number
+    from device cookie, session, or past store order records.
+    """
+    if not user or not user.is_authenticated:
+        return None
+
+    # If user already has an address, ensure profile phone is set and return
+    existing_addr = Address.objects.filter(user=user).order_by('-id').first()
+    if existing_addr:
+        try:
+            profile, _ = Profile.objects.get_or_create(user=user)
+            if not profile.phone and existing_addr.mobile:
+                profile.phone = existing_addr.mobile
+                profile.save(update_fields=['phone'])
+        except Exception:
+            pass
+        return existing_addr
+
+    candidate = None
+    # 1. Device cookie (1st priority for same device/browser)
+    if request:
+        addr_cookie = request.COOKIES.get('vilio_user_addr')
+        if addr_cookie:
+            try:
+                import json
+                from urllib.parse import unquote
+                candidate = json.loads(unquote(addr_cookie))
+            except Exception:
+                pass
+        if not candidate and hasattr(request, 'session') and 'vilio_user_addr' in request.session:
+            candidate = request.session['vilio_user_addr']
+
+    # 2. Check profile phone
+    if not candidate and hasattr(user, 'profile') and user.profile.phone:
+        prev = Address.objects.filter(mobile=user.profile.phone).order_by('-id').first()
+        if prev:
+            candidate = {
+                'first_name': prev.first_name, 'last_name': prev.last_name,
+                'mobile': prev.mobile, 'address': prev.address,
+                'address_2': prev.address_2 or '', 'city': prev.city,
+                'state': prev.state, 'pincode': prev.pincode
+            }
+
+    # 3. Check user email
+    if not candidate and user.email:
+        prev = Address.objects.filter(user__email=user.email).order_by('-id').first()
+        if prev:
+            candidate = {
+                'first_name': prev.first_name, 'last_name': prev.last_name,
+                'mobile': prev.mobile, 'address': prev.address,
+                'address_2': prev.address_2 or '', 'city': prev.city,
+                'state': prev.state, 'pincode': prev.pincode
+            }
+
+
+    if candidate and candidate.get('address') and candidate.get('mobile'):
+        new_addr = Address.objects.create(
+            user=user,
+            first_name=candidate.get('first_name') or user.first_name or 'Valued',
+            last_name=candidate.get('last_name') or user.last_name or 'Customer',
+            mobile=candidate.get('mobile'),
+            address=candidate.get('address'),
+            address_2=candidate.get('address_2') or '',
+            city=candidate.get('city') or '',
+            state=candidate.get('state') or '',
+            pincode=candidate.get('pincode') or ''
+        )
+        try:
+            profile, _ = Profile.objects.get_or_create(user=user)
+            if not profile.phone and candidate.get('mobile'):
+                profile.phone = candidate.get('mobile')
+                profile.save(update_fields=['phone'])
+        except Exception:
+            pass
+        return new_addr
+
+    return None
+
 @login_required
 def add_address(request):
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        mobile = request.POST.get('mobile')
-        address_text = request.POST.get('address')
-        address_2 = request.POST.get('address_2')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        pincode = request.POST.get('pincode')
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+        mobile = (request.POST.get('mobile') or '').strip()
+        address_text = (request.POST.get('address') or '').strip()
+        address_2 = (request.POST.get('address_2') or '').strip()
+        city = (request.POST.get('city') or '').strip()
+        state = (request.POST.get('state') or '').strip()
+        pincode = (request.POST.get('pincode') or '').strip()
 
         Address.objects.create(
             user=request.user,
@@ -688,10 +843,126 @@ def add_address(request):
             state=state,
             pincode=pincode
         )
-        next_page = request.GET.get('next', 'checkout') 
-        return redirect(next_page)
 
-    return render(request, 'add_address.html')
+        # Sync user profile name and phone if empty
+        try:
+            user_updated = False
+            if not request.user.first_name and first_name:
+                request.user.first_name = first_name
+                user_updated = True
+            if not request.user.last_name and last_name:
+                request.user.last_name = last_name
+                user_updated = True
+            if user_updated:
+                request.user.save(update_fields=['first_name', 'last_name'])
+
+            profile, _ = Profile.objects.get_or_create(user=request.user)
+            if not profile.phone and mobile:
+                profile.phone = mobile
+                profile.save(update_fields=['phone'])
+        except Exception:
+            pass
+
+        next_page = request.POST.get('next') or request.GET.get('next', 'checkout')
+        target = 'checkout' if next_page == 'checkout' else next_page
+        response = redirect(target)
+        try:
+            import json
+            from urllib.parse import quote
+            cookie_payload = {
+                'first_name': first_name,
+                'last_name': last_name,
+                'mobile': mobile,
+                'address': address_text,
+                'address_2': address_2,
+                'city': city,
+                'state': state,
+                'pincode': pincode
+            }
+            response.set_cookie('vilio_user_addr', quote(json.dumps(cookie_payload)), max_age=365*24*60*60, httponly=False)
+            request.session['vilio_user_addr'] = cookie_payload
+        except Exception:
+            pass
+        return response
+
+    # GET Request: Zero-Click Address Pre-population
+    next_dest = request.GET.get('next')
+    if next_dest == 'checkout':
+        synced = sync_user_address_data(request, request.user)
+        if synced:
+            return redirect('checkout')
+
+    # Resolve prefill data
+    prefill = None
+    addr_cookie = request.COOKIES.get('vilio_user_addr')
+    if addr_cookie:
+        try:
+            import json
+            from urllib.parse import unquote
+            prefill = json.loads(unquote(addr_cookie))
+        except Exception:
+            pass
+
+    if not prefill and hasattr(request, 'session') and 'vilio_user_addr' in request.session:
+        prefill = request.session['vilio_user_addr']
+
+    if not prefill and hasattr(request.user, 'profile') and request.user.profile.phone:
+        prev_addr = Address.objects.filter(mobile=request.user.profile.phone).order_by('-id').first()
+        if prev_addr:
+            prefill = {
+                'first_name': prev_addr.first_name,
+                'last_name': prev_addr.last_name,
+                'mobile': prev_addr.mobile,
+                'address': prev_addr.address,
+                'address_2': prev_addr.address_2 or '',
+                'city': prev_addr.city,
+                'state': prev_addr.state,
+                'pincode': prev_addr.pincode
+            }
+
+    if not prefill and request.user.email:
+        prev_addr = Address.objects.filter(user__email=request.user.email).order_by('-id').first()
+        if prev_addr:
+            prefill = {
+                'first_name': prev_addr.first_name,
+                'last_name': prev_addr.last_name,
+                'mobile': prev_addr.mobile,
+                'address': prev_addr.address,
+                'address_2': prev_addr.address_2 or '',
+                'city': prev_addr.city,
+                'state': prev_addr.state,
+                'pincode': prev_addr.pincode
+            }
+
+    if not prefill and (request.user.first_name or request.user.last_name):
+        prefill = {
+            'first_name': request.user.first_name or '',
+            'last_name': request.user.last_name or '',
+            'mobile': getattr(getattr(request.user, 'profile', None), 'phone', '') or '',
+        }
+
+    return render(request, 'add_address.html', {'prefill': prefill})
+
+def lookup_address_by_phone(request):
+    raw_phone = request.GET.get('mobile') or request.GET.get('phone') or ''
+    phone = raw_phone.strip().replace(' ', '').replace('+91', '').replace('-', '')
+    if len(phone) >= 10:
+        phone = phone[-10:]
+        # Match exact 10-digit mobile number
+        addr = Address.objects.filter(mobile__endswith=phone).order_by('-id').first()
+        if addr:
+            return JsonResponse({
+                'success': True,
+                'first_name': addr.first_name,
+                'last_name': addr.last_name,
+                'mobile': addr.mobile,
+                'address': addr.address,
+                'address_2': addr.address_2 or '',
+                'city': addr.city,
+                'state': addr.state,
+                'pincode': addr.pincode
+            })
+    return JsonResponse({'success': False})
 
 @login_required
 def my_addresses(request):
@@ -875,6 +1146,7 @@ def product_detail(request, id):
 # ================= CHECKOUT & ORDERS =================
 @login_required
 def checkout(request):
+    merge_cart(request)
     cart_obj = Cart.objects.filter(user=request.user).first()
     
     # 1. Basic Checks
@@ -883,9 +1155,16 @@ def checkout(request):
         return redirect('cart')
 
     addresses = Address.objects.filter(user=request.user)
+    
+    # 🚀 ZERO-CLICK AUTO-SYNC: If user has no address in DB, sync from device cookie, session, or recent store records
     if not addresses.exists():
-        messages.info(request, "Please add a delivery address first.")
-        return redirect('/add-address/?next=checkout') # next parameter zaroori hai
+        sync_user_address_data(request, request.user)
+        addresses = Address.objects.filter(user=request.user)
+
+        # Only if completely impossible to find any address, redirect to add-address
+        if not addresses.exists():
+            messages.info(request, "Please add a delivery address first.")
+            return redirect('/add-address/?next=checkout')
 
     processed_cart_items = []
     total = 0
@@ -939,7 +1218,26 @@ def checkout(request):
         'razorpay_key': settings.RAZORPAY_KEY_ID  # Frontend script ke liye
     }
 
-    return render(request, 'place_order.html', context)
+    response = render(request, 'place_order.html', context)
+    first_addr = addresses.first()
+    if first_addr:
+        try:
+            import json
+            from urllib.parse import quote
+            cookie_payload = {
+                'first_name': first_addr.first_name,
+                'last_name': first_addr.last_name,
+                'mobile': first_addr.mobile,
+                'address': first_addr.address,
+                'address_2': first_addr.address_2 or '',
+                'city': first_addr.city,
+                'state': first_addr.state,
+                'pincode': first_addr.pincode
+            }
+            response.set_cookie('vilio_user_addr', quote(json.dumps(cookie_payload)), max_age=365*24*60*60, httponly=False)
+        except Exception:
+            pass
+    return response
 
 @login_required
 @require_POST
@@ -1085,14 +1383,50 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
     else:
         products = Product.objects.filter(is_active=True)
 
-    # 2. Filtering Logic
+    display_type_name = None
+    display_sub_name = None
+
+    # 2. Filtering Logic with robust slug resolution
     if type_slug:
-        products = products.filter(product_type__name__iexact=type_slug)
+        clean = type_slug.lower().strip().replace('-', ' ').replace('_', ' ')
+        if any(w in clean for w in ['track', 'jogger', 'cargo']):
+            q = Q(product_type__name__icontains='track') | Q(name__icontains='track') | Q(name__icontains='jogger')
+            display_type_name = 'Track Pants & Joggers'
+        elif 'pant' in clean and not any(w in clean for w in ['jean', 'denim']):
+            q = Q(product_type__name__icontains='track') | Q(product_type__name__icontains='pant') | Q(name__icontains='jogger') | Q(name__icontains='trouser')
+            display_type_name = 'Track Pants'
+        elif any(w in clean for w in ['t shirt', 'tshirt', 'tee', 'oversized']):
+            q = Q(product_type__name__icontains='t-shirt') | Q(product_type__name__icontains='tshirt') | Q(name__icontains='t-shirt') | Q(name__icontains='tee')
+            display_type_name = 'T-Shirts & Oversized'
+        elif 'shirt' in clean:
+            q = Q(product_type__name__iexact='Shirts') | (Q(name__icontains='shirt') & ~Q(product_type__name__icontains='t-shirt') & ~Q(name__icontains='tee'))
+            display_type_name = 'Shirts'
+        elif any(w in clean for w in ['jean', 'denim']):
+            q = Q(product_type__name__icontains='jean') | Q(name__icontains='denim') | Q(name__icontains='jean')
+            display_type_name = 'Jeans & Denim'
+        else:
+            q = Q(product_type__name__iexact=type_slug) | Q(product_type__name__iexact=clean) | Q(product_type__name__icontains=clean) | Q(name__icontains=clean)
+            display_type_name = clean.title()
+
+        products = products.filter(q)
+
     elif sub_slug:
-        products = products.filter(
-            Q(sub_category__name__iexact=sub_slug) | 
-            Q(product_type__name__iexact=sub_slug)
-        )
+        clean_sub = sub_slug.lower().strip().replace('-', ' ')
+        if 'bottom' in clean_sub:
+            q = Q(sub_category__name__icontains='bottom') | Q(product_type__name__icontains='jean') | Q(product_type__name__icontains='track')
+            display_sub_name = 'Bottom Wear'
+        elif 'top' in clean_sub:
+            q = Q(sub_category__name__icontains='top') | Q(product_type__name__icontains='shirt') | Q(product_type__name__icontains='t-shirt')
+            display_sub_name = 'Top Wear'
+        else:
+            q = Q(sub_category__name__iexact=sub_slug) | Q(sub_category__name__icontains=clean_sub) | Q(product_type__name__icontains=clean_sub)
+            display_sub_name = clean_sub.title()
+
+        products = products.filter(q)
+
+    if sub_slug and not display_sub_name:
+        clean_s = sub_slug.lower().strip().replace('-', ' ')
+        display_sub_name = 'Bottom Wear' if 'bottom' in clean_s else ('Top Wear' if 'top' in clean_s else clean_s.title())
 
     products = products.select_related('category', 'sub_category', 'product_type')\
                        .prefetch_related('images', 'color_variants')\
@@ -1101,8 +1435,8 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
     context = {
         'products': products,
         'category_name': category.name if category else category_slug.title(),
-        'sub_category_name': sub_slug,
-        'type_name': type_slug
+        'sub_category_name': display_sub_name or sub_slug,
+        'type_name': display_type_name or type_slug
     }
     return render(request, 'category_products.html', context)
 

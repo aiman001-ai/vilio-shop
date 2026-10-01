@@ -317,23 +317,49 @@
             display: none;
             position: absolute;
             right: 0;
-            top: calc(100% + 12px);
+            top: calc(100% + 8px);
             background: #ffffff;
             min-width: 220px;
             border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-light);
             padding: 8px 0;
             z-index: 1050;
-            animation: fadeInDown 0.2s ease;
+            animation: fadeInDown 0.15s ease;
+        }
+
+        /* Invisible bridge to prevent mouse leaving hover state when moving from button to dropdown */
+        .account-menu-box::before {
+            content: '';
+            position: absolute;
+            top: -16px;
+            left: -15px;
+            right: -15px;
+            height: 20px;
+            background: transparent;
+        }
+
+        /* Little arrow indicator pointing to user icon */
+        .account-menu-box::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 12px;
+            width: 10px;
+            height: 10px;
+            background: #ffffff;
+            border-left: 1px solid var(--border-light);
+            border-top: 1px solid var(--border-light);
+            transform: rotate(45deg);
         }
 
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-8px); }
+            from { opacity: 0; transform: translateY(-6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .account-dropdown-wrap:hover .account-menu-box {
+        .account-dropdown-wrap:hover .account-menu-box,
+        .account-dropdown-wrap.active .account-menu-box {
             display: block;
         }
 
@@ -969,10 +995,10 @@
             </button>
 
             <!-- User Profile Dropdown -->
-            <div class="account-dropdown-wrap">
-                <a href="{% if user.is_authenticated %}{% url 'my_orders' %}{% else %}{% url 'login' %}{% endif %}" class="action-btn" aria-label="User Account">
+            <div class="account-dropdown-wrap" id="accountDropdown">
+                <button type="button" class="action-btn" id="accountDropdownTrigger" aria-label="User Account" aria-expanded="false" onclick="toggleAccountMenu(event)">
                     <i class="fa-regular fa-user"></i>
-                </a>
+                </button>
                 <div class="account-menu-box">
                     {% if user.is_authenticated %}
                         <div class="user-greeting">
@@ -1191,6 +1217,29 @@
             if (e.key === 'Escape') closeSearchBar();
         });
 
+        // Account Dropdown Toggle & Close
+        function toggleAccountMenu(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const wrap = document.getElementById('accountDropdown');
+            const trigger = document.getElementById('accountDropdownTrigger');
+            if (wrap) {
+                const isActive = wrap.classList.toggle('active');
+                if (trigger) trigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('accountDropdown');
+            if (wrap && !wrap.contains(e.target)) {
+                wrap.classList.remove('active');
+                const trigger = document.getElementById('accountDropdownTrigger');
+                if (trigger) trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
         // Mobile Drawer Toggle
         function openDrawer() {
             document.getElementById('mobileDrawer').classList.add('active');
@@ -1294,6 +1343,27 @@
                     ticking = true;
                 }
             }, { passive: true });
+        })();
+
+        // 🚀 Global Zero-Click Address Sync: Keep Cookie & LocalStorage mirroring on all pages
+        (function() {
+            try {
+                const STORAGE_KEY = 'vilio_saved_shipping_address';
+                const hasCookie = document.cookie.includes('vilio_user_addr=');
+                const localData = localStorage.getItem(STORAGE_KEY);
+
+                if (!hasCookie && localData) {
+                    // Sync from localStorage to 1-year cookie
+                    document.cookie = "vilio_user_addr=" + encodeURIComponent(localData) + "; path=/; max-age=31536000; SameSite=Lax";
+                } else if (hasCookie && !localData) {
+                    // Sync from cookie to localStorage
+                    const parts = (`; ${document.cookie}`).split('; vilio_user_addr=');
+                    if (parts.length === 2) {
+                        const raw = decodeURIComponent(parts.pop().split(';').shift());
+                        localStorage.setItem(STORAGE_KEY, raw);
+                    }
+                }
+            } catch(e) {}
         })();
     </script>
 </body>

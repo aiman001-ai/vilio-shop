@@ -264,95 +264,6 @@
         }
     }
 
-    /* ===== 2. QUICK CATEGORY STORIES / PILLS ===== */
-    .story-categories-wrap {
-        max-width: 1360px;
-        margin: 0 auto 28px;
-        padding: 0 16px;
-    }
-
-    .story-scroll-container {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        overflow-x: auto;
-        padding: 6px 2px 14px;
-        scroll-snap-type: x mandatory;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .story-scroll-container::-webkit-scrollbar {
-        display: none;
-    }
-
-    .story-pill {
-        flex: 0 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        color: #18181b;
-        cursor: pointer;
-        transition: transform 0.2s ease;
-        scroll-snap-align: start;
-    }
-
-    .story-pill:hover {
-        transform: translateY(-2px);
-    }
-
-    .story-circle {
-        width: 68px;
-        height: 68px;
-        border-radius: 50%;
-        padding: 3px;
-        background: linear-gradient(135deg, #ff3f6c, #f59e0b);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .story-pill:hover .story-circle {
-        box-shadow: 0 4px 14px rgba(255, 63, 108, 0.35);
-    }
-
-    .story-circle-inner {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: #18181b;
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        border: 2px solid #ffffff;
-    }
-
-    .story-label {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-        color: #27272a;
-        white-space: nowrap;
-    }
-
-    @media (max-width: 600px) {
-        .story-circle {
-            width: 58px;
-            height: 58px;
-        }
-        .story-circle-inner {
-            font-size: 20px;
-        }
-        .story-label {
-            font-size: 10px;
-        }
-    }
 
     /* ===== 3. TRUST & SALES PROPOSITION BAR ===== */
     .trust-strip-wrap {
@@ -1856,6 +1767,9 @@
         flex-direction: column;
         height: 100%;
         position: relative;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
         transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
@@ -1863,6 +1777,15 @@
         transform: translateY(-4px);
         box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
         border-color: rgba(255, 255, 255, 0.3);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .motivational-card:hover .motivational-cta-btn {
+        background: #f4f4f5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.35);
+        color: #000;
     }
 
     .motivational-media-box {
@@ -2427,59 +2350,6 @@
     </div>
 </section>
 
-<!-- 2. QUICK CATEGORY STORIES / CIRCLES -->
-<section class="story-categories-wrap">
-    <div class="story-scroll-container">
-        <a href="javascript:void(0)" onclick="filterCategory('all', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-fire"></i></div>
-            </div>
-            <span class="story-label">All Drops</span>
-        </a>
-
-        <a href="javascript:void(0)" onclick="filterCategory('shirts', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-shirt"></i></div>
-            </div>
-            <span class="story-label">Shirts</span>
-        </a>
-
-        <a href="javascript:void(0)" onclick="filterCategory('t-shirts', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-vest"></i></div>
-            </div>
-            <span class="story-label">Oversized</span>
-        </a>
-
-        <a href="javascript:void(0)" onclick="filterCategory('jeans', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-scissors"></i></div>
-            </div>
-            <span class="story-label">Denim Jeans</span>
-        </a>
-
-        <a href="javascript:void(0)" onclick="filterCategory('track-pant', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-person-running"></i></div>
-            </div>
-            <span class="story-label">Track Pants</span>
-        </a>
-
-        <a href="javascript:void(0)" onclick="filterCategory('under999', this)" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-tag"></i></div>
-            </div>
-            <span class="story-label">Under ₹799</span>
-        </a>
-
-        <a href="{% url 'category_default' 'men' %}" class="story-pill">
-            <div class="story-circle">
-                <div class="story-circle-inner"><i class="fa-solid fa-bolt"></i></div>
-            </div>
-            <span class="story-label">Best Sellers</span>
-        </a>
-    </div>
-</section>
 
 <!-- 3. VALUE PROPOSITIONS & TRUST STRIP -->
 <section class="trust-strip-wrap">
@@ -2519,18 +2389,19 @@
 </section>
 
 <!-- 4. SECTION HEADER & FILTER PILLS -->
-<div class="section-header-wrap">
+<div class="section-header-wrap" id="catalogSection">
     <div class="section-title-group">
         <h2>🔥 Trending Drops ({{ products|length }})</h2>
         <p>Handcrafted streetwear, tailored fits, and head-turning textures</p>
     </div>
 
     <div class="filter-pills-row">
-        <button class="filter-btn active" onclick="filterCategory('all', this)">All</button>
-        <button class="filter-btn" onclick="filterCategory('shirts', this)">Shirts</button>
-        <button class="filter-btn" onclick="filterCategory('t-shirts', this)">Oversized Tees</button>
-        <button class="filter-btn" onclick="filterCategory('jeans', this)">Jeans</button>
-        <button class="filter-btn" onclick="filterCategory('under999', this)">Under ₹799</button>
+        <button class="filter-btn active" data-filter="all" onclick="filterCategory('all', this)">All</button>
+        <button class="filter-btn" data-filter="shirts" onclick="filterCategory('shirts', this)">Shirts</button>
+        <button class="filter-btn" data-filter="t-shirts" onclick="filterCategory('t-shirts', this)">Oversized Tees</button>
+        <button class="filter-btn" data-filter="jeans" onclick="filterCategory('jeans', this)">Jeans</button>
+        <button class="filter-btn" data-filter="track-pant" onclick="filterCategory('track-pant', this)">Track Pants</button>
+        <button class="filter-btn" data-filter="under999" onclick="filterCategory('under999', this)">Under ₹799</button>
     </div>
 </div>
 
@@ -2622,7 +2493,7 @@
         {% if forloop.counter == 3 %}
         <!-- 1. IN-GRID MOTIVATIONAL VIDEO CARD 1 (3:4 Ratio) - Completes Row 1 (4 items) -->
         <div class="product-item motivational-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <video id="motivationalVid1" class="motivational-video" autoplay loop muted playsinline preload="metadata">
                         <source src="{% static 'ads/vilio_ingrid_loop.mp4' %}" type="video/mp4">
@@ -2632,7 +2503,7 @@
                             <span class="motivational-badge gold">
                                 <i class="fa-solid fa-fire"></i> STREETWEAR REEL
                             </span>
-                            <button type="button" class="motivational-sound-btn" onclick="toggleMotivationalSound(this, 'motivationalVid1')" title="Toggle Sound" aria-label="Toggle Sound">
+                            <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid1')" title="Toggle Sound" aria-label="Toggle Sound">
                                 <i class="fa-solid fa-volume-xmark"></i>
                             </button>
                         </div>
@@ -2640,9 +2511,9 @@
                             <span class="motivational-tagline">⚡ ELEVATE YOUR AURA</span>
                             <h4 class="motivational-headline">Ditch Ordinary. <span>Wear The Fit</span> That Leads.</h4>
                             <p class="motivational-subtext">Over 10,000+ fashion rebels upgraded to Vilio this season.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Explore Trending Fits <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2650,14 +2521,14 @@
                     <span class="footer-stat"><i class="fa-solid fa-star"></i> 4.9 Rating (1,840+ Sold)</span>
                     <span class="footer-stat"><i class="fa-solid fa-truck-fast"></i> Fast COD</span>
                 </div>
-            </div>
+            </a>
         </div>
         {% endif %}
 
         {% if forloop.counter == 6 %}
         <!-- 2. IN-GRID EDITORIAL IMAGE MOTIVATION CARD 2 (Confidence) - Completes Row 2 (4 items) -->
         <div class="product-item motivational-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_confidence.jpg' %}" alt="Vilio Confidence Edit" class="motivational-img" loading="lazy">
                     <div class="motivational-overlay">
@@ -2670,9 +2541,9 @@
                             <span class="motivational-tagline">✨ UNTOLD CONFIDENCE</span>
                             <h4 class="motivational-headline">Style Speaks <span>Before You</span> Say A Word.</h4>
                             <p class="motivational-subtext">Sculpted drapes & tailored cuts that give you effortless authority.</p>
-                            <a href="/search/?q=shirt" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Shop Luxury Shirts <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2680,7 +2551,7 @@
                     <span class="footer-stat"><i class="fa-solid fa-circle-check"></i> 98.4% Fit Satisfaction</span>
                     <span class="footer-stat"><i class="fa-solid fa-bolt"></i> Dispatches in 24h</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- FULL-WIDTH MOTIVATIONAL VIDEO BANNER BREAK 1 - Spans 100% (Row 3) -->
@@ -2718,7 +2589,7 @@
         {% if forloop.counter == 9 %}
         <!-- 3. IN-GRID MOTIVATIONAL IMAGE CARD 3 (Zero Compromise Quality) - Completes Row 4 (4 items) -->
         <div class="product-item motivational-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_type_products' 'men' 'top' 't-shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_quality.jpg' %}" alt="Vilio Quality Benchmark" class="motivational-img" loading="lazy">
                     <div class="motivational-overlay">
@@ -2731,9 +2602,9 @@
                             <span class="motivational-tagline">💎 ZERO COMPROMISE</span>
                             <h4 class="motivational-headline">Dense 380 GSM Cotton. <span>Zero Shrinkage.</span></h4>
                             <p class="motivational-subtext">Tested across 50+ wash cycles. Color-lock guarantee with breathability.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Experience Heavyweight <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2741,14 +2612,14 @@
                     <span class="footer-stat"><i class="fa-solid fa-shield-halved"></i> 50+ Wash Tested</span>
                     <span class="footer-stat"><i class="fa-solid fa-wind"></i> 100% Breathable</span>
                 </div>
-            </div>
+            </a>
         </div>
         {% endif %}
 
         {% if forloop.counter == 12 %}
         <!-- 4. IN-GRID MOTIVATIONAL VIDEO CARD 4 (Signature Texture Reel) - Completes Row 5 (4 items) -->
         <div class="product-item motivational-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <video id="motivationalVid2" class="motivational-video" autoplay loop muted playsinline preload="metadata">
                         <source src="{% static 'ads/vilio_waffle_shirt_ad_9x16.mp4' %}" type="video/mp4">
@@ -2758,7 +2629,7 @@
                             <span class="motivational-badge gold">
                                 <i class="fa-solid fa-crown"></i> SIGNATURE WEAVE
                             </span>
-                            <button type="button" class="motivational-sound-btn" onclick="toggleMotivationalSound(this, 'motivationalVid2')" title="Toggle Sound" aria-label="Toggle Sound">
+                            <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid2')" title="Toggle Sound" aria-label="Toggle Sound">
                                 <i class="fa-solid fa-volume-xmark"></i>
                             </button>
                         </div>
@@ -2766,9 +2637,9 @@
                             <span class="motivational-tagline">👑 BESPOKE TEXTURE</span>
                             <h4 class="motivational-headline">Crafted For Those Who <span>Lead, Not Follow</span>.</h4>
                             <p class="motivational-subtext">3D waffle weave & structured resort drapes.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Shop Signature Drops <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2776,7 +2647,7 @@
                     <span class="footer-stat"><i class="fa-solid fa-fire"></i> High Demand</span>
                     <span class="footer-stat"><i class="fa-solid fa-star"></i> 4.95 Rating</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- FULL-WIDTH LUXURY TRUST & MOTIVATION BANNER BREAK 2 - Spans 100% (Row 6) -->
@@ -2827,7 +2698,7 @@
         {% if forloop.counter == 15 %}
         <!-- 5. IN-GRID MOTIVATIONAL IMAGE CARD 5 (The Manifesto) - Completes Row 7 (4 items) -->
         <div class="product-item motivational-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_manifesto.jpg' %}" alt="Vilio Manifesto" class="motivational-img" loading="lazy">
                     <div class="motivational-overlay">
@@ -2840,9 +2711,9 @@
                             <span class="motivational-tagline">⚡ VILIO STREET ETHOS</span>
                             <h4 class="motivational-headline">Dress Like You Own <span>The Entire Room</span>.</h4>
                             <p class="motivational-subtext">Engineered for urban night outs, cafe work, and spontaneous road trips.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Explore All Collections <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2850,14 +2721,14 @@
                     <span class="footer-stat"><i class="fa-solid fa-shield-check"></i> 100% Genuine</span>
                     <span class="footer-stat"><i class="fa-solid fa-truck-fast"></i> Same Day Dispatch</span>
                 </div>
-            </div>
+            </a>
         </div>
         {% endif %}
 
         {% if forloop.last %}
         <!-- 6. IN-GRID BONUS CARD 6 (VIP Access) - Completes End of Catalog Grid -->
         <div class="product-item motivational-item hidden-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'login' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_vip.jpg' %}" alt="Vilio VIP" class="motivational-img" loading="lazy">
                     <div class="motivational-overlay">
@@ -2870,9 +2741,9 @@
                             <span class="motivational-tagline">👑 EXCLUSIVE PRIVILEGE</span>
                             <h4 class="motivational-headline">Get <span>Extra 15% Off</span> Next Order.</h4>
                             <p class="motivational-subtext">Early access to every limited drop & member-only prices.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Join VIP Club <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2880,12 +2751,12 @@
                     <span class="footer-stat"><i class="fa-solid fa-gift"></i> Instant 15% Off</span>
                     <span class="footer-stat"><i class="fa-solid fa-gem"></i> Lifetime Perks</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- 7. IN-GRID BONUS CARD 7 (Express Pan-India Delivery) - Completes Final Row -->
         <div class="product-item motivational-item hidden-item" data-type="all">
-            <div class="motivational-card">
+            <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_express.jpg' %}" alt="Pan India Delivery" class="motivational-img" loading="lazy">
                     <div class="motivational-overlay">
@@ -2898,9 +2769,9 @@
                             <span class="motivational-tagline">⚡ ZERO RISK SHOPPING</span>
                             <h4 class="motivational-headline">Delivering Across <span>26,000+ Pincodes</span>.</h4>
                             <p class="motivational-subtext">Open-box inspection on delivery. Pay safely via Cash or UPI.</p>
-                            <a href="{% url 'category_default' 'men' %}" class="motivational-cta-btn">
+                            <span class="motivational-cta-btn">
                                 Shop All Collections <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2908,7 +2779,7 @@
                     <span class="footer-stat"><i class="fa-solid fa-check"></i> 100% Genuine</span>
                     <span class="footer-stat"><i class="fa-solid fa-hand-holding-dollar"></i> Free COD</span>
                 </div>
-            </div>
+            </a>
         </div>
         {% endif %}
         {% endfor %}
@@ -3134,11 +3005,27 @@
     }
 
     // 4. CLIENT-SIDE CATEGORY FILTERING (Instant, zero reload)
-    function filterCategory(type, btnElement) {
+    function filterCategory(type, btnElement, shouldScroll = false) {
         // Toggle active button
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            if (b.getAttribute('data-filter') === type) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+            }
+        });
         if (btnElement && btnElement.classList.contains('filter-btn')) {
             btnElement.classList.add('active');
+        }
+
+        // Smooth scroll to catalog grid if triggered from top story pills
+        if (shouldScroll) {
+            const target = document.getElementById('catalogSection');
+            if (target) {
+                const navHeight = 70;
+                const topPos = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                window.scrollTo({ top: topPos, behavior: 'smooth' });
+            }
         }
 
         const items = document.querySelectorAll('.product-item');
@@ -3178,9 +3065,9 @@
             } else if (type === 't-shirts') {
                 show = itemType.includes('t-shirt') || itemName.includes('tee') || itemName.includes('t-shirt');
             } else if (type === 'jeans') {
-                show = itemType.includes('jean') || itemSub.includes('bottom') || itemName.includes('denim') || itemName.includes('pant');
+                show = itemType.includes('jean') || itemName.includes('jean') || itemName.includes('denim');
             } else if (type === 'track-pant') {
-                show = itemType.includes('track') || itemName.includes('track') || itemName.includes('pant') || itemSub.includes('bottom');
+                show = itemType.includes('track') || itemName.includes('track') || itemName.includes('jogger') || itemName.includes('trouser') || (itemName.includes('pant') && !itemType.includes('jean') && !itemName.includes('denim'));
             } else if (type === 'under999') {
                 show = price <= 799;
             }

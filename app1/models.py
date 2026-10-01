@@ -388,4 +388,36 @@ class CustomerReview(models.Model):
         verbose_name_plural = 'Customer Reviews'
 
     def __str__(self):
-        return f"{self.name} ({self.city}) - {self.rating}★"
+        return f"{self.name} ({self.city}) - {self.rating}★"
+
+
+# ==========================================================
+# 🛒 AUTO MERGE CART & ADDRESS ON LOGIN (Django Auth & Google / Allauth)
+# ==========================================================
+from django.contrib.auth.signals import user_logged_in
+
+@receiver(user_logged_in)
+def auto_sync_on_login(sender, request, user, **kwargs):
+    if request and user and user.is_authenticated:
+        try:
+            from .views import merge_cart, sync_user_address_data
+            merge_cart(request)
+            sync_user_address_data(request, user)
+        except Exception:
+            pass
+
+try:
+    from allauth.account.signals import user_logged_in as allauth_user_logged_in
+    @receiver(allauth_user_logged_in)
+    def auto_sync_on_allauth_login(sender, request, user, **kwargs):
+        if request and user and user.is_authenticated:
+            try:
+                from .views import merge_cart, sync_user_address_data
+                merge_cart(request)
+                sync_user_address_data(request, user)
+            except Exception:
+                pass
+except ImportError:
+    pass
+
+

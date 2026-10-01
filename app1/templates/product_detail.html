@@ -174,10 +174,13 @@
         <div class="sticky-btn-placeholder">
             <div class="action-btns">
                 <button id="cartBtn" onclick="validatedAddToCart(document.getElementById('current-active-id').value)" class="btn-cart">
-                    <i class="fa-solid fa-bag-shopping"></i> ADD TO BAG
+                    <span class="btn-icon-wrap"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span class="btn-label">ADD TO BAG</span>
                 </button>
                 <button id="buyBtn" onclick="validatedBuyNow(document.getElementById('current-active-id').value)" class="btn-buy">
-                    <i class="fa-solid fa-bolt-lightning"></i> BUY NOW
+                    <span class="btn-icon-wrap"><i class="fa-solid fa-bolt-lightning"></i></span>
+                    <span class="btn-label">BUY NOW</span>
+                    <span class="btn-shine"></span>
                 </button>
             </div>
         </div>
@@ -281,37 +284,75 @@
 </div>
 
 <div class="suggestions-wrapper">
-    <h3 class="section-title" style="padding-left: 10px;">SIMILAR PRODUCTS</h3>
-    <div class="slider-container">
-        <button class="slide-btn prev" onclick="scrollSlider(-1)">&#10094;</button>
-        <button class="slide-btn next" onclick="scrollSlider(1)">&#10095;</button>
+    <div class="similar-header-row">
+        <div class="similar-header-text">
+            <div class="similar-eyebrow">
+                <span class="similar-sparkle"><i class="fa-solid fa-sparkles"></i> YOU MAY ALSO LIKE</span>
+                <span class="similar-count-tag">{{ suggestions|length }} CURATED DROPS</span>
+            </div>
+            <h2 class="similar-main-heading">Similar Styles & Recommendations</h2>
+            <p class="similar-subheading">Handcrafted streetwear silhouettes tailored to complement this urban aesthetic.</p>
+        </div>
+        <div class="similar-nav-arrows">
+            <button type="button" class="similar-arrow-btn prev" onclick="scrollSlider(-1)" aria-label="Previous Products">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button type="button" class="similar-arrow-btn next" onclick="scrollSlider(1)" aria-label="Next Products">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
 
+    <div class="slider-container">
         <div class="suggestion-slider" id="suggestionSlider">
             {% for item in suggestions %}
             <div class="suggestion-card">
-                <a href="{% url 'product_detail' item.id %}">
+                <a href="{% url 'product_detail' item.id %}" class="suggestion-card-link">
                     <div class="suggest-img-box">
                         {% if item.image %}
-    {% cloudinary item.image width=300 height=380 quality="auto" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" alt=item.name %}
-{% else %}
-    <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" class="suggest-img">
-{% endif %}
-                        <div class="product-ribbon" data-discount="{{ item.discount_percentage }}"></div>
+                            {% cloudinary item.image width=380 height=500 quality="auto" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" alt=item.name %}
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" class="suggest-img">
+                        {% endif %}
+                        
+                        <div class="suggest-overlay-gradient"></div>
+
+                        {% if item.has_discount and item.discount_percentage > 0 %}
+                        <div class="similar-discount-badge">
+                            <i class="fa-solid fa-bolt-lightning"></i> {{ item.discount_percentage }}% OFF
+                        </div>
+                        {% endif %}
+
+                        <div class="similar-brand-tag">VILIO</div>
+
                         <div class="rating-badge" data-product-id="{{ item.id }}">
-                            <span class="rating-value">-.-</span>
+                            <span class="rating-value">4.8</span>
                             <svg class="star-svg" viewBox="0 0 24 24">
                                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                             </svg>
                             <span class="separator">|</span>
-                            <span class="user-count">-</span>
+                            <span class="user-count">120+</span>
+                        </div>
+
+                        <div class="similar-quick-view">
+                            <span>VIEW DROP</span>
+                            <i class="fa-solid fa-arrow-right"></i>
                         </div>
                     </div>
+
                     <div class="suggest-info">
-                        <p class="suggest-name">{{ item.name|truncatechars:22 }}</p>
+                        <div class="suggest-brand-row">
+                            <span class="suggest-brand">VILIO STREETWEAR</span>
+                            {% if item.has_discount %}
+                                <span class="suggest-deal-chip">TRENDING</span>
+                            {% endif %}
+                        </div>
+                        <h4 class="suggest-name" title="{{ item.name }}">{{ item.name }}</h4>
                         <div class="suggest-price-row">
                             <span class="curr-price">₹{{ item.current_price }}</span>
                             {% if item.has_discount %}
                                 <span class="old-price">₹{{ item.original_price }}</span>
+                                <span class="save-tag">Save ₹{{ item.save_amount }}</span>
                             {% endif %}
                         </div>
                     </div>
@@ -320,6 +361,14 @@
             {% endfor %}      
         </div>
     </div>
+
+    <!-- Scroll Track Indicator -->
+    <div class="similar-scroll-track-wrap">
+        <div class="similar-scroll-track">
+            <div class="similar-scroll-thumb" id="similarScrollThumb"></div>
+        </div>
+    </div>
+</div>
 
     <div class="brand-service-section">
         <div class="service-container">
@@ -359,11 +408,25 @@
 <div id="imageModal" class="image-modal">
     <span class="image-close" onclick="closeImageModal()">&times;</span>
 
-    <a id="downloadImageBtn" class="download-btn">
-    <i class="fa-solid fa-download"></i>
-</a>
+    <div class="modal-top-actions">
+        <span id="modalSlideCounter" class="modal-slide-counter">1 / 1</span>
+        <button type="button" class="btn-download-all-modal" onclick="downloadAllProductImages()" title="Download All Images">
+            <i class="fa-solid fa-cloud-arrow-down"></i> <span>Download All</span>
+        </button>
+        <a id="downloadImageBtn" class="download-btn" title="Download Current Image">
+            <i class="fa-solid fa-download"></i>
+        </a>
+    </div>
+
+    <button type="button" class="modal-nav-btn prev" onclick="navigateModalSlide(-1)" aria-label="Previous image">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
 
     <div id="modalSlider" class="modal-slider"></div>
+
+    <button type="button" class="modal-nav-btn next" onclick="navigateModalSlide(1)" aria-label="Next image">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
 </div>
 
 <div id="sizeChartModal" class="modal-overlay">
@@ -737,37 +800,47 @@ body {
 
 .color-item-wrapper { 
     cursor: pointer; 
-    padding: 2px; 
-    border-radius: 8px; 
+    padding: 3px; 
+    border-radius: 10px; 
     border: 2px solid transparent;
-    transition: all 0.2s ease; 
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+    position: relative;
 }
 
 .color-item { 
-    width: 48px; 
-    height: 60px; 
+    width: 52px; 
+    height: 66px; 
     overflow: hidden; 
-    border-radius: 6px; 
+    border-radius: 8px; 
+    background: #f4f4f5;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
 .color-item img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
+    transition: transform 0.3s ease;
+}
+
+.color-item-wrapper:hover .color-item img {
+    transform: scale(1.08);
 }
 
 .color-item-wrapper:hover {
-    border-color: #a1a1aa;
+    border-color: #d4d4d8;
+    transform: translateY(-2px);
 }
 
 .color-item-wrapper.active { 
     border-color: #09090b; 
-    box-shadow: 0 0 0 1px #09090b; 
+    box-shadow: 0 0 0 1.5px #09090b, 0 6px 16px rgba(0, 0, 0, 0.12); 
+    transform: translateY(-2px);
 }
 
 /* Size Selection */
 .size-section {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .size-header-row { 
@@ -782,49 +855,69 @@ body {
     font-size: 11.5px; 
     font-weight: 700; 
     text-decoration: underline; 
-    letter-spacing: 0.4px; 
-    display: flex;
+    letter-spacing: 0.5px; 
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
+    transition: color 0.2s;
+}
+.size-chart-link:hover {
+    color: #ff3366;
 }
 
 .size-container { 
     display: flex; 
     gap: 10px; 
     flex-wrap: wrap; 
-    margin-top: 4px; 
+    margin-top: 6px; 
 }
 
 .size-btn { 
-    min-width: 52px; 
-    height: 44px; 
-    border-radius: 8px; 
-    border: 1.5px solid #d4d4d8; 
+    min-width: 58px; 
+    height: 48px; 
+    border-radius: 12px; 
+    border: 1.5px solid #e4e4e7; 
     background: #ffffff; 
     cursor: pointer; 
     font-weight: 700; 
-    font-size: 13.5px; 
-    display: flex; 
+    font-size: 14px; 
+    letter-spacing: 0.5px;
+    display: inline-flex; 
     align-items: center; 
     justify-content: center; 
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
-    padding: 0 16px; 
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); 
+    padding: 0 18px; 
     color: #18181b;
+    position: relative;
+    user-select: none;
 }
 
 .size-btn:hover:not(:disabled) {
     border-color: #09090b;
-    background: #f4f4f5;
-    transform: translateY(-1px);
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .size-btn.active { 
     border-color: #09090b !important; 
     color: #ffffff !important; 
     background: #09090b !important; 
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22) !important;
+    transform: translateY(-2px);
+}
+
+.size-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #ffffff;
 }
 
 .size-btn.out-of-stock { 
@@ -833,7 +926,7 @@ body {
     border: 1.5px dashed #d4d4d8 !important; 
     background: #f4f4f5 !important;
     text-decoration: line-through;
-    opacity: 0.65;
+    opacity: 0.6;
 }
 
 .size-recommendation {
@@ -842,28 +935,28 @@ body {
     gap: 8px;
     font-size: 12px;
     color: #52525b;
-    margin-top: 8px;
+    margin-top: 10px;
     margin-bottom: 0;
-    padding: 7px 12px;
-    background: #fafafa;
-    border-radius: 6px;
-    border-left: 3px solid #18181b;
+    padding: 8px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid #09090b;
 }
 .size-recommendation i {
-    color: #18181b;
+    color: #09090b;
     font-size: 13px;
 }
 
 /* ===== 6. DYNAMIC RESPONSIVE ACTION BUTTONS ===== */
 .sticky-btn-placeholder {
-    margin: 6px 0 18px 0;
+    margin: 14px 0 24px 0;
     width: 100%;
     box-sizing: border-box;
 }
 
 .action-btns { 
     display: flex; 
-    gap: 12px; 
+    gap: 14px; 
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -872,29 +965,45 @@ body {
 .btn-cart { 
     flex: 1 1 0; 
     min-width: 0;
-    background: #ffffff; 
-    color: #09090b; 
-    border: 2px solid #09090b; 
-    padding: 15px 16px; 
+    height: 54px;
+    background: #09090b; 
+    color: #ffffff; 
+    border: 1.5px solid #27272a; 
+    padding: 0 20px; 
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800; 
     font-size: 14px; 
-    letter-spacing: 0.5px; 
+    letter-spacing: 0.8px; 
+    text-transform: uppercase;
     cursor: pointer; 
-    border-radius: 10px; 
-    display: flex; 
+    border-radius: 12px; 
+    display: inline-flex; 
     align-items: center; 
     justify-content: center; 
-    gap: 8px; 
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    gap: 10px; 
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1); 
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12);
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-cart .btn-icon-wrap {
+    font-size: 16px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
 }
 
 .btn-cart:hover { 
-    background: #09090b; 
-    color: #ffffff; 
+    background: #18181b; 
+    border-color: #3f3f46;
     transform: translateY(-2px); 
-    box-shadow: 0 8px 24px rgba(0,0,0,0.16); 
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22); 
+}
+
+.btn-cart:hover .btn-icon-wrap {
+    transform: scale(1.18) rotate(-8deg);
 }
 
 .btn-cart:active { 
@@ -904,30 +1013,68 @@ body {
 .btn-buy { 
     flex: 1 1 0; 
     min-width: 0;
-    background: linear-gradient(135deg, #ff3366 0%, #ff5e3a 100%); 
+    height: 54px;
+    background: linear-gradient(135deg, #ff1e56 0%, #ff4b2b 45%, #ff8c00 100%); 
     color: #ffffff; 
     border: none; 
-    padding: 15px 16px; 
+    padding: 0 20px; 
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800; 
     font-size: 14px; 
-    letter-spacing: 0.5px; 
+    letter-spacing: 0.8px; 
+    text-transform: uppercase;
     cursor: pointer; 
-    border-radius: 10px; 
-    display: flex; 
+    border-radius: 12px; 
+    display: inline-flex; 
     align-items: center; 
     justify-content: center; 
-    gap: 8px; 
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
-    box-shadow: 0 4px 16px rgba(255, 51, 102, 0.35); 
+    gap: 10px; 
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1); 
+    box-shadow: 0 6px 22px rgba(255, 30, 86, 0.4), 0 2px 6px rgba(0, 0, 0, 0.08); 
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
 }
 
+.btn-buy .btn-shine {
+    position: absolute;
+    top: -60%;
+    left: -80%;
+    width: 50%;
+    height: 220%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.42) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(28deg);
+    pointer-events: none;
+    animation: btnShimmerSweep 3.6s infinite ease-in-out;
+}
+
+@keyframes btnShimmerSweep {
+    0% { left: -80%; }
+    35% { left: 140%; }
+    100% { left: 140%; }
+}
+
+.btn-buy .btn-icon-wrap {
+    font-size: 16px;
+    color: #fffbeb;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+}
+
 .btn-buy:hover { 
     transform: translateY(-2px); 
-    box-shadow: 0 8px 26px rgba(255, 51, 102, 0.45); 
+    box-shadow: 0 12px 30px rgba(255, 30, 86, 0.54); 
     filter: brightness(1.06); 
+}
+
+.btn-buy:hover .btn-icon-wrap {
+    transform: scale(1.2) rotate(12deg);
 }
 
 .btn-buy:active { 
@@ -1105,149 +1252,387 @@ body {
     margin-top: 8px;
 }
 
-/* ===== 9. SIMILAR PRODUCTS CAROUSEL ===== */
+/* ===== 9. SIMILAR PRODUCTS SHOWCASE ===== */
 .suggestions-wrapper { 
     max-width: 1360px; 
-    margin: 40px auto; 
+    margin: 56px auto 40px auto; 
     padding: 0 32px; 
     overflow: hidden; 
 }
+
+.similar-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid #f1f1f4;
+    padding-bottom: 18px;
+}
+
+.similar-header-text {
+    flex: 1;
+    min-width: 280px;
+}
+
+.similar-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.similar-sparkle {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    color: #ff2a5f;
+    text-transform: uppercase;
+    background: rgba(255, 42, 95, 0.08);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 42, 95, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.similar-count-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #71717a;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.similar-main-heading {
+    font-size: 24px;
+    font-weight: 800;
+    color: #09090b;
+    letter-spacing: -0.5px;
+    margin: 0 0 6px 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.similar-subheading {
+    font-size: 13.5px;
+    color: #71717a;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.similar-nav-arrows {
+    display: flex;
+    gap: 10px;
+}
+
+.similar-arrow-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #e4e4e7;
+    color: #09090b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.similar-arrow-btn:hover {
+    background: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.similar-arrow-btn:active {
+    transform: scale(0.95);
+}
+
 .slider-container { 
     position: relative; 
     width: 100%; 
 }
+
 .suggestion-slider { 
     display: flex; 
-    gap: 16px; 
+    gap: 20px; 
     overflow-x: auto; 
     scroll-behavior: smooth; 
-    padding: 12px 0; 
+    padding: 14px 2px 22px 2px; 
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 .suggestion-slider::-webkit-scrollbar { 
     display: none; 
 }
+
 .suggestion-card { 
-    flex: 0 0 220px; 
-    background: #fff; 
-    border: 1px solid #f0f0f0; 
-    border-radius: 10px;
+    flex: 0 0 240px; 
+    scroll-snap-align: start;
+    background: #ffffff; 
+    border: 1px solid #ededf0; 
+    border-radius: 16px;
     overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    position: relative;
 }
+
 .suggestion-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+    transform: translateY(-8px);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.12);
+    border-color: #d4d4d8;
 }
-.suggestion-card a { 
+
+.suggestion-card-link { 
     text-decoration: none; 
     color: inherit; 
+    display: block;
 }
+
 .suggest-img-box { 
     position: relative; 
     width: 100%; 
-    height: 290px; 
+    height: 310px; 
     overflow: hidden; 
+    background: #f4f4f5;
 }
+
 .suggest-img-box img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.suggest-info { 
-    padding: 12px; 
+
+.suggestion-card:hover .suggest-img-box img {
+    transform: scale(1.07);
 }
-.suggest-name { 
-    font-size: 13.5px; 
-    font-weight: 600; 
-    color: #18181b; 
-    margin: 0 0 6px 0; 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+.suggest-overlay-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+    pointer-events: none;
+    opacity: 0.85;
+    transition: opacity 0.3s;
 }
-.suggest-price-row { 
-    display: flex; 
-    gap: 8px; 
-    align-items: baseline;
-    font-size: 13.5px; 
+
+.similar-discount-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 4;
+    background: linear-gradient(135deg, #ff1e56, #ff4b2b);
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(255, 30, 86, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
-.curr-price { 
-    font-weight: 700; 
-    color: #18181b; 
+
+.similar-brand-tag {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
-.old-price { 
-    color: #71717a; 
-    text-decoration: line-through; 
-    font-size: 12px;
+
+.similar-quick-view {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 6;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #09090b;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.slide-btn { 
-    position: absolute; 
-    width: 40px; 
-    height: 40px; 
-    background: #fff; 
-    border: 1px solid #d4d5d9; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    z-index: 10; 
-    top: 50%; 
-    transform: translateY(-50%); 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12); 
-    transition: all 0.2s ease;
+
+.suggestion-card:hover .similar-quick-view {
+    transform: translateY(0);
+    opacity: 1;
 }
-.slide-btn:hover {
-    background: #09090b;
-    color: #fff;
-    border-color: #09090b;
-}
-.slide-btn.prev { left: -16px; }
-.slide-btn.next { right: -16px; }
 
 .rating-badge {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
+    bottom: 12px;
+    left: 12px;
     z-index: 5;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 8px;
-    background: rgba(255,255,255,0.85) !important;
-    backdrop-filter: blur(8px) saturate(160%) !important;
-    border: 1px solid rgba(255,255,255,0.6);
-    border-radius: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(10px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     color: #18181b;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: opacity 0.2s;
 }
+
+.suggestion-card:hover .rating-badge {
+    opacity: 0;
+}
+
 .star-svg {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     fill: #ffaa00;
 }
+
 .separator {
     color: #a1a1aa;
     font-weight: 400;
-    margin: 0 1px;
+    margin: 0 2px;
 }
+
 .user-count {
     font-size: 10px;
     color: #52525b;
     font-weight: 600;
 }
-.product-ribbon { 
-    position: absolute; 
-    top: 10px; 
-    left: 0; 
-    font-size: 9px; 
+
+.suggest-info { 
+    padding: 14px 16px 16px 16px; 
+    background: #ffffff;
+}
+
+.suggest-brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.suggest-brand {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: #a1a1aa;
+    text-transform: uppercase;
+}
+
+.suggest-deal-chip {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #ff2a5f;
+    background: #fff0f3;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.4px;
+}
+
+.suggest-name { 
+    font-size: 14px; 
     font-weight: 700; 
-    color: #fff; 
-    padding: 3px 8px; 
-    display: none; 
-    border-radius: 0 4px 4px 0;
+    color: #18181b; 
+    margin: 0 0 8px 0; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    transition: color 0.2s;
+}
+
+.suggestion-card:hover .suggest-name {
+    color: #ff2a5f;
+}
+
+.suggest-price-row { 
+    display: flex; 
+    gap: 8px; 
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+.curr-price { 
+    font-weight: 800; 
+    color: #09090b; 
+    font-size: 16px;
+}
+
+.old-price { 
+    color: #a1a1aa; 
+    text-decoration: line-through; 
+    font-size: 12.5px;
+}
+
+.save-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #16a34a;
+    background: #ecfdf5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+}
+
+.similar-scroll-track-wrap {
+    max-width: 220px;
+    margin: 4px auto 0 auto;
+    display: flex;
+    justify-content: center;
+}
+
+.similar-scroll-track {
+    width: 100%;
+    height: 3px;
+    background: #e4e4e7;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.similar-scroll-thumb {
+    width: 35%;
+    height: 100%;
+    background: #09090b;
+    border-radius: 999px;
+    transition: transform 0.12s ease-out;
 }
 
 /* ===== 10. BRAND SERVICE STRIP ===== */
@@ -1337,19 +1722,66 @@ body {
     max-height: 90%;
     object-fit: contain;
 }
-.download-btn {
+.modal-top-actions {
     position: absolute;
-    top: 24px;
-    right: 70px;
-    background: transparent;
-    color: #fff;
-    border: none;
-    padding: 8px;
+    top: 20px;
+    right: 75px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10005;
+}
+.modal-slide-counter {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.5px;
+}
+.btn-download-all-modal {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.btn-download-all-modal:hover {
+    background: #ffffff;
+    color: #000000;
+    transform: translateY(-1px);
+}
+.download-btn {
+    background: rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.download-btn:hover {
+    background: #ffffff;
+    color: #000000;
+    transform: scale(1.08);
 }
 .image-close {
     position: absolute;
@@ -1360,6 +1792,39 @@ body {
     font-weight: 300;
     line-height: 1;
     cursor: pointer;
+    z-index: 10005;
+}
+.modal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 10004;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.modal-nav-btn:hover {
+    background: #ffffff;
+    color: #000000;
+    transform: translateY(-50%) scale(1.1);
+}
+.modal-nav-btn.prev { left: 20px; }
+.modal-nav-btn.next { right: 20px; }
+@media (max-width: 600px) {
+    .modal-top-actions { top: 16px; right: 55px; gap: 6px; }
+    .btn-download-all-modal span { display: none; }
+    .btn-download-all-modal { padding: 8px 10px; }
+    .modal-nav-btn { display: none; }
 }
 
 /* Modals */
@@ -1544,11 +2009,12 @@ body {
         right: 0 !important;
         width: 100% !important; 
         max-width: 100% !important;
-        background: rgba(255, 255, 255, 0.96) !important; 
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
-        box-shadow: 0 -4px 18px rgba(0,0,0,0.1) !important; 
+        background: rgba(255, 255, 255, 0.94) !important; 
+        backdrop-filter: blur(18px) !important;
+        -webkit-backdrop-filter: blur(18px) !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important; 
         padding: 10px 14px !important; 
+        padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
         margin: 0 !important; 
         gap: 10px !important; 
         z-index: 9999 !important;
@@ -1557,16 +2023,20 @@ body {
 
     .btn-cart { 
         flex: 1 !important; 
-        padding: 13px 8px !important; 
+        height: 48px !important;
+        padding: 0 10px !important; 
         font-size: 13px !important; 
-        border-radius: 8px !important;
+        border-radius: 10px !important;
+        letter-spacing: 0.5px !important;
     }
 
     .btn-buy { 
         flex: 1 !important; 
-        padding: 13px 8px !important; 
+        height: 48px !important;
+        padding: 0 10px !important; 
         font-size: 13px !important; 
-        border-radius: 8px !important;
+        border-radius: 10px !important;
+        letter-spacing: 0.5px !important;
     }
 
     /* Floating WhatsApp Button on Mobile - Shift to Left & Compact 36px Icon */
@@ -1606,21 +2076,64 @@ body {
         padding: 0 16px !important;
     }
 
-    .slide-btn { 
+    .similar-nav-arrows { 
         display: none !important; 
     }
 
-    .suggestion-card { 
-        flex: 0 0 170px !important; 
+    .similar-main-heading {
+        font-size: 20px !important;
     }
 
-    .suggest-img-box { 
-        height: 220px !important; 
+    .similar-subheading {
+        font-size: 12.5px !important;
     }
 
     .suggestions-wrapper { 
         padding: 0 16px !important; 
-        margin: 24px auto !important; 
+        margin: 32px auto !important; 
+    }
+
+    .suggestion-slider {
+        gap: 14px !important;
+        padding: 10px 2px 16px 2px !important;
+    }
+
+    .suggestion-card { 
+        flex: 0 0 180px !important; 
+        border-radius: 12px !important;
+    }
+
+    .suggest-img-box { 
+        height: 230px !important; 
+    }
+
+    .similar-quick-view {
+        display: none !important;
+    }
+
+    .rating-badge {
+        opacity: 1 !important;
+        padding: 3px 6px !important;
+        font-size: 10px !important;
+        bottom: 8px !important;
+        left: 8px !important;
+    }
+
+    .suggest-info {
+        padding: 10px 12px 12px 12px !important;
+    }
+
+    .suggest-name {
+        font-size: 13px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .curr-price {
+        font-size: 14.5px !important;
+    }
+
+    .similar-scroll-track-wrap {
+        max-width: 160px !important;
     }
 }
 </style>
@@ -2051,10 +2564,31 @@ function showPopup(msg) {
 function scrollSlider(direction) {
     const slider = document.getElementById('suggestionSlider');
     if (slider) {
-        const scrollAmount = 230 * 2; 
+        const card = slider.querySelector('.suggestion-card');
+        const cardWidth = card ? card.offsetWidth + 20 : 260;
+        const scrollAmount = cardWidth * 2; 
         slider.scrollBy({ left: direction === 1 ? scrollAmount : -scrollAmount, behavior: 'smooth' });
     }
 }
+
+// Similar products scroll indicator tracker
+document.addEventListener('DOMContentLoaded', function() {
+    const simSlider = document.getElementById('suggestionSlider');
+    const simThumb = document.getElementById('similarScrollThumb');
+    if (simSlider && simThumb) {
+        const updateThumb = () => {
+            const maxScroll = simSlider.scrollWidth - simSlider.clientWidth;
+            if (maxScroll > 0) {
+                const pct = Math.min(1, Math.max(0, simSlider.scrollLeft / maxScroll));
+                const trackWidth = simThumb.parentElement.clientWidth;
+                const thumbWidth = simThumb.clientWidth;
+                simThumb.style.transform = `translateX(${pct * (trackWidth - thumbWidth)}px)`;
+            }
+        };
+        simSlider.addEventListener('scroll', updateThumb, { passive: true });
+        window.addEventListener('resize', updateThumb, { passive: true });
+    }
+});
 
 function setupImageInteractions() {
     let startX = 0;
@@ -2156,53 +2690,159 @@ function closeImageModal(){
     if(imgModal) { imgModal.style.display = 'none'; document.body.style.overflow = 'auto'; }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const imgModalEl = document.getElementById('imageModal');
-    if(imgModalEl) {
-        imgModalEl.addEventListener('click', function(e){
-            if(e.target === this) closeImageModal();
-        });
+function updateModalActiveSlide(index) {
+    const modalSlider = document.getElementById('modalSlider');
+    const downloadBtn = document.getElementById('downloadImageBtn');
+    const counter = document.getElementById('modalSlideCounter');
+    if (!modalSlider) return;
+
+    const slides = modalSlider.querySelectorAll('.modal-slide img');
+    if (!slides.length) return;
+
+    let activeIdx = typeof index === 'number' ? index : Math.round(modalSlider.scrollLeft / modalSlider.clientWidth);
+    activeIdx = Math.max(0, Math.min(activeIdx, slides.length - 1));
+
+    const currentImg = slides[activeIdx];
+    if (currentImg && currentImg.src) {
+        const src = currentImg.src;
+        if (downloadBtn) {
+            downloadBtn.href = src.replace("/upload/", "/upload/fl_attachment/");
+            downloadBtn.setAttribute("download", src.split('/').pop().split('?')[0]);
+        }
+        if (counter) {
+            counter.innerText = `${activeIdx + 1} / ${slides.length}`;
+        }
     }
-});
+}
+
+function navigateModalSlide(direction) {
+    const modalSlider = document.getElementById('modalSlider');
+    if (!modalSlider) return;
+    const slideWidth = modalSlider.clientWidth;
+    const currentIdx = Math.round(modalSlider.scrollLeft / slideWidth);
+    const newIdx = currentIdx + direction;
+    modalSlider.scrollTo({ left: newIdx * slideWidth, behavior: 'smooth' });
+    setTimeout(() => updateModalActiveSlide(), 200);
+}
+
+async function downloadAllProductImages() {
+    const images = Array.from(document.querySelectorAll('#imageSlider .slide-img'));
+    if (!images.length) return;
+
+    // Deduplicate image URLs
+    const uniqueSrcs = [];
+    const seen = new Set();
+    images.forEach(img => {
+        const src = img.getAttribute('src') || img.src;
+        if (src && !seen.has(src)) {
+            seen.add(src);
+            uniqueSrcs.push(src);
+        }
+    });
+
+    if (!uniqueSrcs.length) return;
+
+    if (typeof showPopup === 'function') {
+        showPopup(`⏳ Downloading all ${uniqueSrcs.length} images...`);
+    }
+
+    const cleanTitle = (document.querySelector('.prod-title')?.innerText || 'product')
+        .trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    for (let i = 0; i < uniqueSrcs.length; i++) {
+        const src = uniqueSrcs[i];
+        const downloadUrl = src.replace("/upload/", "/upload/fl_attachment/");
+        const filename = `${cleanTitle}_image_${i + 1}.jpg`;
+
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.setAttribute('download', filename);
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (typeof showPopup === 'function') {
+        showPopup(`✅ All ${uniqueSrcs.length} images downloaded!`);
+    }
+}
 
 function openImageViewer(clickedSrc){
     const modal = document.getElementById('imageModal');
     const modalSlider = document.getElementById('modalSlider');
-    const downloadBtn = document.getElementById('downloadImageBtn');
     if(!modal || !modalSlider) return;
 
     modalSlider.innerHTML = '';
-    const images = document.querySelectorAll('#imageSlider .slide-img');
-    let activeIndex = 0;
+    
+    // Deduplicate slides
+    const rawImages = document.querySelectorAll('#imageSlider .slide-img');
+    const uniqueList = [];
+    const seenUrls = new Set();
+    rawImages.forEach(img => {
+        const s = img.getAttribute('src') || img.src;
+        if (s && !seenUrls.has(s)) {
+            seenUrls.add(s);
+            uniqueList.push(s);
+        }
+    });
 
-    images.forEach((img, index) => {
-        if(img.src === clickedSrc) activeIndex = index;
-        
+    let activeIndex = 0;
+    uniqueList.forEach((src, index) => {
+        if (src === clickedSrc) activeIndex = index;
         modalSlider.innerHTML += `
             <div class="modal-slide">
-                <img src="${img.src}" alt="Preview">
+                <img src="${src}" alt="Preview image ${index + 1}">
             </div>
         `;
     });
-
-    if(downloadBtn){
-    downloadBtn.href = clickedSrc.replace(
-    "/upload/",
-    "/upload/fl_attachment/"
-);
-    downloadBtn.setAttribute(
-        "download",
-        clickedSrc.split('/').pop().split('?')[0]
-    );
-}
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     setTimeout(() => {
         modalSlider.scrollLeft = activeIndex * modalSlider.clientWidth;
-    }, 100);
+        updateModalActiveSlide(activeIndex);
+    }, 60);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const imgModalEl = document.getElementById('imageModal');
+    if (imgModalEl) {
+        imgModalEl.addEventListener('click', function(e){
+            if (e.target === this) closeImageModal();
+        });
+    }
+
+    const modalSlider = document.getElementById('modalSlider');
+    if (modalSlider) {
+        let scrollTimeout;
+        modalSlider.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                updateModalActiveSlide();
+            }, 80);
+        }, { passive: true });
+    }
+
+    const downloadBtn = document.getElementById('downloadImageBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            updateModalActiveSlide();
+        });
+    }
+
+    window.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('imageModal');
+        if (modal && modal.style.display === 'flex') {
+            if (e.key === 'ArrowLeft') navigateModalSlide(-1);
+            else if (e.key === 'ArrowRight') navigateModalSlide(1);
+            else if (e.key === 'Escape') closeImageModal();
+        }
+    });
+});
 </script>
 
 <script>

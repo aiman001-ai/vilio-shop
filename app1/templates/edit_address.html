@@ -1,44 +1,153 @@
 {% extends 'base.html' %}
-{% block title %}Edit Address | VILIO{% endblock %}
+{% block title %}Edit Delivery Address | VILIO{% endblock %}
 
 {% block content %}
 <style>
     .address-wrapper { 
-        padding: 50px 15px 80px; 
+        padding: 40px 15px 80px; 
         min-height: calc(100vh - 220px);
+        background: radial-gradient(circle at 50% 15%, rgba(255,255,255,0.03) 0%, transparent 60%);
     }
 
     .address-container { 
-        max-width: 650px; 
+        max-width: 680px; 
         margin: 0 auto; 
         background: #141418; 
-        padding: 40px; 
-        border-radius: 20px; 
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        padding: 36px 40px 44px; 
+        border-radius: 24px; 
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+    }
+
+    .address-header-row {
+        text-align: center;
+        margin-bottom: 24px;
     }
 
     .address-container h1 { 
         font-weight: 800; 
-        font-size: 24px;
+        font-size: 26px;
         margin: 0 0 6px; 
-        color: #fff; 
-        text-align: center;
+        color: #ffffff; 
         letter-spacing: -0.5px;
     }
 
     .sub-text {
-        text-align: center;
-        color: #8c8c9a;
+        color: #94a3b8;
         font-size: 13.5px;
-        margin-bottom: 32px;
+        margin: 0;
+    }
+
+    /* 1-Click Sync Banner */
+    .autofill-sync-card {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(16, 185, 129, 0.12) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin-bottom: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .sync-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .sync-icon-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .sync-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sync-desc {
+        font-size: 12px;
+        color: #94a3b8;
+        line-height: 1.4;
+    }
+
+    .btn-gps-sync {
+        background: #ffffff;
+        color: #09090b;
+        border: none;
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+    }
+
+    .btn-gps-sync:hover {
+        background: #f1f5f9;
+        transform: translateY(-1px);
+    }
+
+    .gps-status-pill {
+        width: 100%;
+        margin-top: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .gps-status-pill.info {
+        display: block;
+        background: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .gps-status-pill.success {
+        display: block;
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .gps-status-pill.error {
+        display: block;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     /* Grid Layout */
     .form-grid { 
         display: grid; 
         grid-template-columns: 1fr 1fr; 
-        gap: 20px; 
+        gap: 18px; 
     }
 
     .full-width { grid-column: span 2; }
@@ -46,48 +155,57 @@
     .form-group { position: relative; }
 
     .form-group label { 
-        display: block; 
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         font-size: 11.5px; 
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 8px; 
-        color: #b0b0bc; 
+        margin-bottom: 7px; 
+        color: #cbd5e1; 
     }
     
-    .address-container input, 
-    .address-container textarea {
+    .address-container input {
         width: 100%; 
         padding: 13px 16px; 
-        border: 1.5px solid rgba(255, 255, 255, 0.08);
-        border-radius: 10px; 
+        border: 1.5px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px; 
         font-size: 14.5px; 
         background-color: #191920;
         transition: all 0.25s ease;
-        color: #fff;
+        color: #ffffff;
         box-sizing: border-box;
         font-family: inherit;
     }
 
-    .address-container input::placeholder,
-    .address-container textarea::placeholder { color: #5a5a68; }
+    .address-container input::placeholder { color: #64748b; }
 
-    .address-container input:focus, 
-    .address-container textarea:focus { 
-        border-color: rgba(255, 255, 255, 0.4); 
-        background-color: #1f1f28;
+    .address-container input:focus { 
+        border-color: #3b82f6; 
+        background-color: #1e1e28;
         outline: none; 
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Pulse animation when autofilled */
+    .field-autofilled {
+        animation: autofillGlow 1.8s ease;
+    }
+
+    @keyframes autofillGlow {
+        0% { border-color: #10b981; background-color: rgba(16, 185, 129, 0.15); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25); }
+        100% { border-color: rgba(255, 255, 255, 0.1); background-color: #191920; box-shadow: none; }
     }
 
     /* Pincode Specific Styles */
     .pincode-wrapper { position: relative; }
     #pin-loader { 
         position: absolute; 
-        right: 15px; 
+        right: 14px; 
         top: 36px; 
         font-size: 12px; 
-        font-weight: 600;
+        font-weight: 700;
     }
 
     /* Button Styling */
@@ -95,111 +213,261 @@
         background: #ffffff; 
         color: #0c0c0e; 
         width: 100%; 
-        padding: 15px; 
+        padding: 16px; 
         border: none; 
         border-radius: 12px; 
-        font-weight: 700; 
+        font-weight: 800; 
         font-size: 15px;
         cursor: pointer; 
-        margin-top: 24px;
+        margin-top: 26px;
         transition: transform 0.2s, background 0.2s;
         letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-update:hover {
-        background: #e8e8ed;
+        background: #f1f5f9;
         transform: translateY(-2px);
     }
 
     @media (max-width: 600px) { 
-        .address-wrapper { padding: 20px 12px; }
-        .address-container { padding: 24px 18px; border-radius: 16px; }
-        .form-grid { grid-template-columns: 1fr; gap: 15px; } 
+        .address-wrapper { padding: 20px 12px 60px; }
+        .address-container { padding: 26px 20px; border-radius: 20px; }
+        .form-grid { grid-template-columns: 1fr; gap: 14px; } 
         .full-width { grid-column: span 1; } 
-        .address-container h1 { font-size: 20px; text-align: left; }
-        .sub-text { text-align: left; margin-bottom: 22px; }
+        .autofill-sync-card { flex-direction: column; align-items: stretch; gap: 12px; }
+        .btn-gps-sync { justify-content: center; }
     }
 </style>
 
 <div class="address-wrapper">
     <div class="address-container">
-        <h1>Edit Shipping Address</h1>
-        <p class="sub-text">Update your delivery address details below.</p>
+        <div class="address-header-row">
+            <h1>Edit Delivery Address</h1>
+            <p class="sub-text">Update your shipping details below.</p>
+        </div>
+
+        <!-- 1-Click Sync Banner (GPS & Google Autofill) -->
+        <div class="autofill-sync-card">
+            <div class="sync-info">
+                <div class="sync-icon-circle">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                </div>
+                <div>
+                    <div class="sync-title">Re-detect Address via GPS <span style="font-size: 10px; background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px;">1-CLICK</span></div>
+                    <div class="sync-desc">Auto-fill your current street, area, city, state & pincode using GPS.</div>
+                </div>
+            </div>
+            <button type="button" class="btn-gps-sync" id="btnDetectLocation" onclick="autoDetectCompleteAddress()">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: #f59e0b;"></i> <span>Update from GPS</span>
+            </button>
+            <div id="gps-status-pill" class="gps-status-pill"></div>
+        </div>
         
-        <form method="POST">
+        <form method="POST" autocomplete="on" id="editAddressForm">
             {% csrf_token %}
             <div class="form-grid">
                 <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" name="first_name" value="{{ address.first_name }}" required>
+                    <label for="first_name">First Name</label>
+                    <input type="text" name="first_name" id="first_name" value="{{ address.first_name }}" autocomplete="shipping given-name" required>
                 </div>
                 <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" name="last_name" value="{{ address.last_name }}" required>
+                    <label for="last_name">Last Name</label>
+                    <input type="text" name="last_name" id="last_name" value="{{ address.last_name }}" autocomplete="shipping family-name" required>
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Mobile Number (For Courier Updates)</label>
-                    <input type="tel" name="mobile" value="{{ address.mobile }}" pattern="[0-9]{10}" required>
+                    <label for="mobile">Mobile Number (For Courier Delivery)</label>
+                    <input type="tel" name="mobile" id="mobile" value="{{ address.mobile }}" pattern="[0-9]{10}" autocomplete="shipping tel" required>
                 </div>
 
                 <div class="form-group full-width pincode-wrapper">
-                    <label>Pincode</label>
-                    <input type="text" name="pincode" id="pincode" value="{{ address.pincode }}" maxlength="6" required>
+                    <label for="pincode">Pincode</label>
+                    <input type="text" name="pincode" id="pincode" value="{{ address.pincode }}" maxlength="6" autocomplete="shipping postal-code" required>
                     <span id="pin-loader"></span>
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Flat, House no., Building, Apartment</label>
-                    <input type="text" name="address" value="{{ address.address }}" required>
+                    <label for="address_line1">Flat, House no., Building, Apartment</label>
+                    <input type="text" name="address" id="address_line1" value="{{ address.address }}" autocomplete="shipping address-line1" required>
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Area, Street, Landmark</label>
-                    <textarea name="address_2" rows="2">{{ address.address_2 }}</textarea>
+                    <label for="address_line2">Area, Street, Sector, Landmark</label>
+                    <input type="text" name="address_2" id="address_line2" value="{{ address.address_2 }}" autocomplete="shipping address-line2">
                 </div>
 
                 <div class="form-group">
-                    <label>City</label>
-                    <input type="text" name="city" id="city" value="{{ address.city }}" required>
+                    <label for="city">City / District</label>
+                    <input type="text" name="city" id="city" value="{{ address.city }}" autocomplete="shipping address-level2" required>
                 </div>
                 <div class="form-group">
-                    <label>State</label>
-                    <input type="text" name="state" id="state" value="{{ address.state }}" required>
+                    <label for="state">State</label>
+                    <input type="text" name="state" id="state" value="{{ address.state }}" autocomplete="shipping address-level1" required>
                 </div>
             </div>
 
-            <button type="submit" class="btn-update">SAVE CHANGES</button>
+            <button type="submit" class="btn-update">
+                <i class="fa-solid fa-check"></i> SAVE CHANGES
+            </button>
         </form>
     </div>
 </div>
 
 <script>
-    document.getElementById('pincode').addEventListener('input', function() {
-        const pincode = this.value;
-        const loader = document.getElementById('pin-loader');
-        if (pincode.length === 6) {
-            loader.innerText = "🔍 Checking...";
-            loader.style.color = "#888";
-            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data[0].Status === "Success") {
-                    document.getElementById('city').value = data[0].PostOffice[0].District;
-                    document.getElementById('state').value = data[0].PostOffice[0].State;
-                    loader.innerText = "✅ Found"; 
-                    loader.style.color = "#00d084";
-                } else { 
-                    loader.innerText = "❌ Invalid"; 
-                    loader.style.color = "#ff4757"; 
-                }
-            })
-            .catch(err => {
-                loader.innerText = "";
-            });
-        } else {
+function checkPincodeLookup(pincode) {
+    const loader = document.getElementById('pin-loader');
+    if (!loader) return;
+
+    if (pincode && pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+        loader.innerText = "🔍 Checking...";
+        loader.style.color = "#94a3b8";
+
+        fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+                const po = data[0].PostOffice[0];
+                const cityEl = document.getElementById('city');
+                const stateEl = document.getElementById('state');
+                
+                if (cityEl) cityEl.value = po.District || po.Block || po.Circle;
+                if (stateEl) stateEl.value = po.State;
+
+                loader.innerText = "✅ " + (po.District || "Valid"); 
+                loader.style.color = "#10b981";
+            } else { 
+                loader.innerText = "❌ Invalid PIN"; 
+                loader.style.color = "#ef4444"; 
+            }
+        })
+        .catch(err => {
             loader.innerText = "";
-        }
-    });
+        });
+    } else {
+        loader.innerText = "";
+    }
+}
+
+const pinInput = document.getElementById('pincode');
+if (pinInput) {
+    pinInput.addEventListener('input', function() { checkPincodeLookup(this.value.trim()); });
+    pinInput.addEventListener('change', function() { checkPincodeLookup(this.value.trim()); });
+    pinInput.addEventListener('paste', function() { setTimeout(() => checkPincodeLookup(pinInput.value.trim()), 100); });
+}
+
+function autoDetectCompleteAddress() {
+    const btn = document.getElementById('btnDetectLocation');
+    const statusPill = document.getElementById('gps-status-pill');
+
+    if (!navigator.geolocation) return;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Detecting GPS...</span>';
+    }
+    if (statusPill) {
+        statusPill.className = "gps-status-pill info";
+        statusPill.innerText = "📍 Getting your exact device coordinates...";
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            try {
+                let resolved = false;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1`);
+                    const data = await res.json();
+                    
+                    if (data && data.address) {
+                        const a = data.address;
+                        const houseNo = a.house_number || a.building || '';
+                        const road = a.road || a.street || '';
+                        const area = a.suburb || a.neighbourhood || '';
+                        const city = a.city || a.town || a.village || a.county || '';
+                        const state = a.state || '';
+                        const pincode = (a.postcode || '').replace(/[^0-9]/g, '').slice(0, 6);
+
+                        applyResolvedAddress({ houseNo, road, area, city, state, pincode });
+                        resolved = true;
+                    }
+                } catch (e) {}
+
+                if (!resolved) {
+                    try {
+                        const res2 = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+                        const data2 = await res2.json();
+
+                        if (data2) {
+                            const road = data2.locality || '';
+                            const city = data2.city || data2.locality || '';
+                            const state = data2.principalSubdivision || '';
+                            const pincode = (data2.postcode || '').replace(/[^0-9]/g, '').slice(0, 6);
+                            applyResolvedAddress({ houseNo: '', road, area: '', city, state, pincode });
+                            resolved = true;
+                        }
+                    } catch (e) {}
+                }
+
+                if (resolved) {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Updated!</span>';
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="color: #f59e0b;"></i> <span>Update from GPS</span>';
+                        }, 3000);
+                    }
+                    if (statusPill) {
+                        statusPill.className = "gps-status-pill success";
+                        statusPill.innerText = "✅ Address updated via GPS!";
+                    }
+                }
+            } catch (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> <span>Retry</span>';
+                }
+            }
+        },
+        function(err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> <span>Update from GPS</span>';
+            }
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+}
+
+function applyResolvedAddress(addr) {
+    const flatField = document.getElementById('address_line1');
+    const areaField = document.getElementById('address_line2');
+    const cityField = document.getElementById('city');
+    const stateField = document.getElementById('state');
+    const pinField = document.getElementById('pincode');
+
+    const line1 = [addr.houseNo, addr.road].filter(Boolean).join(', ') || addr.area;
+    if (flatField && line1) flatField.value = line1;
+    if (areaField && addr.area) areaField.value = addr.area;
+    if (cityField && addr.city) cityField.value = addr.city;
+    if (stateField && addr.state) stateField.value = addr.state;
+    if (pinField && addr.pincode) {
+        pinField.value = addr.pincode;
+        checkPincodeLookup(addr.pincode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const pin = document.getElementById('pincode');
+    if (pin && pin.value && pin.value.length === 6) {
+        checkPincodeLookup(pin.value);
+    }
+});
 </script>
 {% endblock %}
