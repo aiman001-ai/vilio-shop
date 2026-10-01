@@ -422,7 +422,7 @@
         border-color: #0d0d0f;
     }
 
-    /* ===== 5. PRODUCT GRID (Wider container to highlight & enlarge images) ===== */
+    /* ===== 5. PRODUCT GRID (Consistent & Perfectly Balanced) ===== */
     .catalog-wrapper {
         max-width: 1440px;
         margin: 0 auto;
@@ -453,7 +453,17 @@
         }
     }
 
-    /* Product Item / Card */
+    /* Product Grid Cells */
+    .product-item,
+    .motivational-item {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    /* Product Card */
     .product-card {
         background: #ffffff;
         border-radius: 10px;
@@ -462,6 +472,8 @@
         transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         display: flex;
         flex-direction: column;
+        height: 100%;
+        width: 100%;
         position: relative;
     }
 
@@ -471,22 +483,26 @@
         border-color: #d4d4d8;
     }
 
-    /* Image Container (Taller, elegant fashion ratio that maximizes image prominence) */
+    /* Image Container: Uniform 3:4 ratio with zero flex-shrink to guarantee identical sizing */
     .card-media-box {
         position: relative;
         width: 100%;
-        aspect-ratio: 3 / 4.15;
+        aspect-ratio: 3 / 4;
         background: #f4f4f5;
         overflow: hidden;
         display: block;
+        flex-shrink: 0;
     }
 
     .card-img {
         position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: cover !important;
         opacity: 0;
         transition: opacity 0.4s ease, transform 0.5s ease;
     }
@@ -668,13 +684,13 @@
         font-weight: 400;
         color: #52525b;
         margin-bottom: 3px;
-        line-height: 1.32;
+        line-height: 1.35;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
-        min-height: 29px;
+        height: 31px;
         text-decoration: none;
     }
 
@@ -685,9 +701,12 @@
     .card-price-row {
         display: flex;
         align-items: baseline;
-        gap: 6px;
-        flex-wrap: wrap;
+        gap: 5px;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        overflow: hidden;
         margin-top: auto;
+        height: 18px;
     }
 
     .price-current {
@@ -711,11 +730,13 @@
 
     @media (max-width: 768px) {
         .card-body {
-            padding: 5px 7px 7px;
+            padding: 6px 7px 7px;
+            min-height: 56px;
         }
         .card-title {
             font-size: 10.5px;
-            min-height: 26px;
+            height: 28px;
+            line-height: 14px;
             margin-bottom: 2px;
         }
         .price-current {
@@ -770,6 +791,7 @@
         text-decoration: none;
         transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         height: 100%;
+        width: 100%;
     }
 
     .motivational-card:hover {
@@ -781,19 +803,23 @@
     .motivational-media-box {
         position: relative;
         width: 100%;
-        height: 100%;
-        min-height: 100%;
-        aspect-ratio: 3 / 4.15;
+        aspect-ratio: 3 / 4;
         overflow: hidden;
         background: #09090c;
         display: block;
+        flex-shrink: 0;
     }
 
     .motivational-media-box video,
     .motivational-media-box img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: cover !important;
         display: block;
         transition: transform 0.4s ease;
     }
@@ -831,61 +857,55 @@
         transform: scale(1.08);
     }
 
-    .motivational-card-body {
-        padding: 14px 14px 16px;
-        background: #0d0d12;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .motivational-card-title {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 14px;
-        font-weight: 800;
-        color: #ffffff;
-        margin: 0;
-        line-height: 1.35;
-        letter-spacing: -0.2px;
-    }
-
-    .motivational-card-title span {
-        color: #ffaa00;
-    }
-
-    .motivational-card-quote {
-        font-size: 11.5px;
-        color: #a1a1aa;
-        line-height: 1.45;
-        margin: 0;
-    }
-
-    .motivational-card-cta {
+    /* Sleek Editorial Footer Strip matching product card body height exactly */
+    .motivational-footer-strip {
+        padding: 7px 9px 9px;
+        background: #09090c;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 7px;
-        background: #ffffff;
-        color: #09090b;
-        padding: 9px 12px;
-        border-radius: var(--radius-sm);
-        font-size: 11.5px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        margin-top: 4px;
-        box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+        justify-content: space-between;
+        flex: 1;
+        min-height: 56px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        box-sizing: border-box;
     }
 
-    .motivational-card-cta:hover {
-        background: #ffaa00;
-        color: #000000;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(255, 170, 0, 0.3);
+    .motivational-strip-tag {
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        color: #a1a1aa;
+        text-transform: uppercase;
+    }
+
+    .motivational-strip-cta {
+        font-size: 9px;
+        font-weight: 600;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .motivational-card:hover .motivational-strip-cta {
+        color: #e4e4e7;
+        transform: translateX(2px);
+    }
+
+    @media (max-width: 768px) {
+        .motivational-footer-strip {
+            padding: 6px 7px 7px;
+            min-height: 56px;
+        }
+        .motivational-strip-tag {
+            font-size: 8.5px;
+        }
+        .motivational-strip-cta {
+            font-size: 8.5px;
+        }
     }
 
     /* FULL-WIDTH BANNER BREAK IN GRID */
@@ -1724,219 +1744,6 @@
         }
     }
 
-    /* ===== 5B. IN-GRID MOTIVATIONAL MEDIA & BANNER BREAKS ===== */
-    .motivational-item {
-        position: relative;
-    }
-
-    .motivational-card {
-        background: #0d0e14;
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        position: relative;
-        text-decoration: none;
-        color: inherit;
-        cursor: pointer;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-    }
-
-    .motivational-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-        border-color: rgba(255, 255, 255, 0.3);
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .motivational-card:hover .motivational-cta-btn {
-        background: #f4f4f5;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.35);
-        color: #000;
-    }
-
-    .motivational-media-box {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 3 / 4;
-        overflow: hidden;
-        background: #0a0b10;
-        display: block;
-    }
-
-    .motivational-video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .motivational-img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .motivational-card:hover .motivational-img {
-        transform: scale(1.06);
-    }
-
-    .motivational-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.1) 35%, rgba(10, 11, 16, 0.95) 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 14px;
-        z-index: 2;
-    }
-
-    .motivational-top-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .motivational-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background: rgba(255, 255, 255, 0.16);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #ffffff;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-    }
-
-    .motivational-badge.gold {
-        background: linear-gradient(135deg, rgba(234, 179, 8, 0.35) 0%, rgba(168, 85, 247, 0.25) 100%);
-        border-color: rgba(234, 179, 8, 0.6);
-        color: #fef08a;
-    }
-
-    .motivational-sound-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 12px;
-        transition: background 0.2s, transform 0.2s;
-    }
-
-    .motivational-sound-btn:hover {
-        background: rgba(0, 0, 0, 0.85);
-        transform: scale(1.1);
-    }
-
-    .motivational-content {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .motivational-tagline {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
-        color: #a1a1aa;
-    }
-
-    .motivational-headline {
-        font-size: 15px;
-        font-weight: 800;
-        line-height: 1.25;
-        color: #ffffff;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-        margin: 0;
-    }
-
-    .motivational-headline span {
-        background: linear-gradient(90deg, #facc15, #f97316);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .motivational-subtext {
-        font-size: 11px;
-        color: #d4d4d8;
-        line-height: 1.35;
-        margin: 0;
-    }
-
-    .motivational-cta-btn {
-        margin-top: 5px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 12px;
-        background: #ffffff;
-        color: #090a0f;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
-    }
-
-    .motivational-cta-btn:hover {
-        background: #f4f4f5;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.35);
-        color: #000;
-    }
-
-    .motivational-card-footer {
-        padding: 9px 12px;
-        background: #0f1017;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 10px;
-        color: #94a3b8;
-    }
-
-    .motivational-card-footer .footer-stat {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #f1f5f9;
-        font-weight: 600;
-    }
-
-    .motivational-card-footer .footer-stat i {
-        color: #eab308;
-    }
-
     /* FULL WIDTH BANNER BREAKS ACROSS CATALOG */
     .catalog-full-banner {
         grid-column: 1 / -1;
@@ -2474,6 +2281,10 @@
                         <i class="fa-solid fa-volume-xmark"></i>
                     </button>
                 </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">VILIO REEL</span>
+                    <span class="motivational-strip-cta">SHOP NOW <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
             </a>
         </div>
         {% endif %}
@@ -2484,6 +2295,10 @@
             <a href="{% url 'category_type_products' 'men' 'top' 'shirts' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_confidence.jpg' %}" alt="Vilio Confidence Edit" class="motivational-img" loading="lazy">
+                </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">STATEMENT LOOK</span>
+                    <span class="motivational-strip-cta">EXPLORE <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
             </a>
         </div>
@@ -2527,6 +2342,10 @@
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_quality.jpg' %}" alt="Vilio Quality Benchmark" class="motivational-img" loading="lazy">
                 </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">HEAVYWEIGHT COTTON</span>
+                    <span class="motivational-strip-cta">VIEW <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
             </a>
         </div>
         {% endif %}
@@ -2542,6 +2361,10 @@
                     <button type="button" class="motivational-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleMotivationalSound(this, 'motivationalVid2')" title="Toggle Sound" aria-label="Toggle Sound">
                         <i class="fa-solid fa-volume-xmark"></i>
                     </button>
+                </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">SIGNATURE WEAVE</span>
+                    <span class="motivational-strip-cta">DISCOVER <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
             </a>
         </div>
@@ -2598,6 +2421,10 @@
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_manifesto.jpg' %}" alt="Vilio Manifesto" class="motivational-img" loading="lazy">
                 </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">STREET ETHOS</span>
+                    <span class="motivational-strip-cta">EXPLORE <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
             </a>
         </div>
         {% endif %}
@@ -2609,6 +2436,10 @@
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_vip.jpg' %}" alt="Vilio VIP" class="motivational-img" loading="lazy">
                 </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">VIP CLUB</span>
+                    <span class="motivational-strip-cta">JOIN <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
             </a>
         </div>
 
@@ -2617,6 +2448,10 @@
             <a href="{% url 'category_default' 'men' %}" class="motivational-card">
                 <div class="motivational-media-box">
                     <img src="{% static 'ads/card_express.jpg' %}" alt="Pan India Delivery" class="motivational-img" loading="lazy">
+                </div>
+                <div class="motivational-footer-strip">
+                    <span class="motivational-strip-tag">PAN-INDIA COD</span>
+                    <span class="motivational-strip-cta">ORDER <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
             </a>
         </div>
