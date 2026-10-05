@@ -1018,7 +1018,7 @@
         /* ===== 7. FLOATING WHATSAPP SUPPORT BUTTON ===== */
         .floating-whatsapp {
             position: fixed;
-            bottom: 70px;
+            bottom: 125px; /* Safely placed above rolling mascot track on mobile */
             right: 14px;
             z-index: 999;
             display: flex;
@@ -1084,6 +1084,7 @@
             will-change: transform;
             transform: translate3d(80px, 0, 0);
             display: block !important;
+            overflow: visible !important;
         }
 
         @media (min-width: 769px) {
@@ -1123,6 +1124,7 @@
             touch-action: none;
             will-change: transform;
             -webkit-tap-highlight-color: transparent;
+            overflow: visible;
         }
 
         @media (min-width: 769px) {
@@ -1143,26 +1145,23 @@
             display: block;
             will-change: transform;
             transform-origin: 50% 50%;
-            contain: strict;
         }
 
-
         .squash-horizontal {
-            animation: waBounceSquashH 0.25s ease-out;
+            animation: waBounceSquashH 0.22s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         @keyframes waBounceSquashH {
             0% { transform: scale(1, 1); }
-            35% { transform: scale(1.15, 0.85); }
-            70% { transform: scale(0.92, 1.08); }
+            35% { transform: scale(1.07, 0.93); }
+            70% { transform: scale(0.96, 1.04); }
             100% { transform: scale(1, 1); }
         }
 
         .wa-sound-waves {
             position: absolute;
-            right: -13px;
-            top: 50%;
-            transform: translateY(-50%);
+            top: -12px;
+            right: 4px;
             display: none;
             align-items: center;
             gap: 2px;
@@ -2678,16 +2677,24 @@
             const MAX_JUMP_UP = -75;
 
             // Cached bounds to eliminate layout thrashing
-            let cachedMinX = 14;
-            let cachedMaxX = 260;
+            let cachedMinX = 8;
+            let cachedMaxX = 320;
             let cachedDiameter = 44;
 
             function updateBounds() {
-                const w = window.innerWidth || document.documentElement.clientWidth || 360;
+                const w = Math.min(window.innerWidth || 360, document.documentElement.clientWidth || 360);
                 const isMobile = w <= 768;
                 cachedDiameter = isMobile ? 44 : 52;
-                cachedMinX = 14;
-                cachedMaxX = isMobile ? Math.max(cachedMinX + 60, w - 110) : Math.max(cachedMinX + 140, w - 190);
+                if (isMobile) {
+                    // Mobile: Full edge-to-edge rolling track across the screen!
+                    const margin = 8;
+                    cachedMinX = margin;
+                    cachedMaxX = Math.max(cachedMinX + 50, w - cachedDiameter - margin);
+                } else {
+                    // Desktop: Wide track, with clearance for desktop bottom-right WhatsApp button
+                    cachedMinX = 24;
+                    cachedMaxX = Math.max(cachedMinX + 120, w - cachedDiameter - 180);
+                }
                 if (posX > cachedMaxX) posX = cachedMaxX;
                 if (posX < cachedMinX) posX = cachedMinX;
             }
@@ -2922,24 +2929,26 @@
                             setTemporaryFace('shock', 400);
                         }
 
-                        // Wall collisions (Gentler on mobile)
+                        // Wall collisions (Smooth rebound back into view, never get stuck or cut off)
                         if (posX >= cachedMaxX) {
-                            posX = cachedMaxX;
-                            velX = -Math.abs(velX) * (isMobile ? 0.4 : 0.72);
+                            posX = cachedMaxX - 2;
                             currentDirection = -1;
-                            velY = isMobile ? -3.5 : -5.0;
+                            const bounceForce = Math.max(Math.abs(velX) * 0.75, isMobile ? 3.2 : 4.5);
+                            velX = -bounceForce;
+                            velY = isMobile ? -3.6 : -4.8;
                             posY = -2;
                             triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 350);
+                            if (!isSpeaking) setTemporaryFace('dizzy', 320);
                             distanceAccumulator = 0;
                         } else if (posX <= cachedMinX) {
-                            posX = cachedMinX;
-                            velX = Math.abs(velX) * (isMobile ? 0.4 : 0.72);
+                            posX = cachedMinX + 2;
                             currentDirection = 1;
-                            velY = isMobile ? -3.5 : -5.0;
+                            const bounceForce = Math.max(Math.abs(velX) * 0.75, isMobile ? 3.2 : 4.5);
+                            velX = bounceForce;
+                            velY = isMobile ? -3.6 : -4.8;
                             posY = -2;
                             triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 350);
+                            if (!isSpeaking) setTemporaryFace('dizzy', 320);
                             distanceAccumulator = 0;
                         }
 
