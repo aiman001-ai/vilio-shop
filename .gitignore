@@ -20,36 +20,25 @@ env/
 .DS_Store
 Thumbs.db
 
-# 6. Root temporary test and scratch files
-/*.jpg
-/*.png
-/*.webp
-/*.wav
-/*.mp4
-/*.json
-/product_reference_images/
-/product_summary.txt
-/analyze_images.py
-/analyze_missing_angles.py
-/check_*.py
-/inspect_*.py
-/create_*.py
-/download_*.py
-/generate_*.py
-/test_*.py
-/detailed_*.py
-/find_*.py
-/list_*.py
-/full_store_audit.py
-/build_*.py
-/refine_*.py
-/restore_*.py
-/audit_samples/
-/audit_supplier_assets/
-/embossed_triangle_refs/
-/generated_missing_angles/
-/master_joggers_brown/
-/original_joggers_inspect/
-/waffle_shirt_refs/
-/generated_joggers_all/
+# 6. Scripts folder temporary test and scratch files
+scripts/archive_assets/
+scripts/*.json
+scripts/*.txt
+scripts/*.log
+scripts/analyze_*.py
+scripts/check_*.py
+scripts/inspect_*.py
+scripts/create_*.py
+scripts/download_*.py
+scripts/generate_*.py
+scripts/test_*.py
+scripts/detailed_*.py
+scripts/find_*.py
+scripts/list_*.py
+scripts/full_store_audit.py
+scripts/build_*.py
+scripts/refine_*.py
+scripts/restore_*.py
+
+# 7. Static
 /static/
