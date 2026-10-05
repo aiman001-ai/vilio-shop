@@ -2701,6 +2701,7 @@
             updateBounds();
 
             let isSquashing = false;
+            let lastWallBounceTime = 0;
             function triggerSquash() {
                 if (isSquashing) return;
                 isSquashing = true;
@@ -2726,33 +2727,18 @@
                 speakMessage(speech);
             }
 
-            // ===== 🌀 2D SCROLL ENGINE (GENTLE SPEED ON MOBILE) =====
+            // ===== 🌀 2D SCROLL ENGINE (LIGHTWEIGHT & FULLY SYNCHRONIZED) =====
             let lastScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-            let scrollTicking = false;
+            let pendingScrollDelta = 0;
 
             window.addEventListener('scroll', function() {
-                if (!scrollTicking) {
-                    window.requestAnimationFrame(() => {
-                        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-                        const deltaScroll = currentScrollY - lastScrollY;
-                        lastScrollY = currentScrollY;
+                const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+                const deltaScroll = currentScrollY - lastScrollY;
+                lastScrollY = currentScrollY;
 
-                        const isMobile = window.innerWidth <= 768;
-
-                        if (Math.abs(deltaScroll) > 1.8) {
-                            // On mobile: gentle, calm rolling speed!
-                            const scrollSpeed = Math.min(Math.abs(deltaScroll), isMobile ? 8 : 16);
-                            const dir = deltaScroll > 0 ? currentDirection : -currentDirection;
-                            velX += dir * (scrollSpeed * (isMobile ? 0.07 : 0.22));
-
-                            const maxV = isMobile ? 4.0 : 11;
-                            if (velX > maxV) velX = maxV;
-                            if (velX < -maxV) velX = -maxV;
-                            wakePhysicsLoop();
-                        }
-                        scrollTicking = false;
-                    });
-                    scrollTicking = true;
+                if (Math.abs(deltaScroll) > 1.0) {
+                    pendingScrollDelta += deltaScroll;
+                    wakePhysicsLoop();
                 }
             }, { passive: true });
 
@@ -2819,9 +2805,17 @@
                 velX = dragVelX * (isMobile ? 0.45 : 1.1);
                 velY = dragVelY * (isMobile ? 0.45 : 1.1);
 
-                if (Math.abs(velX) > 0.5) {
+                // If released right at corner, ensure inward roll away from wall
+                if (posX >= cachedMaxX - 6) {
+                    currentDirection = -1;
+                    if (velX >= 0) velX = isMobile ? -1.8 : -2.5;
+                } else if (posX <= cachedMinX + 6) {
+                    currentDirection = 1;
+                    if (velX <= 0) velX = isMobile ? 1.8 : 2.5;
+                } else if (Math.abs(velX) > 0.5) {
                     currentDirection = velX > 0 ? 1 : -1;
                 }
+
                 if (Math.hypot(velX, velY) > 10) {
                     setTemporaryFace('shock', 400);
                 }
@@ -2890,10 +2884,42 @@
             function physicsLoop() {
                 if (!isDragging) {
                     const isMobile = window.innerWidth <= 768;
-                    // Calmer damping on mobile
-                    velX *= isMobile ? 0.88 : 0.93;
-                    if (Math.abs(velX) < 0.05) velX = 0;
 
+                    // 1. Process scroll velocity impulses (Single synchronized tick)
+                    if (Math.abs(pendingScrollDelta) > 1.0) {
+                        const delta = pendingScrollDelta;
+                        pendingScrollDelta = 0;
+
+                        // Corner escape logic:
+                        // If emoji is at or near the right wall, ANY scroll MUST roll it left!
+                        // If emoji is at or near the left wall, ANY scroll MUST roll it right!
+                        let dir = currentDirection;
+                        if (posX >= cachedMaxX - 8) {
+                            dir = -1;
+                            currentDirection = -1;
+                        } else if (posX <= cachedMinX + 8) {
+                            dir = 1;
+                            currentDirection = 1;
+                        } else {
+                            dir = delta > 0 ? currentDirection : -currentDirection;
+                        }
+
+                        const scrollSpeed = Math.min(Math.abs(delta), isMobile ? 8 : 16);
+                        const push = dir * (scrollSpeed * (isMobile ? 0.08 : 0.22));
+                        velX += push;
+
+                        const maxV = isMobile ? 4.2 : 11;
+                        if (velX > maxV) velX = maxV;
+                        if (velX < -maxV) velX = -maxV;
+                    } else {
+                        pendingScrollDelta = 0;
+                    }
+
+                    // 2. Calmer damping on mobile
+                    velX *= isMobile ? 0.91 : 0.93;
+                    if (Math.abs(velX) < 0.06) velX = 0;
+
+                    // 3. Vertical jump / hop physics
                     if (posY < 0 || velY !== 0) {
                         velY += GRAVITY;
                         posY += velY;
@@ -2912,6 +2938,7 @@
                         }
                     }
 
+                    // 4. Movement, Rotation & Wall Collisions
                     if (velX !== 0 || posY !== 0 || velY !== 0) {
                         wasMoving = true;
                         posX += velX;
@@ -2929,31 +2956,46 @@
                             setTemporaryFace('shock', 400);
                         }
 
-                        // Wall collisions (Smooth rebound back into view, never get stuck or cut off)
+                        // Wall collisions (Smooth elastic rebound back into view, debounced)
                         if (posX >= cachedMaxX) {
-                            posX = cachedMaxX - 2;
+                            posX = cachedMaxX;
                             currentDirection = -1;
-                            const bounceForce = Math.max(Math.abs(velX) * 0.75, isMobile ? 3.2 : 4.5);
-                            velX = -bounceForce;
-                            velY = isMobile ? -3.6 : -4.8;
+                            const minRebound = isMobile ? 3.2 : 4.5;
+                            velX = -Math.max(Math.abs(velX) * 0.75, minRebound);
+                            velY = isMobile ? -3.5 : -4.8;
                             posY = -2;
-                            triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 320);
+
+                            const now = Date.now();
+                            if (now - lastWallBounceTime > 320) {
+                                lastWallBounceTime = now;
+                                triggerSquash();
+                                if (!isSpeaking) setTemporaryFace('dizzy', 320);
+                            }
                             distanceAccumulator = 0;
                         } else if (posX <= cachedMinX) {
-                            posX = cachedMinX + 2;
+                            posX = cachedMinX;
                             currentDirection = 1;
-                            const bounceForce = Math.max(Math.abs(velX) * 0.75, isMobile ? 3.2 : 4.5);
-                            velX = bounceForce;
-                            velY = isMobile ? -3.6 : -4.8;
+                            const minRebound = isMobile ? 3.2 : 4.5;
+                            velX = Math.max(Math.abs(velX) * 0.75, minRebound);
+                            velY = isMobile ? -3.5 : -4.8;
                             posY = -2;
-                            triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 320);
+
+                            const now = Date.now();
+                            if (now - lastWallBounceTime > 320) {
+                                lastWallBounceTime = now;
+                                triggerSquash();
+                                if (!isSpeaking) setTemporaryFace('dizzy', 320);
+                            }
                             distanceAccumulator = 0;
                         }
 
+                        // Spin & roll physics: 1 full 360 deg turn per circumference
                         const radius = cachedDiameter / 2;
                         angle += (velX / radius) * (180 / Math.PI);
+                        if (angle > 36000 || angle < -36000) {
+                            angle %= 360;
+                        }
+
                         render();
                         requestAnimationFrame(physicsLoop);
                     } else {
