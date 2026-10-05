@@ -43,15 +43,15 @@
         <div class="main-img-card-wrap">
             <div class="main-img-card" id="imageSlider">
                 {% if product.image %}
-                    {% cloudinary product.image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" alt=product.name %}
+                    {% cloudinary product.image width=750 height=1000 quality="auto:eco" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" fetchpriority="high" loading="eager" decoding="async" alt=product.name %}
                 {% endif %}
 
                 {% if product.cached_first_variant and product.cached_first_variant.color_image and product.cached_first_variant.color_image.url != product.image.url %}
-                    {% cloudinary product.cached_first_variant.color_image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=product.cached_first_variant.color_name %}
+                    {% cloudinary product.cached_first_variant.color_image width=750 height=1000 quality="auto:eco" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" alt=product.cached_first_variant.color_name %}
                 {% endif %}
 
                 {% for img in clean_gallery %}
-                    {% cloudinary img.image width=900 height=1200 quality="auto:good" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
+                    {% cloudinary img.image width=750 height=1000 quality="auto:eco" fetch_format="auto" crop="fill" gravity="auto" class="slide-img" loading="lazy" decoding="async" %}
                 {% endfor %}
             </div>
             <div class="slider-dots" id="sliderDots"></div>
@@ -310,9 +310,9 @@
                 <a href="{% url 'product_detail' item.id %}" class="suggestion-card-link">
                     <div class="suggest-img-box">
                         {% if item.image %}
-                            {% cloudinary item.image width=380 height=500 quality="auto" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" alt=item.name %}
+                            {% cloudinary item.image width=380 height=500 quality="auto:eco" fetch_format="auto" crop="fill" gravity="auto" class="suggest-img" loading="lazy" decoding="async" alt=item.name %}
                         {% else %}
-                            <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" class="suggest-img">
+                            <img src="{% static 'images/no-image.png' %}" alt="No Image" loading="lazy" decoding="async" class="suggest-img">
                         {% endif %}
                         
                         <div class="suggest-overlay-gradient"></div>

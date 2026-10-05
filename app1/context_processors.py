@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from .models import Cart, CartItem, Category
 from django.db.models import Sum
 
@@ -26,5 +27,11 @@ def cart_count_processor(request):
 
 
 def menu_categories(request):
-    categories = Category.objects.prefetch_related('subcategories__product_types').all()
+    categories = cache.get('menu_categories_global_cache_v1')
+    if categories is None:
+        try:
+            categories = list(Category.objects.prefetch_related('subcategories__product_types').all())
+            cache.set('menu_categories_global_cache_v1', categories, 600)
+        except Exception:
+            categories = []
     return {'all_categories': categories}

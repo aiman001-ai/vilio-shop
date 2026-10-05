@@ -2225,14 +2225,14 @@
 
                     <!-- Main Image -->
                     {% if product.image %}
-                        {% cloudinary product.image width=600 quality="auto:eco" fetch_format="auto" crop="fill" class="card-img active slider-frame" loading="lazy" alt=product.name %}
+                        {% cloudinary product.image width=420 quality="auto:eco" fetch_format="auto" crop="fill" class="card-img active slider-frame" loading="lazy" decoding="async" alt=product.name %}
                     {% else %}
-                        <img src="{% static 'images/no-image.png' %}" class="card-img active slider-frame" loading="lazy" alt="{{ product.name }}">
+                        <img src="{% static 'images/no-image.png' %}" class="card-img active slider-frame" loading="lazy" decoding="async" alt="{{ product.name }}">
                     {% endif %}
 
                     <!-- Extra Gallery Images for Card Hover Animation -->
                     {% for extra in product.images.all|slice:":2" %}
-                        {% cloudinary extra.image width=600 quality="auto:eco" fetch_format="auto" crop="fill" class="card-img slider-frame" loading="lazy" %}
+                        {% cloudinary extra.image width=420 quality="auto:eco" fetch_format="auto" crop="fill" class="card-img slider-frame" loading="lazy" decoding="async" %}
                     {% endfor %}
 
                     <!-- Quick Add Button -->

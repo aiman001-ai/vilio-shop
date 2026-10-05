@@ -84,8 +84,8 @@ INSTALLED_APPS = [
 SITE_ID = 1
 
 MIDDLEWARE = [
-    
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # 🚀 Hyper-fast response: compresses HTML by ~80%
     'whitenoise.middleware.WhiteNoiseMiddleware', # Static files handling
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -94,7 +94,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -133,7 +132,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'require',
         },
-        'CONN_MAX_AGE': 60,
+        'CONN_MAX_AGE': 600,  # 🚀 Persistent connection pooling avoids re-connecting on every page
     }
 }
 

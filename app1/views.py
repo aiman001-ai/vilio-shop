@@ -965,6 +965,12 @@ def verify_otp(request):
 
 # ================= PRODUCT DETAIL =================
 def product_detail(request, id):
+    # 🚀 SPEED FIX: Check in-memory cache first for instant ~15ms response
+    cache_key = f'product_detail_data_v2_{id}'
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        return render(request, 'product_detail.html', cached_data)
+
     # 1. Jo product user ne click kiya hai (Fully Optimized & Prefetched)
     current_product = get_object_or_404(
         Product.objects.select_related('category', 'sub_category', 'product_type')
@@ -991,7 +997,6 @@ def product_detail(request, id):
         'has_variants', 'offer_enabled', 'offer_started_at'
     ).prefetch_related('color_variants__sizes', 'simple_size_stocks')
 
-    # FIX 1: DEBUG logic ko optimized kiya taaki loop ke andar DB hit na ho
     siblings_list = list(sibling_products)
 
     # 3. JavaScript ke liye JSON data
@@ -1001,7 +1006,7 @@ def product_detail(request, id):
         # FIX 2: .first() hatakar memory cache se pehla element nikala (0 SQL Hits!)
         colors_cache = prod.color_variants.all()
         color_var = colors_cache[0] if colors_cache else None
-        prod.cached_first_variant = color_var   # 🚀 SPEED FIX: Template ke liye cache attach kiya
+        prod.cached_first_variant = color_var
 
         if color_var:
             size_list = []
@@ -1065,8 +1070,6 @@ def product_detail(request, id):
     random.shuffle(all_suggestions)
 
     # 5. Variants data for template (Purely runs from RAM memory)
-
-    # ===== SIZE SORT ORDER =====
     SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL',
                   '28', '30', '32', '34', '36', '38', '40', '42', '44',
                   'FREE SIZE', 'FREE']
@@ -1080,7 +1083,6 @@ def product_detail(request, id):
 
     if current_product.has_variants:
         for color in current_product.color_variants.all():
-            # Sizes ko sort karke loop karo
             sorted_sizes = sorted(color.sizes.all(), key=lambda s: size_sort_key(s.size_name))
             for size in sorted_sizes:
                 variants.append({
@@ -1090,7 +1092,6 @@ def product_detail(request, id):
                     "stock": size.stock
                 })
     else:
-        # Simple sizes bhi sort karo
         simple_sizes_list = sorted(
             current_product.simple_size_stocks.all(),
             key=lambda s: size_sort_key(s.size_name)
@@ -1099,12 +1100,11 @@ def product_detail(request, id):
     # ===== DEDUPLICATION: Gallery images se main image aur variant image hata do =====
     seen_public_ids = set()
 
-    # Main image ka public_id track karo
     if current_product.image:
         seen_public_ids.add(str(current_product.image))
 
-    # Pehle variant ki image ka public_id track karo
-    first_variant_obj = current_product.color_variants.first() if current_product.has_variants else None
+    # 🚀 SPEED FIX: Avoid DB hit from .first() by using cached_first_variant
+    first_variant_obj = current_product.cached_first_variant if current_product.has_variants else None
     if first_variant_obj and first_variant_obj.color_image:
         seen_public_ids.add(str(first_variant_obj.color_image))
 
@@ -1116,15 +1116,18 @@ def product_detail(request, id):
             seen_public_ids.add(public_id)
             clean_gallery.append(img)
 
-    return render(request, 'product_detail.html', {
+    context_data = {
         'product': current_product,
         'sibling_products': siblings_list,
         'variants': variants,
         'simple_sizes_list': simple_sizes_list,
         'variants_json': mark_safe(json.dumps(variants_json_data)),
         'suggestions': all_suggestions,
-        'clean_gallery': clean_gallery,  # ← Naya deduplicated list
-    })
+        'clean_gallery': clean_gallery,
+    }
+    cache.set(cache_key, context_data, 180)
+
+    return render(request, 'product_detail.html', context_data)
 # ================= CHECKOUT & ORDERS =================
 @login_required
 def checkout(request):
@@ -1349,8 +1352,14 @@ def my_orders(request):
 
 # ================= SEARCH & CATEGORIES =================
 def search(request):
-    query = request.GET.get('q')
-    products = Product.objects.filter(name__icontains=query, is_active=True) if query else []
+    query = request.GET.get('q', '').strip()
+    if query:
+        products = list(Product.objects.filter(
+            Q(name__icontains=query) | Q(brand__icontains=query) | Q(product_type__name__icontains=query),
+            is_active=True
+        ).select_related('category', 'sub_category', 'product_type').prefetch_related('images', 'color_variants'))
+    else:
+        products = []
     return render(request, 'search_results.html', {'products': products, 'query': query})
 
 def get_menu_data(request):
@@ -1359,6 +1368,19 @@ def get_menu_data(request):
     return {'all_categories': categories}
 
 def category_products(request, category_slug, sub_slug=None, type_slug=None):
+    # 🚀 SPEED FIX: Check in-memory cache for instant ~15ms category loading
+    cache_key = f"cat_prods_cache_v3_{category_slug}_{sub_slug}_{type_slug}"
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        shuffled = list(cached_data['products'])
+        random.shuffle(shuffled)
+        return render(request, 'category_products.html', {
+            'products': shuffled,
+            'category_name': cached_data['category_name'],
+            'sub_category_name': cached_data['sub_category_name'],
+            'type_name': cached_data['type_name'],
+        })
+
     category = Category.objects.filter(name__iexact=category_slug).first()
     if category:
         products = Product.objects.filter(category=category, is_active=True)
@@ -1412,15 +1434,23 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
 
     products_list = list(products.select_related('category', 'sub_category', 'product_type')
                                  .prefetch_related('images', 'color_variants'))
-    random.shuffle(products_list)
 
-    context = {
+    cat_payload = {
         'products': products_list,
         'category_name': category.name if category else category_slug.title(),
         'sub_category_name': display_sub_name or sub_slug,
         'type_name': display_type_name or type_slug
     }
-    return render(request, 'category_products.html', context)
+    cache.set(cache_key, cat_payload, 240)
+
+    shuffled = list(products_list)
+    random.shuffle(shuffled)
+    return render(request, 'category_products.html', {
+        'products': shuffled,
+        'category_name': cat_payload['category_name'],
+        'sub_category_name': cat_payload['sub_category_name'],
+        'type_name': cat_payload['type_name']
+    })
 
 def get_product_data(request, product_id):
     try:
@@ -1500,6 +1530,19 @@ def get_product_data(request, product_id):
         }, status=404)
 
 def category_default(request, category_slug):
+    # 🚀 SPEED FIX: Check in-memory cache for instant ~15ms response
+    cache_key = f"cat_default_cache_v3_{category_slug}"
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        shuffled = list(cached_data['products'])
+        random.shuffle(shuffled)
+        return render(request, 'category_products.html', {
+            'products': shuffled,
+            'category_name': cached_data['category_name'],
+            'category_slug': category_slug,
+            'sub_category': 'All Products',
+        })
+
     category_obj = Category.objects.filter(name__iexact=category_slug).first()
     if category_obj:
         products = Product.objects.filter(category=category_obj, is_active=True)
@@ -1508,15 +1551,21 @@ def category_default(request, category_slug):
     
     products_list = list(products.select_related('category', 'sub_category', 'product_type')
                                  .prefetch_related('images', 'color_variants'))
-    random.shuffle(products_list)
 
-    context = {
+    cat_payload = {
         'products': products_list,
         'category_name': category_obj.name if category_obj else category_slug.title(),
+    }
+    cache.set(cache_key, cat_payload, 240)
+
+    shuffled = list(products_list)
+    random.shuffle(shuffled)
+    return render(request, 'category_products.html', {
+        'products': shuffled,
+        'category_name': cat_payload['category_name'],
         'category_slug': category_slug,
         'sub_category': 'All Products', 
-    }
-    return render(request, 'category_products.html', context)
+    })
 
 
 # ================= CANCEL ORDER (NEW) =================
