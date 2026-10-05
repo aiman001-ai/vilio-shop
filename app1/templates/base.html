@@ -2616,6 +2616,9 @@
                     utterance.onend = () => stopTalkingAnim();
                     utterance.onerror = (e) => {
                         stopTalkingAnim();
+                        if (e && (e.error === 'not-allowed' || e.error === 'canceled')) {
+                            hasWelcomed = false;
+                        }
                     };
 
                     window.speechSynthesis.speak(utterance);
@@ -3024,21 +3027,35 @@
                     }
                 }, 7000);
             } else {
-                if (!isMobileDevice) {
-                    // 🖥️ Desktop: polite welcome
+                // 🚀 ALL PAGES (Mobile + Laptop): Speak automatically after page has finished loading/refreshing!
+                function doAutoWelcome() {
+                    if (hasWelcomed) return;
                     setTimeout(() => {
                         triggerWelcome();
-                    }, 800);
+                    }, 650);
                 }
 
-                // 📱 & 🖥️ Clean click listener for first visitor gesture anywhere on page
-                function onFirstUserGesture() {
-                    if (!hasWelcomed) {
-                        triggerWelcome();
-                    }
-                    window.removeEventListener('click', onFirstUserGesture);
+                if (document.readyState === 'complete') {
+                    doAutoWelcome();
+                } else {
+                    window.addEventListener('load', doAutoWelcome, { once: true });
                 }
-                window.addEventListener('click', onFirstUserGesture, { passive: true, once: true });
+
+                // Fallback gesture: if browser autoplay blocks audio until first user interaction,
+                // trigger on tap, but NEVER on outgoing links (like clicking header vilio.shop)!
+                function onFirstInteractionGesture(e) {
+                    if (hasWelcomed) {
+                        window.removeEventListener('pointerdown', onFirstInteractionGesture);
+                        return;
+                    }
+                    // If user is clicking a link or button to navigate away, do not speak before leaving!
+                    if (e && e.target && e.target.closest('a, button, form, input, select')) {
+                        return;
+                    }
+                    triggerWelcome();
+                    window.removeEventListener('pointerdown', onFirstInteractionGesture);
+                }
+                window.addEventListener('pointerdown', onFirstInteractionGesture, { passive: true });
             }
         })();
     </script>
