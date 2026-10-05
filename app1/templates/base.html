@@ -2274,6 +2274,7 @@
             let cartTimer = null;
             let isSpeaking = false;
             let talkMouthInterval = null;
+            let speechWatchdogTimer = null;
 
             // ===== 🛍️ PAGE-SPECIFIC PERSUASIVE & HIGH-CONVERSION SALES SPEECHES =====
             function getPageContext() {
@@ -2300,18 +2301,30 @@
                     const titleEl = document.querySelector('.prod-title') || document.querySelector('h1');
                     const titleText = (titleEl ? titleEl.textContent : '').toLowerCase();
                     const breadcrumbs = (document.querySelector('.pdp-breadcrumbs-bar') ? document.querySelector('.pdp-breadcrumbs-bar').textContent : '').toLowerCase();
-                    const fullText = titleText + ' ' + breadcrumbs;
+                    const fullText = titleText + ' ' + breadcrumbs + ' ' + (document.title || '').toLowerCase();
 
+                    if (fullText.includes('jean') || fullText.includes('denim')) {
+                        return 'jeans';
+                    }
+                    if (fullText.includes('jogger') || fullText.includes('pant') || fullText.includes('cargo') || fullText.includes('trouser')) {
+                        return 'joggers';
+                    }
                     if (fullText.includes('t-shirt') || fullText.includes('tshirt') || fullText.includes('tee')) {
                         return 'tshirt';
                     }
-                    if (fullText.includes('shirt') || fullText.includes('corduroy') || fullText.includes('overshirt')) {
+                    if (fullText.includes('shirt') || fullText.includes('corduroy') || fullText.includes('overshirt') || fullText.includes('linen') || fullText.includes('waffle')) {
                         return 'shirt';
                     }
                     return 'product';
                 }
                 // 6. Category Pages
                 if (path.includes('/category/')) {
+                    if (path.includes('jean') || path.includes('denim')) {
+                        return 'jeans';
+                    }
+                    if (path.includes('jogger') || path.includes('pant') || path.includes('track') || path.includes('cargo')) {
+                        return 'joggers';
+                    }
                     if (path.includes('t-shirt') || path.includes('tshirt') || path.includes('tee')) {
                         return 'tshirt';
                     }
@@ -2329,75 +2342,132 @@
             }
 
             const PAGE_SPEECHES = {
-                // 👔 SHIRT PAGES (Corduroy Overshirts, Formal/Casual Shirts)
-                shirt: [
-                    "Arre! Yeh luxury corduroy shirt dekhi kya? Fitting ekdum fire hai! Sirf do piece bache hain, jaldi Add to Cart karo!",
-                    "Sach bata raha hoon, yeh overshirt pehante hi look 10 guna upar ho jayega! Aur code VILIO20 lagakar 20 percent discount bhi mil raha hai. Mauka mat chhoro, abhi lo!",
-                    "Ek number luxury quality hai! Cash on delivery aur 7 days easy return guarantee hai, bilkul bindaas order karo!",
-                    "Yeh premium corduroy ka stock tezi se khatam ho raha hai! Baad me out of stock ho jayega, jaldi Order Now dabao!"
-                ],
-
-                // 👕 T-SHIRT PAGES (Oversized Tees, Graphic Streetwear Drops)
-                tshirt: [
-                    "Woah! Yeh oversized graphic tee bohot viral chal rahi hai! Pehanke nikaloge toh sab dekhte reh jayenge! Turant order karo!",
-                    "240 GSM heavy cotton fabric hai, wash ke baad bhi print aur colour ekdum fresh rahega! Size select karo aur abhi lo!",
-                    "Yeh t-shirt aapki wardrobe ka hero ban jayegi! Limited drop hai, code VILIO20 lagao aur discount loot lo!",
-                    "Alag hi streetwear flex dikhega! COD available hai, bina soche turant book karo!"
-                ],
-
-                // 🛒 CART PAGE (/cart/)
-                cart: [
-                    "Cart me rakh kar wait mat karo! Dusre customers bhi cart me daal rahe hain! Jaldi Checkout karo warna out of stock ho jayega!",
-                    "Aapka choice ek number hai! Code VILIO20 se flat 20 percent bachat ho rahi hai, fatafat Checkout button dabao aur parcel book karo!",
-                    "Cart me chhod doge toh koi aur le jayega! Abhi Proceed to Checkout karo aur loot lo!"
-                ],
-
-                // 💳 CHECKOUT / PLACE ORDER PAGE (/checkout/, /place-order/)
-                checkout: [
-                    "Almost done! Address confirm karo aur aage badho! Aapka order priority dispatch me pack hone ke liye taiyaar hai! Bas Place Order daba do!",
-                    "Bilkul sahi decision liya hai! 7 days easy return guarantee aur COD dono available hai, bina kisi tension ke Order Confirm karo!",
-                    "Badhaai ho! Best discount rate lock ho chuka hai. Jaldi se Place Order dabao aur apni delivery confirm karo!"
-                ],
-
-                // 💰 PAYMENT PAGE (/payment/, payment gateways)
-                payment: [
-                    "100 percent safe aur secure encrypted payment hai! UPI ya Card se pay karo aur express superfast delivery pao!",
-                    "Bas aakhri second ka kaam hai, payment complete karo aur apna favourite outfit ghar mangwao!"
-                ],
-
-                // 🎉 ORDER SUCCESS PAGE (/order-success/)
-                success: [
-                    "Waah maza aa gaya! Aapka order confirm ho gaya hai! Hum bohot jaldi premium packaging ke sath parcel dispatch kar rahe hain. Thanks for shopping with Vilio!"
-                ],
-
-                // 🏷️ GENERAL PRODUCT DETAIL (Any other product)
-                product: [
-                    "Yeh piece sach me bohot stylish hai! Verified five-star customer reviews hain! Fatafat apna size choose karo aur abhi book karo!",
-                    "Limited quantity drop hai! Aisi premium quality is price me dobara nahi milegi. Turant Buy Now dabao!"
-                ],
-
-                // 📂 CATEGORY / SEARCH PAGES
-                category: [
-                    "Yahan ke saare designs top trending hain! Kisi bhi product par tap karo aur apna perfect size book karo!",
-                    "Ek se badhkar ek collection hai! Jo pasand aaye turant cart me daalo, stock bohot tezi se bik raha hai!"
-                ],
-
-                // 🏠 HOME PAGE (Default fallback)
-                home: [
-                    "Hey! Vilio dot shop me aapka welcome hai! Latest collection check karo!",
-                    "Style upgrade time! Trending corduroy shirts aur viral graphic tees live hain! Code VILIO20 lagakar 20 percent discount pao, shopping start karo!",
-                    "Looking sharp today! Vilio ke saath apna style upgrade karo! Free shipping aur Cash on Delivery available hai!"
-                ]
+                shirt: {
+                    hi: [
+                        "अरे वाह! यह लक्ज़री शर्ट देखी क्या? फिटिंग एकदम ज़बरदस्त है! सिर्फ दो पीस बचे हैं, जल्दी से ऐड टू कार्ट करो!",
+                        "यह शर्ट पहनते ही लुक एकदम क्लासिक हो जाएगा! कोड VILIO20 लगाकर 20% डिस्काउंट पाओ और अभी ऑर्डर करो!",
+                        "प्रीमियम क्वालिटी कॉटन है! 7 दिन की आसान एक्सचेंज और कैश ऑन डिलीवरी दोनों उपलब्ध है!"
+                    ],
+                    en: [
+                        "Check out this luxury overshirt! The fit is absolute fire, grab yours before it sells out!",
+                        "Level up your style with this classic piece! Use code VILIO20 for flat 20 percent off!",
+                        "Premium quality fabric with 7 days easy exchange and Cash on Delivery available!"
+                    ]
+                },
+                tshirt: {
+                    hi: [
+                        "यह ओवरसाइज़्ड ग्राफिक टी बहुत ट्रेंडिंग है! हेवी 240 GSM कॉटन है, पहनकर निकलोगे तो सब देखते रह जाएंगे!",
+                        "वायरल स्ट्रीटवियर ड्रॉप है! साइज सेलेक्ट करो और कोड VILIO20 लगाकर डिस्काउंट पाओ!",
+                        "कपड़े की क्वालिटी बहुत शानदार है! कैश ऑन डिलीवरी उपलब्ध है, तुरंत ऑर्डर करो!"
+                    ],
+                    en: [
+                        "This oversized graphic tee is trending everywhere! 240 GSM heavy cotton, looks insane on you!",
+                        "Viral streetwear drop! Pick your size and use code VILIO20 for flat 20 percent off!",
+                        "High quality street flex with Cash on Delivery available, order now!"
+                    ]
+                },
+                jeans: {
+                    hi: [
+                        "यह डेनिम जींस एकदम परफेक्ट फिटिंग देती है! लॉन्ग-लास्टिंग और स्ट्रेचेबल फैब्रिक है, अभी ऑर्डर करो!",
+                        "क्लासिक स्ट्रीट स्टाइल जींस है! स्नीकर्स के साथ बहुत तगड़ा लुक देगी, जल्दी से साइज बुक करो!"
+                    ],
+                    en: [
+                        "These premium denim jeans fit like a dream! Ultra durable and stylish, grab your size now!",
+                        "Classic street denim with perfect drape. Pair it with sneakers for the ultimate drip!"
+                    ]
+                },
+                joggers: {
+                    hi: [
+                        "यह परफॉर्मेंस जॉगर्स बहुत कम्फर्टेबल और स्टाइलिश हैं! जिम और कैज़ुअल वियर दोनों के लिए बेस्ट हैं!",
+                        "एंकेल-ज़िप फिटिंग और सुपर स्ट्रेचेबल फैब्रिक! स्टॉक सीमित है, तुरंत बाय नाउ दबाओ!"
+                    ],
+                    en: [
+                        "These performance joggers are insanely comfortable! Perfect for workouts and daily streetwear!",
+                        "Clean ankle-zip taper and premium stretch fabric, order now before stock runs out!"
+                    ]
+                },
+                cart: {
+                    hi: [
+                        "कार्ट में रखकर इंतज़ार मत करो! कोड VILIO20 लगाकर डिस्काउंट लॉक करो और जल्दी चेकआउट करो!",
+                        "आपकी चॉइस बहुत बढ़िया है! कैश ऑन डिलीवरी उपलब्ध है, फटाफट चेकआउट बटन दबाओ!"
+                    ],
+                    en: [
+                        "Don't leave your favorite items in the bag! Use code VILIO20 for 20 percent off and checkout now!",
+                        "Great choices in your bag! Cash on delivery is ready, tap checkout to secure your order!"
+                    ]
+                },
+                checkout: {
+                    hi: [
+                        "बस एक स्टेप और! डिलीवरी एड्रेस कन्फर्म करो और ऑर्डर प्लेस करो! एक्सप्रेस डिलीवरी शुरू हो जाएगी!",
+                        "7 दिन की आसान एक्सचेंज और कैश ऑन डिलीवरी गारंटी है, बिना किसी टेंशन के ऑर्डर कन्फर्म करो!"
+                    ],
+                    en: [
+                        "Almost there! Confirm your address and tap place order for express priority dispatch!",
+                        "Safe shopping with 7 days easy returns and Cash on Delivery, place your order now!"
+                    ]
+                },
+                payment: {
+                    hi: [
+                        "100% सुरक्षित और सिक्योर पेमेंट है! UPI या कार्ड से पे करो और फास्टेस्ट डिलीवरी पाओ!"
+                    ],
+                    en: [
+                        "100 percent safe and secure payment! Pay via UPI or card for instant express delivery!"
+                    ]
+                },
+                success: {
+                    hi: [
+                        "बधाई हो! आपका ऑर्डर कन्फर्म हो गया है! हम बहुत जल्द प्रीमियम पैकिंग के साथ पार्सल भेज रहे हैं!"
+                    ],
+                    en: [
+                        "Awesome! Your order is confirmed! We are packing your premium parcel right now!"
+                    ]
+                },
+                category: {
+                    hi: [
+                        "यहाँ के सारे डिज़ाइन्स लेटेस्ट और टॉप ट्रेंडिंग हैं! जो पसंद आए उसपर टैप करो और अपना साइज चुनो!",
+                        "एक से बढ़कर एक न्यू अराइवल्स हैं! कोड VILIO20 लगाओ और डिस्काउंट के साथ शॉपिंग करो!"
+                    ],
+                    en: [
+                        "All the hottest trending drops are right here! Tap on any piece and choose your size!",
+                        "Explore our newest luxury collection! Use code VILIO20 for exclusive discounts!"
+                    ]
+                },
+                product: {
+                    hi: [
+                        "यह पीस सच में बहुत स्टाइलिश है! 5-स्टार कस्टमर रेटिंग्स हैं, जल्दी से बाय नाउ दबाओ!",
+                        "प्रीमियम क्वालिटी ड्रॉप है! ऐसी क्वालिटी इस प्राइस में दोबारा नहीं मिलेगी, अभी बुक करो!"
+                    ],
+                    en: [
+                        "This piece looks incredible! Verified 5-star quality, tap Buy Now to get yours!",
+                        "Limited collection drop at this price point, order today before it's gone!"
+                    ]
+                },
+                home: {
+                    hi: [
+                        "विलीओ में आपका स्वागत है! न्यू कलेक्शन चेक करो और कोड VILIO20 से 20% डिस्काउंट पाओ!",
+                        "ट्रेंडिंग कॉरडरॉय शर्ट्स और वायरल ग्राफिक टीज़ लाइव हैं! फ्री शिपिंग और कैश ऑन डिलीवरी उपलब्ध है!"
+                    ],
+                    en: [
+                        "Welcome to Vilio! Explore our latest streetwear and use code VILIO20 for 20 percent off!",
+                        "Trending luxury shirts and oversized tees are live! Free shipping and Cash on Delivery available!"
+                    ]
+                }
             };
 
             const speechIndices = {};
             function getNextSpeechForPage() {
                 const context = getPageContext();
                 const list = PAGE_SPEECHES[context] || PAGE_SPEECHES.home;
+                const hiList = list.hi || [];
+                const enList = list.en || [];
                 if (typeof speechIndices[context] !== 'number') speechIndices[context] = 0;
-                const text = list[speechIndices[context] % list.length];
-                speechIndices[context] = (speechIndices[context] + 1) % list.length;
-                return text;
+                const idx = speechIndices[context];
+                speechIndices[context] = (speechIndices[context] + 1);
+
+                return {
+                    hi: hiList[idx % hiList.length] || '',
+                    en: enList[idx % enList.length] || ''
+                };
             }
 
             let audioCtx = null;
@@ -2419,7 +2489,6 @@
                     const ctx = getAudioContext();
                     if (!ctx) return;
                     const now = ctx.currentTime;
-                    // Play a cheerful marimba/bell sequence
                     const freqs = [523.25, 659.25, 783.99, 1046.50];
                     freqs.forEach((freq, idx) => {
                         const osc = ctx.createOscillator();
@@ -2436,8 +2505,6 @@
                     });
                 } catch(e) {}
             }
-
-            let speechWatchdogTimer = null;
 
             function startTalkingAnim(durationMs = 6000) {
                 isSpeaking = true;
@@ -2467,16 +2534,16 @@
                 setFaceByKey(ROLLING_KEYS[rollingIndex] || 'happy', true);
             }
 
-            // ===== 🎙️ PLAYFUL EMOJI MASCOT VOICE (HINDI + ENGLISH MIX) =====
+            // ===== 🎙️ PLAYFUL EMOJI MASCOT VOICE (BILINGUAL NATIVE DISPATCH) =====
             let cachedVoice = null;
             function pickBestEmojiVoice() {
                 if (!('speechSynthesis' in window)) return null;
                 const voices = window.speechSynthesis.getVoices() || [];
                 if (!voices.length) return null;
 
-                // 1. Natural Indian Hindi voice (Google हिन्दी, Microsoft Madhur, Swara)
+                // 1. Natural Indian Hindi voice (Google हिन्दी, Microsoft Madhur, Swara, Kalpana)
                 const indianHindi = voices.find(v => 
-                    v.lang && (v.lang.toLowerCase().includes('hi') || v.name.toLowerCase().includes('hindi'))
+                    v.lang && (v.lang.toLowerCase().startsWith('hi') || v.name.toLowerCase().includes('hindi'))
                 );
                 if (indianHindi) return indianHindi;
 
@@ -2486,14 +2553,13 @@
                 );
                 if (indianEn) return indianEn;
 
-                // 3. Clear friendly voices (Google, Natural, Sonia, Hazel, Zira)
+                // 3. Clear friendly English voices (Google, Natural, Sonia, Hazel, Jenny)
                 const friendlyEn = voices.find(v => 
                     v.lang && v.lang.toLowerCase().startsWith('en') && 
                     (v.name.includes('Natural') || v.name.includes('Google') || /sonia|jenny|hazel|zira/i.test(v.name))
                 );
                 if (friendlyEn) return friendlyEn;
 
-                // 4. Any voice fallback
                 return voices[0] || null;
             }
 
@@ -2502,67 +2568,91 @@
                     cachedVoice = pickBestEmojiVoice();
                 }
                 if (cachedVoice) {
-                    return { voice: cachedVoice, lang: cachedVoice.lang || 'en-IN' };
+                    const isHi = (cachedVoice.lang && cachedVoice.lang.toLowerCase().startsWith('hi')) || 
+                                 (cachedVoice.name && cachedVoice.name.toLowerCase().includes('hindi'));
+                    return { voice: cachedVoice, lang: cachedVoice.lang || (isHi ? 'hi-IN' : 'en-IN'), isHindi: isHi };
                 }
-                return { voice: null, lang: 'en-IN' };
+                return { voice: null, lang: 'en-IN', isHindi: false };
             }
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.onvoiceschanged = () => {
                     cachedVoice = pickBestEmojiVoice();
                 };
-                cachedVoice = pickBestEmojiVoice();
             }
 
-            function speakMessage(speechText) {
-                if (isVoiceMuted || !speechText) return;
+            function executeSpeech(speechObj) {
+                if (isVoiceMuted || !speechObj) return;
 
-                // 1. Play cheerful chime immediately
                 playCuteChime();
 
-                // 2. Compute safe talking duration for the watchdog
-                const words = speechText.split(/\s+/).length;
-                const safeDurationMs = Math.max(3500, Math.min(11000, (words / 2.2) * 1000 + 1200));
+                if (!('speechSynthesis' in window)) return;
 
-                // 3. Speech Synthesis
-                if ('speechSynthesis' in window) {
-                    try {
-                        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-                            window.speechSynthesis.cancel();
-                        }
-
-                        const utterance = new SpeechSynthesisUtterance(speechText);
-                        const vConfig = getVoiceConfig();
-                        if (vConfig && vConfig.voice) {
-                            utterance.voice = vConfig.voice;
-                            utterance.lang = vConfig.lang;
-                        } else {
-                            utterance.lang = 'en-IN';
-                        }
-
-                        // Playful & Cute Emoji Mascot Character tuning
-                        utterance.pitch = 1.16;
-                        utterance.rate = 1.05;
-                        utterance.volume = 1.0;
-
-                        utterance.onstart = () => startTalkingAnim(safeDurationMs);
-                        utterance.onend = () => stopTalkingAnim();
-                        utterance.onerror = (e) => {
-                            stopTalkingAnim();
-                            if (e && e.error === 'not-allowed') hasWelcomed = false;
-                        };
-
-                        window.speechSynthesis.speak(utterance);
-
-                        // Mobile safeguard: if onstart doesn't fire within 400ms, start animation
-                        setTimeout(() => {
-                            if (!isSpeaking && window.speechSynthesis.speaking) {
-                                startTalkingAnim(safeDurationMs);
-                            }
-                        }, 400);
-                    } catch(err) {
-                        stopTalkingAnim();
+                try {
+                    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                        window.speechSynthesis.cancel();
                     }
+
+                    const vConfig = getVoiceConfig();
+                    const textToSpeak = (vConfig.isHindi && speechObj.hi) ? speechObj.hi : (speechObj.en || speechObj.hi || '');
+                    if (!textToSpeak) return;
+
+                    const words = textToSpeak.split(/\s+/).length;
+                    const safeDurationMs = Math.max(3500, Math.min(11000, (words / 2.2) * 1000 + 1200));
+
+                    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                    if (vConfig.voice) {
+                        utterance.voice = vConfig.voice;
+                        utterance.lang = vConfig.voice.lang || (vConfig.isHindi ? 'hi-IN' : 'en-IN');
+                    } else {
+                        utterance.lang = vConfig.isHindi ? 'hi-IN' : 'en-IN';
+                    }
+
+                    utterance.pitch = vConfig.isHindi ? 1.08 : 1.15;
+                    utterance.rate = 1.02;
+                    utterance.volume = 1.0;
+
+                    utterance.onstart = () => startTalkingAnim(safeDurationMs);
+                    utterance.onend = () => stopTalkingAnim();
+                    utterance.onerror = (e) => {
+                        stopTalkingAnim();
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+
+                    // Mobile safeguard: if onstart doesn't fire within 400ms, start animation
+                    setTimeout(() => {
+                        if (!isSpeaking && window.speechSynthesis.speaking) {
+                            startTalkingAnim(safeDurationMs);
+                        }
+                    }, 400);
+                } catch(err) {
+                    stopTalkingAnim();
+                }
+            }
+
+            function speakMessage(speechObj) {
+                if (!('speechSynthesis' in window)) return;
+                const voices = window.speechSynthesis.getVoices();
+                if (voices && voices.length > 0) {
+                    cachedVoice = pickBestEmojiVoice();
+                    executeSpeech(speechObj);
+                } else {
+                    let called = false;
+                    const onVoices = () => {
+                        if (called) return;
+                        called = true;
+                        cachedVoice = pickBestEmojiVoice();
+                        executeSpeech(speechObj);
+                    };
+                    window.speechSynthesis.addEventListener('voiceschanged', onVoices, { once: true });
+                    setTimeout(() => {
+                        if (!called) {
+                            called = true;
+                            cachedVoice = pickBestEmojiVoice();
+                            executeSpeech(speechObj);
+                        }
+                    }, 350);
                 }
             }
 
@@ -2618,7 +2708,7 @@
                 }
                 hasWelcomed = true;
                 triggerSquash();
-                velY = -8.0;
+                velY = -7.5;
                 posY = -2;
                 wakePhysicsLoop();
 
@@ -2626,7 +2716,7 @@
                 speakMessage(speech);
             }
 
-            // ===== 🌀 2D SCROLL ENGINE (RAF Throttled, Zero Reflow, Silky Smooth) =====
+            // ===== 🌀 2D SCROLL ENGINE (GENTLE SPEED ON MOBILE) =====
             let lastScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
             let scrollTicking = false;
 
@@ -2637,13 +2727,17 @@
                         const deltaScroll = currentScrollY - lastScrollY;
                         lastScrollY = currentScrollY;
 
-                        if (Math.abs(deltaScroll) > 1.8) {
-                            const scrollSpeed = Math.min(Math.abs(deltaScroll), 16);
-                            const dir = deltaScroll > 0 ? currentDirection : -currentDirection;
-                            velX += dir * (scrollSpeed * 0.22);
+                        const isMobile = window.innerWidth <= 768;
 
-                            if (velX > 11) velX = 11;
-                            if (velX < -11) velX = -11;
+                        if (Math.abs(deltaScroll) > 1.8) {
+                            // On mobile: gentle, calm rolling speed!
+                            const scrollSpeed = Math.min(Math.abs(deltaScroll), isMobile ? 8 : 16);
+                            const dir = deltaScroll > 0 ? currentDirection : -currentDirection;
+                            velX += dir * (scrollSpeed * (isMobile ? 0.07 : 0.22));
+
+                            const maxV = isMobile ? 4.0 : 11;
+                            if (velX > maxV) velX = maxV;
+                            if (velX < -maxV) velX = -maxV;
                             wakePhysicsLoop();
                         }
                         scrollTicking = false;
@@ -2655,7 +2749,15 @@
             // ===== 🖐️ 2D TOUCH & MOUSE INTERACTION (Clean Drag & Instant Tap) =====
             let pointerStartX = 0;
             let pointerStartY = 0;
-            let pointerMoved = false;
+            let touchStartTime = 0;
+            let hasDraggedSignificant = false;
+
+            // Direct click on the emoji ball always triggers jump & speech!
+            ball.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                triggerJumpAndSpeak();
+            });
 
             function onDragStart(clientX, clientY) {
                 isDragging = true;
@@ -2702,39 +2804,42 @@
             function onDragEnd() {
                 if (!isDragging) return;
                 isDragging = false;
-                velX = dragVelX * 1.1;
-                velY = dragVelY * 1.1;
+                const isMobile = window.innerWidth <= 768;
+                // Calmer drag release fling on mobile
+                velX = dragVelX * (isMobile ? 0.45 : 1.1);
+                velY = dragVelY * (isMobile ? 0.45 : 1.1);
 
                 if (Math.abs(velX) > 0.5) {
                     currentDirection = velX > 0 ? 1 : -1;
                 }
-                if (Math.hypot(velX, velY) > 12) {
-                    setTemporaryFace('shock', 500);
+                if (Math.hypot(velX, velY) > 10) {
+                    setTemporaryFace('shock', 400);
                 }
                 wakePhysicsLoop();
             }
 
             ball.addEventListener('pointerdown', (e) => {
+                touchStartTime = Date.now();
                 pointerStartX = e.clientX;
                 pointerStartY = e.clientY;
-                pointerMoved = false;
+                hasDraggedSignificant = false;
                 onDragStart(e.clientX, e.clientY);
-                try { ball.setPointerCapture(e.pointerId); } catch(err) {}
             });
 
             ball.addEventListener('pointermove', (e) => {
                 if (!isDragging) return;
-                if (Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY) > 6) {
-                    pointerMoved = true;
+                const dist = Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY);
+                if (dist > 14) {
+                    hasDraggedSignificant = true;
                 }
                 onDragMove(e.clientX, e.clientY);
             });
 
             ball.addEventListener('pointerup', (e) => {
                 if (!isDragging) return;
-                try { ball.releasePointerCapture(e.pointerId); } catch(err) {}
                 onDragEnd();
-                if (!pointerMoved) {
+                const elapsed = Date.now() - touchStartTime;
+                if (!hasDraggedSignificant && elapsed < 450) {
                     triggerJumpAndSpeak();
                 }
             });
@@ -2774,8 +2879,10 @@
 
             function physicsLoop() {
                 if (!isDragging) {
-                    velX *= 0.93;
-                    if (Math.abs(velX) < 0.06) velX = 0;
+                    const isMobile = window.innerWidth <= 768;
+                    // Calmer damping on mobile
+                    velX *= isMobile ? 0.88 : 0.93;
+                    if (Math.abs(velX) < 0.05) velX = 0;
 
                     if (posY < 0 || velY !== 0) {
                         velY += GRAVITY;
@@ -2808,28 +2915,28 @@
                             }
                         }
 
-                        if (Math.hypot(velX, velY) >= 12 && !isSpecialActive && !isSpeaking) {
+                        if (Math.hypot(velX, velY) >= 10 && !isSpecialActive && !isSpeaking) {
                             setTemporaryFace('shock', 400);
                         }
 
-                        // Wall collisions
+                        // Wall collisions (Gentler on mobile)
                         if (posX >= cachedMaxX) {
                             posX = cachedMaxX;
-                            velX = -Math.abs(velX) * 0.72;
+                            velX = -Math.abs(velX) * (isMobile ? 0.4 : 0.72);
                             currentDirection = -1;
-                            velY = -5.0;
+                            velY = isMobile ? -3.5 : -5.0;
                             posY = -2;
                             triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 400);
+                            if (!isSpeaking) setTemporaryFace('dizzy', 350);
                             distanceAccumulator = 0;
                         } else if (posX <= cachedMinX) {
                             posX = cachedMinX;
-                            velX = Math.abs(velX) * 0.72;
+                            velX = Math.abs(velX) * (isMobile ? 0.4 : 0.72);
                             currentDirection = 1;
-                            velY = -5.0;
+                            velY = isMobile ? -3.5 : -5.0;
                             posY = -2;
                             triggerSquash();
-                            if (!isSpeaking) setTemporaryFace('dizzy', 400);
+                            if (!isSpeaking) setTemporaryFace('dizzy', 350);
                             distanceAccumulator = 0;
                         }
 
@@ -2879,7 +2986,7 @@
                 }
 
                 triggerSquash();
-                velY = -7.5;
+                velY = -7.0;
                 posY = -2;
                 wakePhysicsLoop();
                 const speech = getNextSpeechForPage();
@@ -2924,7 +3031,7 @@
                     }, 800);
                 }
 
-                // 📱 & 🖥️ Clean single-click listener for first visitor gesture (never triggers on scroll or touch move)
+                // 📱 & 🖥️ Clean click listener for first visitor gesture anywhere on page
                 function onFirstUserGesture() {
                     if (!hasWelcomed) {
                         triggerWelcome();
