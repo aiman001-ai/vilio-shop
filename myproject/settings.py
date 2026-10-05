@@ -44,6 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://192.168.1.11:8000',
     'http://192.168.1.45:8000',
     'http://192.168.1.63:8000',
+    'https://*.lhr.life',
 ]
 
 # Security Settings

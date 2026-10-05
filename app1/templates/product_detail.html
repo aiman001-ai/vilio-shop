@@ -34,8 +34,8 @@
                 {% cloudinary product.image width=150 height=200 quality="auto" fetch_format="auto" crop="fill" class="thumb active" onclick="goToSlide(0)" alt=product.name %}
             {% endif %}
             
-            {% for variant in variants %}
-                {% cloudinary variant.color_image width=150 height=200 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="selectVariantViaThumb('"|add:variant.color_image.url|add:"', '"|add:variant.color_name|add:"', '"|add:variant.size_name|add:"', "|add:variant.stock|stringformat:"d"|add:", this)" alt=variant.color_name %}
+            {% for img in clean_gallery %}
+                {% cloudinary img.image width=150 height=200 quality="auto" fetch_format="auto" crop="fill" class="thumb" onclick="goToSlide(forloop.counter)" alt=product.name %}
             {% endfor %}
         </div>
 

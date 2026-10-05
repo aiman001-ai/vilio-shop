@@ -51,6 +51,10 @@ def home(request):
         display_products = list(queryset)
         cache.set('home_display_products_v3', display_products, 180)
 
+    # Randomly shuffle product list on each request so positions change dynamically
+    shuffled_products = list(display_products)
+    random.shuffle(shuffled_products)
+
     if banners is None:
         try:
             banners = list(Banner.objects.filter(is_active=True).order_by('order', '-id'))
@@ -66,7 +70,7 @@ def home(request):
         cache.set('home_reviews_v1', reviews, 180)
 
     return render(request, 'home.html', {
-        'products': display_products,
+        'products': shuffled_products,
         'banners': banners,
         'reviews': reviews,
     })
@@ -1057,6 +1061,9 @@ def product_detail(request, id):
 
         all_suggestions.extend(backup_products)
 
+    # Randomly shuffle suggestions for varied product discovery
+    random.shuffle(all_suggestions)
+
     # 5. Variants data for template (Purely runs from RAM memory)
 
     # ===== SIZE SORT ORDER =====
@@ -1403,12 +1410,12 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
         clean_s = sub_slug.lower().strip().replace('-', ' ')
         display_sub_name = 'Bottom Wear' if 'bottom' in clean_s else ('Top Wear' if 'top' in clean_s else clean_s.title())
 
-    products = products.select_related('category', 'sub_category', 'product_type')\
-                       .prefetch_related('images', 'color_variants')\
-                       .order_by('-id')
+    products_list = list(products.select_related('category', 'sub_category', 'product_type')
+                                 .prefetch_related('images', 'color_variants'))
+    random.shuffle(products_list)
 
     context = {
-        'products': products,
+        'products': products_list,
         'category_name': category.name if category else category_slug.title(),
         'sub_category_name': display_sub_name or sub_slug,
         'type_name': display_type_name or type_slug
@@ -1438,21 +1445,24 @@ def get_product_data(request, product_id):
                     "stock": s.stock
                 })
 
-        # Gallery Images
+        # Gallery Images (Deduplicated maintaining order)
         gallery_images = []
+        seen_gallery_urls = set()
 
-        # Current color image first
-        if color_variant and color_variant.color_image:
-            gallery_images.append(color_variant.color_image.url)
+        def append_unique_url(img_field):
+            if img_field and hasattr(img_field, 'url') and img_field.url:
+                u = img_field.url
+                if u not in seen_gallery_urls:
+                    seen_gallery_urls.add(u)
+                    gallery_images.append(u)
 
-        # Main product image
         if product.image:
-            gallery_images.append(product.image.url)
-
-        # Additional gallery images
+            append_unique_url(product.image)
+        if color_variant and color_variant.color_image:
+            append_unique_url(color_variant.color_image)
         for img in product.images.all():
             if img.image:
-                gallery_images.append(img.image.url)
+                append_unique_url(img.image)
 
         return JsonResponse({
             "success": True,
@@ -1496,12 +1506,12 @@ def category_default(request, category_slug):
     else:
         products = Product.objects.filter(is_active=True)
     
-    products = products.select_related('category', 'sub_category', 'product_type')\
-                       .prefetch_related('images', 'color_variants')\
-                       .order_by('-id')
+    products_list = list(products.select_related('category', 'sub_category', 'product_type')
+                                 .prefetch_related('images', 'color_variants'))
+    random.shuffle(products_list)
 
     context = {
-        'products': products,
+        'products': products_list,
         'category_name': category_obj.name if category_obj else category_slug.title(),
         'category_slug': category_slug,
         'sub_category': 'All Products', 

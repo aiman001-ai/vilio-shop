@@ -1072,6 +1072,139 @@
             }
         }
 
+        /* ===== 7.1 FLOATING ROLLING WHATSAPP EMOJI ===== */
+        .wa-rolling-wrapper {
+            position: fixed;
+            bottom: 74px;
+            left: 0;
+            z-index: 1060;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            will-change: transform;
+            transform: translate3d(80px, 0, 0);
+            display: block !important;
+        }
+
+        @media (min-width: 769px) {
+            .wa-rolling-wrapper {
+                bottom: 24px;
+            }
+        }
+
+        .wa-ground-shadow {
+            position: absolute;
+            bottom: -3px;
+            left: 3px;
+            width: 38px;
+            height: 7px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.12) 55%, rgba(0, 0, 0, 0) 75%);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.08s ease;
+        }
+
+        @media (min-width: 769px) {
+            .wa-ground-shadow {
+                width: 46px;
+                height: 8px;
+                left: 3px;
+            }
+        }
+
+        .wa-emoji-ball {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: auto;
+            filter: drop-shadow(0 6px 14px rgba(245, 158, 11, 0.45));
+            transition: filter 0.2s ease;
+            touch-action: none;
+        }
+
+        @media (min-width: 769px) {
+            .wa-emoji-ball {
+                width: 52px;
+                height: 52px;
+            }
+        }
+
+        .wa-emoji-ball:hover {
+            filter: drop-shadow(0 8px 18px rgba(245, 158, 11, 0.75)) brightness(1.06);
+        }
+
+        .wa-emoji-face {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: block;
+            will-change: transform;
+            transform-origin: 50% 50%;
+        }
+
+
+        .squash-horizontal {
+            animation: waBounceSquashH 0.25s ease-out;
+        }
+
+        @keyframes waBounceSquashH {
+            0% { transform: scale(1, 1); }
+            35% { transform: scale(1.15, 0.85); }
+            70% { transform: scale(0.92, 1.08); }
+            100% { transform: scale(1, 1); }
+        }
+
+        .wa-sound-waves {
+            position: absolute;
+            right: -13px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            align-items: center;
+            gap: 2px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .wa-sound-waves.active {
+            display: flex;
+        }
+
+        .wa-sound-waves span {
+            display: block;
+            width: 3px;
+            height: 10px;
+            background: #ffb800;
+            border-radius: 2px;
+            animation: soundWaveAnim 0.45s ease-in-out infinite alternate;
+        }
+
+        .wa-sound-waves span:nth-child(2) {
+            height: 16px;
+            animation-delay: 0.15s;
+        }
+
+        .wa-sound-waves span:nth-child(3) {
+            height: 8px;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes soundWaveAnim {
+            0% { transform: scaleY(0.4); }
+            100% { transform: scaleY(1.4); }
+        }
+
+        .wa-emoji-ball.idle-float {
+            animation: waIdleFloat 2.6s ease-in-out infinite;
+        }
+
+        @keyframes waIdleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
         /* ===== 8. TOAST NOTIFICATION ===== */
         .toast-notify {
             position: fixed;
@@ -1452,6 +1585,19 @@
         <i class="fa-brands fa-whatsapp"></i>
         <span>Need Help? Chat</span>
     </a>
+
+    <!-- 8.01 FLOATING ROLLING WHATSAPP EMOJI (Rolls back & forth on scroll, speaks & welcomes) -->
+    <div class="wa-rolling-wrapper" id="waRollingWrapper">
+        <div class="wa-ground-shadow" id="waGroundShadow"></div>
+        <div class="wa-emoji-ball" id="waEmojiBall" title="Click to hear me speak & play!">
+            <div class="wa-sound-waves" id="waSoundWaves">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="wa-emoji-face" id="waEmojiFace">
+                <!-- WhatsApp SVG Face injected by JavaScript -->
+            </div>
+        </div>
+    </div>
 
     <!-- 8.1 MOBILE ACCOUNT BOTTOM SHEET -->
     <div class="account-sheet-backdrop" id="accountSheetBackdrop" onclick="closeAccountSheet()"></div>
@@ -1867,6 +2013,888 @@
                     }
                 }
             } catch(e) {}
+        })();
+
+        // ===== 🟡 WHATSAPP ROLLING EMOJI ENGINE ("Idhr Udhr Rudakta Rhe") =====
+        (function() {
+            const wrapper = document.getElementById('waRollingWrapper');
+            const faceContainer = document.getElementById('waEmojiFace');
+            const ball = document.getElementById('waEmojiBall');
+            const shadow = document.getElementById('waGroundShadow');
+            const soundWaves = document.getElementById('waSoundWaves');
+
+            if (!wrapper || !faceContainer || !ball) return;
+
+            // Enforce visible at all times
+            wrapper.style.display = 'block';
+
+            // SVG Head & Base Sphere (High Definition 3D WhatsApp Yellow Gradient)
+            const SVG_HEAD = `
+                <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="waSphereGrad" cx="36%" cy="30%" r="65%">
+                            <stop offset="0%" stop-color="#FFF982"/>
+                            <stop offset="28%" stop-color="#FFD600"/>
+                            <stop offset="68%" stop-color="#FFA000"/>
+                            <stop offset="90%" stop-color="#E66700"/>
+                            <stop offset="100%" stop-color="#BA4300"/>
+                        </radialGradient>
+                        <linearGradient id="waTearGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#80DEEA"/>
+                            <stop offset="45%" stop-color="#00B0FF"/>
+                            <stop offset="100%" stop-color="#0072C6"/>
+                        </linearGradient>
+                        <linearGradient id="waGlassGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#2c2c2c"/>
+                            <stop offset="40%" stop-color="#141414"/>
+                            <stop offset="100%" stop-color="#000000"/>
+                        </linearGradient>
+                        <filter id="waSoftShadow" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#8a3700" flood-opacity="0.3"/>
+                        </filter>
+                    </defs>
+                    <!-- 3D Yellow Sphere Base -->
+                    <circle cx="50" cy="50" r="47" fill="url(#waSphereGrad)" filter="url(#waSoftShadow)"/>
+                    <!-- Top Specular Gloss Highlight -->
+                    <ellipse cx="38" cy="22" rx="18" ry="9" fill="#FFFFFF" opacity="0.38" transform="rotate(-18 38 22)"/>
+                    <!-- Bottom Soft Rim Curve -->
+                    <path d="M 23 76 Q 50 87 77 76 Q 50 82 23 76" fill="#FFF2A3" opacity="0.35"/>
+            `;
+
+            const SVG_TAIL = `</svg>`;
+
+            // ===== 🎭 WHATSAPP FACES MAP (Dynamic Expressions on Move/Scroll/Bounce) =====
+            const FACES_MAP = {
+                // 1. 😄 Happy Grin (Idle / Starting / Smooth Roll)
+                happy: {
+                    id: 'happy',
+                    name: "Happy Vibes! 😄",
+                    svg: `
+                        <path d="M 25 31 Q 34 27 42 32" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 58 32 Q 66 27 75 31" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="34" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="32" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <circle cx="66" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="64" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <ellipse cx="21" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <ellipse cx="79" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <path d="M 26 55 Q 50 86 74 55 Z" fill="#2E1400"/>
+                        <path d="M 27.5 55 Q 50 62 72.5 55 Q 50 69 27.5 55 Z" fill="#FFFFFF"/>
+                        <path d="M 38 72 Q 50 65 62 72 Q 50 83 38 72 Z" fill="#FF5376"/>
+                    `
+                },
+                // 2. 😂 Tears of Joy (Joyful Rolling)
+                laugh: {
+                    id: 'laugh',
+                    name: "Haha! 😂",
+                    svg: `
+                        <path d="M 24 33 Q 33 26 42 32" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 58 32 Q 67 26 76 33" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 23 44 Q 33 37 43 45" stroke="#331800" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                        <path d="M 57 45 Q 67 37 77 44" stroke="#331800" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                        <path d="M 26 53 Q 50 87 74 53 Z" fill="#2E1400"/>
+                        <path d="M 27.5 53 Q 50 61 72.5 53 Q 50 68 27.5 53 Z" fill="#FFFFFF"/>
+                        <path d="M 37 72 Q 50 64 63 72 Q 50 84 37 72 Z" fill="#FF5376"/>
+                        <path d="M 12 46 C 4 52 7 66 17 64 C 23 62 25 51 18 47 Z" fill="url(#waTearGrad)"/>
+                        <ellipse cx="14" cy="54" rx="2" ry="4" fill="#FFFFFF" opacity="0.65" transform="rotate(-20 14 54)"/>
+                        <path d="M 88 46 C 96 52 93 66 83 64 C 77 62 75 51 82 47 Z" fill="url(#waTearGrad)"/>
+                        <ellipse cx="86" cy="54" rx="2" ry="4" fill="#FFFFFF" opacity="0.65" transform="rotate(20 86 54)"/>
+                    `
+                },
+                // 3. 😜 Winking Tongue Out (Playful Rolling)
+                wink: {
+                    id: 'wink',
+                    name: "Crazy Fun! 😜",
+                    svg: `
+                        <path d="M 24 43 Q 34 49 44 43" stroke="#331800" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                        <circle cx="66" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="64" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <path d="M 24 31 Q 34 26 44 33" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 58 30 Q 66 25 76 31" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 28 57 Q 50 76 72 57" stroke="#331800" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <path d="M 43 65 C 43 83 57 83 57 65 Z" fill="#FF4081" stroke="#331800" stroke-width="2.5"/>
+                        <line x1="50" y1="66" x2="50" y2="76" stroke="#C2185B" stroke-width="2" stroke-linecap="round"/>
+                    `
+                },
+                // 4. 🤪 Zany / Crazy Face (Wobbly Rolling & Spinning)
+                zany: {
+                    id: 'zany',
+                    name: "Wheeee! 🤪",
+                    svg: `
+                        <path d="M 22 28 Q 32 23 44 30" stroke="#683400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                        <path d="M 56 34 Q 68 25 78 31" stroke="#683400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                        <circle cx="33" cy="41" r="9.5" fill="#2D1500"/>
+                        <circle cx="30" cy="37" r="3.5" fill="#FFFFFF"/>
+                        <circle cx="67" cy="44" r="5.5" fill="#2D1500"/>
+                        <circle cx="65" cy="42" r="2" fill="#FFFFFF"/>
+                        <path d="M 26 58 Q 48 76 72 57" stroke="#331800" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                        <path d="M 46 64 C 46 84 65 83 63 64 Z" fill="#FF4081" stroke="#331800" stroke-width="2.5"/>
+                        <line x1="54" y1="65" x2="54" y2="76" stroke="#C2185B" stroke-width="2" stroke-linecap="round"/>
+                    `
+                },
+                // 5. 🤩 Star-Struck (Speeding & Excited)
+                star: {
+                    id: 'star',
+                    name: "Star Vibe! 🤩",
+                    svg: `
+                        <polygon points="34,30 37,39 46,39 39,44 42,53 34,48 26,53 29,44 22,39 31,39" fill="#FF4081" stroke="#C2185B" stroke-width="1"/>
+                        <polygon points="66,30 69,39 78,39 71,44 74,53 66,48 58,53 61,44 54,39 63,39" fill="#FF4081" stroke="#C2185B" stroke-width="1"/>
+                        <path d="M 26 55 Q 50 87 74 55 Z" fill="#2E1400"/>
+                        <path d="M 27.5 55 Q 50 62 72.5 55 Q 50 69 27.5 55 Z" fill="#FFFFFF"/>
+                        <path d="M 38 73 Q 50 65 62 73 Q 50 84 38 73 Z" fill="#FF5376"/>
+                    `
+                },
+                // 6. 😎 Cool Sunglasses (Swagger Roll & Stop)
+                cool: {
+                    id: 'cool',
+                    name: "Stay Cool! 😎",
+                    svg: `
+                        <path d="M 18 36 Q 34 32 50 37 Q 66 32 82 36 Q 84 55 68 57 Q 52 59 49 46 Q 47 59 31 57 Q 15 55 18 36 Z" fill="url(#waGlassGrad)" stroke="#111" stroke-width="2.5"/>
+                        <path d="M 24 38 L 36 37 L 29 53 L 20 52 Z" fill="#FFFFFF" opacity="0.32"/>
+                        <path d="M 64 38 L 76 37 L 69 53 L 60 52 Z" fill="#FFFFFF" opacity="0.32"/>
+                        <path d="M 33 66 Q 51 78 68 65" stroke="#331800" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                    `
+                },
+                // 7. 😵 Dizzy / Bumped (Triggered on Wall Collision / Edge Bounce)
+                dizzy: {
+                    id: 'dizzy',
+                    name: "Boing! 😵",
+                    svg: `
+                        <path d="M 26 36 L 40 48 M 40 36 L 26 48" stroke="#331800" stroke-width="4.5" stroke-linecap="round"/>
+                        <path d="M 60 36 L 74 48 M 74 36 L 60 48" stroke="#331800" stroke-width="4.5" stroke-linecap="round"/>
+                        <ellipse cx="21" cy="54" rx="7" ry="4" fill="#FF4D4D" opacity="0.4"/>
+                        <ellipse cx="79" cy="54" rx="7" ry="4" fill="#FF4D4D" opacity="0.4"/>
+                        <path d="M 28 66 Q 36 58 44 66 Q 52 74 60 66 Q 68 58 72 65" stroke="#331800" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+                    `
+                },
+                // 8. 😱 Shocked / Screaming (Triggered on Turbo Speed / Fast Fling)
+                shock: {
+                    id: 'shock',
+                    name: "Whoaaaa! 😱",
+                    svg: `
+                        <path d="M 18 36 C 24 18 76 18 82 36 C 74 27 26 27 18 36 Z" fill="#00B0FF" opacity="0.65"/>
+                        <path d="M 22 28 Q 33 34 43 27" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 57 27 Q 67 34 78 28" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <ellipse cx="34" cy="40" rx="7.5" ry="9.5" fill="#FFFFFF" stroke="#331800" stroke-width="2.5"/>
+                        <circle cx="34" cy="41" r="4.2" fill="#2D1500"/>
+                        <ellipse cx="66" cy="40" rx="7.5" ry="9.5" fill="#FFFFFF" stroke="#331800" stroke-width="2.5"/>
+                        <circle cx="66" cy="41" r="4.2" fill="#2D1500"/>
+                        <ellipse cx="50" cy="69" rx="10.5" ry="15" fill="#2E1400"/>
+                        <path d="M 42 58 Q 50 63 58 58 Q 50 66 42 58 Z" fill="#FFFFFF"/>
+                        <ellipse cx="50" cy="77" rx="6" ry="4.5" fill="#FF5376"/>
+                    `
+                },
+                // 9. 🗣️ Talking Open Mouth (Animated while speaking)
+                talking_open: {
+                    id: 'talking_open',
+                    name: "Speaking... 🗣️",
+                    svg: `
+                        <path d="M 25 31 Q 34 27 42 32" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 58 32 Q 66 27 75 31" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="34" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="32" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <circle cx="66" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="64" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <ellipse cx="21" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <ellipse cx="79" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <ellipse cx="50" cy="67" rx="12" ry="11" fill="#2E1400"/>
+                        <path d="M 40 58 Q 50 63 60 58 Q 50 66 40 58 Z" fill="#FFFFFF"/>
+                        <ellipse cx="50" cy="74" rx="6.5" ry="4" fill="#FF5376"/>
+                    `
+                },
+                // 10. 🗣️ Talking Mid Mouth (Animated while speaking)
+                talking_mid: {
+                    id: 'talking_mid',
+                    name: "Speaking... 🗣️",
+                    svg: `
+                        <path d="M 25 31 Q 34 27 42 32" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 58 32 Q 66 27 75 31" stroke="#683400" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="34" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="32" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <circle cx="66" cy="42" r="7.5" fill="#2D1500"/>
+                        <circle cx="64" cy="39" r="2.8" fill="#FFFFFF"/>
+                        <ellipse cx="21" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <ellipse cx="79" cy="54" rx="6" ry="3.5" fill="#FF4D4D" opacity="0.32"/>
+                        <ellipse cx="50" cy="65" rx="10" ry="7" fill="#2E1400"/>
+                        <path d="M 42 60 Q 50 63 58 60 Q 50 64 42 60 Z" fill="#FFFFFF"/>
+                        <ellipse cx="50" cy="69" rx="5" ry="2.5" fill="#FF5376"/>
+                    `
+                }
+            };
+
+            const ROLLING_KEYS = ['happy', 'laugh', 'wink', 'zany', 'star', 'cool'];
+            let rollingIndex = 0;
+            let currentFaceKey = 'happy';
+            let isSpecialActive = false;
+            let specialTimer = null;
+            let distanceAccumulator = 0;
+            let wasMoving = false;
+
+            // Pre-render all SVG face layers once for instant, lag-free 0ms switching
+            let allFacesSvg = '';
+            for (const [k, obj] of Object.entries(FACES_MAP)) {
+                allFacesSvg += `<g id="waFace_${k}" style="display:${k === 'happy' ? 'inline' : 'none'}">${obj.svg}</g>`;
+            }
+            faceContainer.innerHTML = SVG_HEAD + allFacesSvg + SVG_TAIL;
+
+            function setFaceByKey(key, force = false) {
+                if (!force && isSpecialActive && key !== 'dizzy' && key !== 'shock' && key !== 'talking_open' && key !== 'talking_mid') {
+                    return;
+                }
+                if (currentFaceKey === key && !force) return;
+                const oldEl = document.getElementById('waFace_' + currentFaceKey);
+                const newEl = document.getElementById('waFace_' + key);
+                if (oldEl) oldEl.style.display = 'none';
+                if (newEl) newEl.style.display = 'inline';
+                currentFaceKey = key;
+            }
+
+            function setTemporaryFace(key, duration = 500) {
+                isSpecialActive = true;
+                setFaceByKey(key, true);
+                clearTimeout(specialTimer);
+                specialTimer = setTimeout(() => {
+                    isSpecialActive = false;
+                    if (Math.abs(velX) > 0.4) {
+                        setFaceByKey(ROLLING_KEYS[rollingIndex]);
+                    } else {
+                        setFaceByKey('cool');
+                    }
+                }, duration);
+            }
+
+            // ===== 🎙️ AUDIO & SPEECH SYNTHESIS ENGINE =====
+            let isVoiceMuted = false;
+            let hasWelcomed = false;
+            let cartTimer = null;
+            let isSpeaking = false;
+            let talkMouthInterval = null;
+
+            // ===== 🛍️ PAGE-SPECIFIC PERSUASIVE & HIGH-CONVERSION SALES SPEECHES =====
+            function getPageContext() {
+                const path = (window.location.pathname || '').toLowerCase();
+
+                // 1. Checkout / Place Order Page
+                if (path.includes('/checkout') || path.includes('/place-order')) {
+                    return 'checkout';
+                }
+                // 2. Payment Page / Razorpay
+                if (path.includes('/payment') || path.includes('/verify-payment') || path.includes('/razorpay')) {
+                    return 'payment';
+                }
+                // 3. Order Success Page
+                if (path.includes('/order-success')) {
+                    return 'success';
+                }
+                // 4. Cart Page
+                if (path.includes('/cart')) {
+                    return 'cart';
+                }
+                // 5. Product Detail Page
+                if (path.includes('/product/')) {
+                    const titleEl = document.querySelector('.prod-title') || document.querySelector('h1');
+                    const titleText = (titleEl ? titleEl.textContent : '').toLowerCase();
+                    const breadcrumbs = (document.querySelector('.pdp-breadcrumbs-bar') ? document.querySelector('.pdp-breadcrumbs-bar').textContent : '').toLowerCase();
+                    const fullText = titleText + ' ' + breadcrumbs;
+
+                    if (fullText.includes('t-shirt') || fullText.includes('tshirt') || fullText.includes('tee')) {
+                        return 'tshirt';
+                    }
+                    if (fullText.includes('shirt') || fullText.includes('corduroy') || fullText.includes('overshirt')) {
+                        return 'shirt';
+                    }
+                    return 'product';
+                }
+                // 6. Category Pages
+                if (path.includes('/category/')) {
+                    if (path.includes('t-shirt') || path.includes('tshirt') || path.includes('tee')) {
+                        return 'tshirt';
+                    }
+                    if (path.includes('shirt')) {
+                        return 'shirt';
+                    }
+                    return 'category';
+                }
+                // 7. Search Page
+                if (path.includes('/search')) {
+                    return 'category';
+                }
+                // 8. Home Page Default
+                return 'home';
+            }
+
+            const PAGE_SPEECHES = {
+                // 👔 SHIRT PAGES (Corduroy Overshirts, Formal/Casual Shirts)
+                shirt: [
+                    "Arre! Yeh luxury corduroy shirt dekhi kya? Fitting ekdum fire hai! Sirf do piece bache hain, jaldi Add to Cart karo!",
+                    "Sach bata raha hoon, yeh overshirt pehante hi look 10 guna upar ho jayega! Aur code VILIO20 lagakar 20 percent discount bhi mil raha hai. Mauka mat chhoro, abhi lo!",
+                    "Ek number luxury quality hai! Cash on delivery aur 7 days easy return guarantee hai, bilkul bindaas order karo!",
+                    "Yeh premium corduroy ka stock tezi se khatam ho raha hai! Baad me out of stock ho jayega, jaldi Order Now dabao!"
+                ],
+
+                // 👕 T-SHIRT PAGES (Oversized Tees, Graphic Streetwear Drops)
+                tshirt: [
+                    "Woah! Yeh oversized graphic tee bohot viral chal rahi hai! Pehanke nikaloge toh sab dekhte reh jayenge! Turant order karo!",
+                    "240 GSM heavy cotton fabric hai, wash ke baad bhi print aur colour ekdum fresh rahega! Size select karo aur abhi lo!",
+                    "Yeh t-shirt aapki wardrobe ka hero ban jayegi! Limited drop hai, code VILIO20 lagao aur discount loot lo!",
+                    "Alag hi streetwear flex dikhega! COD available hai, bina soche turant book karo!"
+                ],
+
+                // 🛒 CART PAGE (/cart/)
+                cart: [
+                    "Cart me rakh kar wait mat karo! Dusre customers bhi cart me daal rahe hain! Jaldi Checkout karo warna out of stock ho jayega!",
+                    "Aapka choice ek number hai! Code VILIO20 se flat 20 percent bachat ho rahi hai, fatafat Checkout button dabao aur parcel book karo!",
+                    "Cart me chhod doge toh koi aur le jayega! Abhi Proceed to Checkout karo aur loot lo!"
+                ],
+
+                // 💳 CHECKOUT / PLACE ORDER PAGE (/checkout/, /place-order/)
+                checkout: [
+                    "Almost done! Address confirm karo aur aage badho! Aapka order priority dispatch me pack hone ke liye taiyaar hai! Bas Place Order daba do!",
+                    "Bilkul sahi decision liya hai! 7 days easy return guarantee aur COD dono available hai, bina kisi tension ke Order Confirm karo!",
+                    "Badhaai ho! Best discount rate lock ho chuka hai. Jaldi se Place Order dabao aur apni delivery confirm karo!"
+                ],
+
+                // 💰 PAYMENT PAGE (/payment/, payment gateways)
+                payment: [
+                    "100 percent safe aur secure encrypted payment hai! UPI ya Card se pay karo aur express superfast delivery pao!",
+                    "Bas aakhri second ka kaam hai, payment complete karo aur apna favourite outfit ghar mangwao!"
+                ],
+
+                // 🎉 ORDER SUCCESS PAGE (/order-success/)
+                success: [
+                    "Waah maza aa gaya! Aapka order confirm ho gaya hai! Hum bohot jaldi premium packaging ke sath parcel dispatch kar rahe hain. Thanks for shopping with Vilio!"
+                ],
+
+                // 🏷️ GENERAL PRODUCT DETAIL (Any other product)
+                product: [
+                    "Yeh piece sach me bohot stylish hai! Verified five-star customer reviews hain! Fatafat apna size choose karo aur abhi book karo!",
+                    "Limited quantity drop hai! Aisi premium quality is price me dobara nahi milegi. Turant Buy Now dabao!"
+                ],
+
+                // 📂 CATEGORY / SEARCH PAGES
+                category: [
+                    "Yahan ke saare designs top trending hain! Kisi bhi product par tap karo aur apna perfect size book karo!",
+                    "Ek se badhkar ek collection hai! Jo pasand aaye turant cart me daalo, stock bohot tezi se bik raha hai!"
+                ],
+
+                // 🏠 HOME PAGE (Default fallback)
+                home: [
+                    "Hey! Vilio dot shop me aapka welcome hai! Latest collection check karo!",
+                    "Style upgrade time! Trending corduroy shirts aur viral graphic tees live hain! Code VILIO20 lagakar 20 percent discount pao, shopping start karo!",
+                    "Looking sharp today! Vilio ke saath apna style upgrade karo! Free shipping aur Cash on Delivery available hai!"
+                ]
+            };
+
+            const speechIndices = {};
+            function getNextSpeechForPage() {
+                const context = getPageContext();
+                const list = PAGE_SPEECHES[context] || PAGE_SPEECHES.home;
+                if (typeof speechIndices[context] !== 'number') speechIndices[context] = 0;
+                const text = list[speechIndices[context] % list.length];
+                speechIndices[context] = (speechIndices[context] + 1) % list.length;
+                return text;
+            }
+
+            let audioCtx = null;
+            function getAudioContext() {
+                try {
+                    if (!audioCtx) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) audioCtx = new AudioCtx();
+                    }
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                } catch(e) {}
+                return audioCtx;
+            }
+
+            function playCuteChime() {
+                try {
+                    const ctx = getAudioContext();
+                    if (!ctx) return;
+                    const now = ctx.currentTime;
+                    // Play a cheerful marimba/bell sequence
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+                    freqs.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.type = 'triangle';
+                        const start = now + idx * 0.07;
+                        osc.frequency.setValueAtTime(freq, start);
+                        gain.gain.setValueAtTime(0.18, start);
+                        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+                        osc.start(start);
+                        osc.stop(start + 0.25);
+                    });
+                } catch(e) {}
+            }
+
+            function startTalkingAnim() {
+                isSpeaking = true;
+                if (soundWaves) soundWaves.classList.add('active');
+                let toggle = false;
+                clearInterval(talkMouthInterval);
+                talkMouthInterval = setInterval(() => {
+                    toggle = !toggle;
+                    setFaceByKey(toggle ? 'talking_open' : 'talking_mid', true);
+                }, 140);
+            }
+
+            function stopTalkingAnim() {
+                isSpeaking = false;
+                clearInterval(talkMouthInterval);
+                if (soundWaves) soundWaves.classList.remove('active');
+                setFaceByKey(ROLLING_KEYS[rollingIndex], true);
+            }
+
+            // ===== 🎙️ PLAYFUL EMOJI MASCOT VOICE (HINDI + ENGLISH MIX) =====
+            let cachedVoice = null;
+            function pickBestEmojiVoice() {
+                if (!('speechSynthesis' in window)) return null;
+                const voices = window.speechSynthesis.getVoices() || [];
+                if (!voices.length) return null;
+
+                // 1. Natural Indian Hindi voice (Google हिन्दी, Microsoft Madhur, Swara)
+                const indianHindi = voices.find(v => 
+                    v.lang && (v.lang.toLowerCase().includes('hi') || v.name.toLowerCase().includes('hindi'))
+                );
+                if (indianHindi) return indianHindi;
+
+                // 2. Indian English voice (Google English India, Neerja, Prabhat, Heera, Ravi)
+                const indianEn = voices.find(v => 
+                    v.lang && (v.lang.toLowerCase().includes('en-in') || v.name.toLowerCase().includes('india'))
+                );
+                if (indianEn) return indianEn;
+
+                // 3. Clear friendly voices (Google, Natural, Sonia, Hazel, Zira)
+                const friendlyEn = voices.find(v => 
+                    v.lang && v.lang.toLowerCase().startsWith('en') && 
+                    (v.name.includes('Natural') || v.name.includes('Google') || /sonia|jenny|hazel|zira/i.test(v.name))
+                );
+                if (friendlyEn) return friendlyEn;
+
+                // 4. Any voice fallback
+                return voices[0] || null;
+            }
+
+            function getVoiceConfig() {
+                if (!cachedVoice) {
+                    cachedVoice = pickBestEmojiVoice();
+                }
+                if (cachedVoice) {
+                    return { voice: cachedVoice, lang: cachedVoice.lang || 'en-IN' };
+                }
+                return { voice: null, lang: 'en-IN' };
+            }
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    cachedVoice = pickBestEmojiVoice();
+                };
+                cachedVoice = pickBestEmojiVoice();
+            }
+
+            function speakMessage(speechText) {
+                if (isVoiceMuted) return;
+
+                // 1. Play cheerful chime immediately
+                playCuteChime();
+
+                // 2. Speech Synthesis
+                if ('speechSynthesis' in window) {
+                    try {
+                        window.speechSynthesis.cancel();
+                        window.speechSynthesis.resume();
+
+                        const utterance = new SpeechSynthesisUtterance(speechText);
+                        const vConfig = getVoiceConfig();
+                        if (vConfig && vConfig.voice) {
+                            utterance.voice = vConfig.voice;
+                            utterance.lang = vConfig.lang;
+                        } else {
+                            utterance.lang = 'en-IN';
+                        }
+
+                        // Playful & Cute Emoji Mascot Character tuning
+                        utterance.pitch = 1.18; // Sweet, energetic emoji pitch
+                        utterance.rate = 1.05;  // Lively upbeat mascot pace
+                        utterance.volume = 1.0;
+
+                        utterance.onstart = () => startTalkingAnim();
+                        utterance.onend = () => stopTalkingAnim();
+                        utterance.onerror = (e) => {
+                            stopTalkingAnim();
+                            if (e && e.error === 'not-allowed') hasWelcomed = false;
+                        };
+
+                        window.speechSynthesis.speak(utterance);
+                    } catch(err) {
+                        stopTalkingAnim();
+                    }
+                }
+            }
+
+            // ===== 2D PHYSICS & SITUATIONAL MOVEMENT STATE =====
+            let posX = 60;
+            let posY = 0;
+            let velX = 0;
+            let velY = 0;
+            let angle = 0;
+            let currentDirection = 1;
+            let isDragging = false;
+            let isLoopRunning = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let dragLastX = 0;
+            let dragLastY = 0;
+            let dragVelX = 0;
+            let dragVelY = 0;
+            const GRAVITY = 0.65;
+            const MAX_JUMP_UP = -75;
+
+            // Cached bounds to eliminate layout thrashing
+            let cachedMinX = 14;
+            let cachedMaxX = 260;
+            let cachedDiameter = 44;
+
+            function updateBounds() {
+                const w = window.innerWidth || document.documentElement.clientWidth || 360;
+                const isMobile = w <= 768;
+                cachedDiameter = isMobile ? 44 : 52;
+                cachedMinX = 14;
+                cachedMaxX = isMobile ? Math.max(cachedMinX + 60, w - 110) : Math.max(cachedMinX + 140, w - 190);
+                if (posX > cachedMaxX) posX = cachedMaxX;
+                if (posX < cachedMinX) posX = cachedMinX;
+            }
+            updateBounds();
+
+            function triggerSquash() {
+                ball.classList.remove('squash-horizontal');
+                void ball.offsetWidth;
+                ball.classList.add('squash-horizontal');
+            }
+
+            function triggerJumpAndSpeak() {
+                if (cartTimer) {
+                    clearTimeout(cartTimer);
+                    cartTimer = null;
+                }
+                hasWelcomed = true;
+                triggerSquash();
+                velY = -8.5;
+                posY = -2;
+                wakePhysicsLoop();
+
+                const speech = getNextSpeechForPage();
+                speakMessage(speech);
+            }
+
+            // ===== 🌀 2D SCROLL ENGINE (Ultra Lightweight, Zero Reflow) =====
+            let lastScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+            window.addEventListener('scroll', function() {
+                const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+                const deltaScroll = currentScrollY - lastScrollY;
+                lastScrollY = currentScrollY;
+
+                if (Math.abs(deltaScroll) > 1.5) {
+                    wakePhysicsLoop();
+                    const scrollSpeed = Math.min(Math.abs(deltaScroll), 22);
+                    const dir = deltaScroll > 0 ? currentDirection : -currentDirection;
+                    velX += dir * (scrollSpeed * 0.28);
+
+                    if (velX > 14) velX = 14;
+                    if (velX < -14) velX = -14;
+                }
+            }, { passive: true });
+
+            // ===== 🖐️ 2D TOUCH & MOUSE INTERACTION (Clean Drag & Instant Tap) =====
+            let pointerStartX = 0;
+            let pointerStartY = 0;
+            let pointerMoved = false;
+
+            function onDragStart(clientX, clientY) {
+                isDragging = true;
+                dragStartX = clientX;
+                dragStartY = clientY;
+                dragLastX = clientX;
+                dragLastY = clientY;
+                dragVelX = 0;
+                dragVelY = 0;
+                velX = 0;
+                velY = 0;
+                wakePhysicsLoop();
+            }
+
+            function onDragMove(clientX, clientY) {
+                if (!isDragging) return;
+                const deltaX = clientX - dragLastX;
+                const deltaY = clientY - dragLastY;
+                dragVelX = deltaX;
+                dragVelY = deltaY;
+                dragLastX = clientX;
+                dragLastY = clientY;
+
+                posX += deltaX;
+                if (posX < cachedMinX) posX = cachedMinX;
+                if (posX > cachedMaxX) posX = cachedMaxX;
+
+                posY += deltaY;
+                if (posY < MAX_JUMP_UP) posY = MAX_JUMP_UP;
+                if (posY > 0) posY = 0;
+
+                distanceAccumulator += Math.hypot(deltaX, deltaY);
+                if (distanceAccumulator >= 110) {
+                    distanceAccumulator = 0;
+                    rollingIndex = (rollingIndex + 1) % ROLLING_KEYS.length;
+                    setFaceByKey(ROLLING_KEYS[rollingIndex]);
+                }
+
+                const radius = cachedDiameter / 2;
+                angle += (deltaX / radius) * (180 / Math.PI);
+                render();
+            }
+
+            function onDragEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                velX = dragVelX * 1.2;
+                velY = dragVelY * 1.2;
+
+                if (Math.abs(velX) > 0.5) {
+                    currentDirection = velX > 0 ? 1 : -1;
+                }
+                if (Math.hypot(velX, velY) > 12) {
+                    setTemporaryFace('shock', 500);
+                }
+                wakePhysicsLoop();
+            }
+
+            ball.addEventListener('pointerdown', (e) => {
+                pointerStartX = e.clientX;
+                pointerStartY = e.clientY;
+                pointerMoved = false;
+                onDragStart(e.clientX, e.clientY);
+                try { ball.setPointerCapture(e.pointerId); } catch(err) {}
+            });
+
+            ball.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                if (Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY) > 7) {
+                    pointerMoved = true;
+                }
+                onDragMove(e.clientX, e.clientY);
+            });
+
+            ball.addEventListener('pointerup', (e) => {
+                if (!isDragging) return;
+                try { ball.releasePointerCapture(e.pointerId); } catch(err) {}
+                onDragEnd();
+                if (!pointerMoved) {
+                    triggerJumpAndSpeak();
+                }
+            });
+
+            ball.addEventListener('pointercancel', () => {
+                if (isDragging) onDragEnd();
+            });
+
+            // ===== 🚀 MAIN 2D ANIMATION & RENDERING LOOP =====
+            function render() {
+                if (isNaN(posX) || !isFinite(posX)) posX = 60;
+                if (isNaN(posY) || !isFinite(posY)) posY = 0;
+                if (isNaN(angle) || !isFinite(angle)) angle = 0;
+
+                wrapper.style.transform = `translate3d(${posX}px, 0, 0)`;
+                ball.style.transform = `translate3d(0, ${posY}px, 0)`;
+                faceContainer.style.transform = `rotate(${angle}deg)`;
+
+                if (shadow) {
+                    const hRatio = Math.min(Math.abs(posY) / 45, 1);
+                    const sRatio = Math.min(Math.abs(velX) / 14, 1);
+                    const scaleX = (1 + sRatio * 0.15) * (1 - hRatio * 0.35);
+                    const scaleY = (1 - sRatio * 0.08) * (1 - hRatio * 0.35);
+                    const opacity = Math.max(0.18, 0.85 - hRatio * 0.6);
+                    shadow.style.transform = `scale(${scaleX}, ${scaleY})`;
+                    shadow.style.opacity = opacity;
+                }
+            }
+
+            function wakePhysicsLoop() {
+                if (!isLoopRunning) {
+                    isLoopRunning = true;
+                    ball.classList.remove('idle-float');
+                    requestAnimationFrame(physicsLoop);
+                }
+            }
+
+            function physicsLoop() {
+                if (!isDragging) {
+                    velX *= 0.93;
+                    if (Math.abs(velX) < 0.06) velX = 0;
+
+                    if (posY < 0 || velY !== 0) {
+                        velY += GRAVITY;
+                        posY += velY;
+                        if (posY >= 0) {
+                            posY = 0;
+                            if (Math.abs(velY) > 2.0) {
+                                velY = -velY * 0.4;
+                                triggerSquash();
+                            } else {
+                                velY = 0;
+                            }
+                        }
+                        if (posY < MAX_JUMP_UP) {
+                            posY = MAX_JUMP_UP;
+                            velY = 1.0;
+                        }
+                    }
+
+                    if (velX !== 0 || posY !== 0 || velY !== 0) {
+                        wasMoving = true;
+                        posX += velX;
+
+                        distanceAccumulator += Math.hypot(velX, velY);
+                        if (distanceAccumulator >= 120) {
+                            distanceAccumulator = 0;
+                            rollingIndex = (rollingIndex + 1) % ROLLING_KEYS.length;
+                            if (!isSpecialActive && !isSpeaking) {
+                                setFaceByKey(ROLLING_KEYS[rollingIndex]);
+                            }
+                        }
+
+                        if (Math.hypot(velX, velY) >= 12 && !isSpecialActive && !isSpeaking) {
+                            setTemporaryFace('shock', 400);
+                        }
+
+                        // Wall collisions
+                        if (posX >= cachedMaxX) {
+                            posX = cachedMaxX;
+                            velX = -Math.abs(velX) * 0.72;
+                            currentDirection = -1;
+                            velY = -6.0;
+                            posY = -2;
+                            triggerSquash();
+                            if (!isSpeaking) setTemporaryFace('dizzy', 400);
+                            distanceAccumulator = 0;
+                        } else if (posX <= cachedMinX) {
+                            posX = cachedMinX;
+                            velX = Math.abs(velX) * 0.72;
+                            currentDirection = 1;
+                            velY = -6.0;
+                            posY = -2;
+                            triggerSquash();
+                            if (!isSpeaking) setTemporaryFace('dizzy', 400);
+                            distanceAccumulator = 0;
+                        }
+
+                        const radius = cachedDiameter / 2;
+                        angle += (velX / radius) * (180 / Math.PI);
+                        render();
+                        requestAnimationFrame(physicsLoop);
+                    } else {
+                        // Settle into sleep!
+                        if (wasMoving) {
+                            wasMoving = false;
+                            distanceAccumulator = 0;
+                            if (!isSpecialActive && !isSpeaking) {
+                                setFaceByKey('cool');
+                            }
+                        }
+                        render();
+                        ball.classList.add('idle-float');
+                        isLoopRunning = false;
+                    }
+                } else {
+                    requestAnimationFrame(physicsLoop);
+                }
+            }
+
+            // Initial render and starting state
+            posX = Math.min(Math.max(60, cachedMinX + 30), cachedMaxX - 30);
+            render();
+            ball.classList.add('idle-float');
+
+            // 📱 Mobile Screen Resize & Orientation Change Clamp
+            window.addEventListener('resize', () => {
+                updateBounds();
+                render();
+            }, { passive: true });
+
+            // ===== 🌟 WELCOME VISITOR ON ARRIVAL =====
+            function triggerWelcome() {
+                if (hasWelcomed) return;
+                hasWelcomed = true;
+
+                getAudioContext();
+                if ('speechSynthesis' in window) {
+                    try { window.speechSynthesis.resume(); } catch(e) {}
+                }
+
+                triggerSquash();
+                velY = -8.0;
+                posY = -2;
+                wakePhysicsLoop();
+                const speech = getNextSpeechForPage();
+                speakMessage(speech);
+            }
+
+            const pageContext = getPageContext();
+
+            if (pageContext === 'cart') {
+                // 🛒 CART PAGE: Strictly wait 7 seconds!
+                // If user clicks "Proceed to Checkout" within 7 seconds, cancel and do NOT speak.
+                let checkoutClicked = false;
+                function setupCartCheckoutListeners() {
+                    const checkoutBtns = document.querySelectorAll('.btn-checkout-primary, a[href*="checkout"], a[href*="place-order"]');
+                    checkoutBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            checkoutClicked = true;
+                            if (cartTimer) {
+                                clearTimeout(cartTimer);
+                                cartTimer = null;
+                            }
+                        });
+                    });
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', setupCartCheckoutListeners);
+                } else {
+                    setupCartCheckoutListeners();
+                }
+
+                // If after 7 seconds, user has NOT clicked Proceed to Checkout, speak to urge them!
+                cartTimer = setTimeout(() => {
+                    if (!checkoutClicked && !hasWelcomed) {
+                        triggerWelcome();
+                    }
+                }, 7000);
+            } else {
+                // 🚀 OTHER PAGES: Speak immediately upon landing on the page!
+                setTimeout(() => {
+                    triggerWelcome();
+                }, 600);
+
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        triggerWelcome();
+                    }, 300);
+                });
+
+                // 🛡️ User interaction backup: if browser autoplay restrictions hold audio until first gesture
+                const interactionEvents = ['pointerdown', 'click', 'touchstart', 'scroll', 'keydown', 'pointermove'];
+                function onFirstInteraction() {
+                    if (!hasWelcomed) {
+                        triggerWelcome();
+                    }
+                    interactionEvents.forEach(evt => window.removeEventListener(evt, onFirstInteraction));
+                }
+                interactionEvents.forEach(evt => window.addEventListener(evt, onFirstInteraction, { passive: true }));
+            }
         })();
     </script>
 </body>
