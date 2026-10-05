@@ -1206,6 +1206,48 @@
             50% { transform: translate3d(0, -5px, 0); }
         }
 
+        /* ===== Lively Vertical Bounce when resting in Corner ===== */
+        .wa-emoji-ball.corner-bounce {
+            animation: waCornerBounce 1.5s ease-in-out infinite;
+        }
+
+        @keyframes waCornerBounce {
+            0%, 100% {
+                transform: translate3d(0, 0, 0) scale(1, 1);
+            }
+            35% {
+                transform: translate3d(0, -28px, 0) scale(0.96, 1.04);
+            }
+            50% {
+                transform: translate3d(0, -34px, 0) scale(1, 1);
+            }
+            72% {
+                transform: translate3d(0, 0, 0) scale(1.08, 0.92);
+            }
+            84% {
+                transform: translate3d(0, -6px, 0) scale(0.98, 1.02);
+            }
+        }
+
+        .wa-ground-shadow.corner-bounce-shadow {
+            animation: waCornerShadow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes waCornerShadow {
+            0%, 100% {
+                transform: scale(1, 1);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(0.65, 0.65);
+                opacity: 0.25;
+            }
+            72% {
+                transform: scale(1.12, 1.12);
+                opacity: 0.85;
+            }
+        }
+
         /* ===== 8. TOAST NOTIFICATION ===== */
         .toast-notify {
             position: fixed;
@@ -2757,6 +2799,8 @@
 
             function onDragStart(clientX, clientY) {
                 isDragging = true;
+                ball.classList.remove('idle-float', 'corner-bounce');
+                if (shadow) shadow.classList.remove('corner-bounce-shadow');
                 dragStartX = clientX;
                 dragStartY = clientY;
                 dragLastX = clientX;
@@ -2876,7 +2920,8 @@
             function wakePhysicsLoop() {
                 if (!isLoopRunning) {
                     isLoopRunning = true;
-                    ball.classList.remove('idle-float');
+                    ball.classList.remove('idle-float', 'corner-bounce');
+                    if (shadow) shadow.classList.remove('corner-bounce-shadow');
                     requestAnimationFrame(physicsLoop);
                 }
             }
@@ -2890,14 +2935,14 @@
                         const delta = pendingScrollDelta;
                         pendingScrollDelta = 0;
 
-                        // Corner escape logic:
-                        // If emoji is at or near the right wall, ANY scroll MUST roll it left!
-                        // If emoji is at or near the left wall, ANY scroll MUST roll it right!
+                        // Corner escape logic (wide 25px zone):
+                        // If emoji is near the right wall, ANY scroll MUST roll it left!
+                        // If emoji is near the left wall, ANY scroll MUST roll it right!
                         let dir = currentDirection;
-                        if (posX >= cachedMaxX - 8) {
+                        if (posX >= cachedMaxX - 25) {
                             dir = -1;
                             currentDirection = -1;
-                        } else if (posX <= cachedMinX + 8) {
+                        } else if (posX <= cachedMinX + 25) {
                             dir = 1;
                             currentDirection = 1;
                         } else {
@@ -2905,10 +2950,10 @@
                         }
 
                         const scrollSpeed = Math.min(Math.abs(delta), isMobile ? 8 : 16);
-                        const push = dir * (scrollSpeed * (isMobile ? 0.08 : 0.22));
+                        const push = dir * (scrollSpeed * (isMobile ? 0.09 : 0.22));
                         velX += push;
 
-                        const maxV = isMobile ? 4.2 : 11;
+                        const maxV = isMobile ? 4.5 : 11;
                         if (velX > maxV) velX = maxV;
                         if (velX < -maxV) velX = -maxV;
                     } else {
@@ -2916,7 +2961,7 @@
                     }
 
                     // 2. Calmer damping on mobile
-                    velX *= isMobile ? 0.91 : 0.93;
+                    velX *= isMobile ? 0.92 : 0.94;
                     if (Math.abs(velX) < 0.06) velX = 0;
 
                     // 3. Vertical jump / hop physics
@@ -2960,9 +3005,9 @@
                         if (posX >= cachedMaxX) {
                             posX = cachedMaxX;
                             currentDirection = -1;
-                            const minRebound = isMobile ? 3.2 : 4.5;
+                            const minRebound = isMobile ? 5.2 : 6.0;
                             velX = -Math.max(Math.abs(velX) * 0.75, minRebound);
-                            velY = isMobile ? -3.5 : -4.8;
+                            velY = isMobile ? -5.2 : -6.2;
                             posY = -2;
 
                             const now = Date.now();
@@ -2975,9 +3020,9 @@
                         } else if (posX <= cachedMinX) {
                             posX = cachedMinX;
                             currentDirection = 1;
-                            const minRebound = isMobile ? 3.2 : 4.5;
+                            const minRebound = isMobile ? 5.2 : 6.0;
                             velX = Math.max(Math.abs(velX) * 0.75, minRebound);
-                            velY = isMobile ? -3.5 : -4.8;
+                            velY = isMobile ? -5.2 : -6.2;
                             posY = -2;
 
                             const now = Date.now();
@@ -2999,7 +3044,7 @@
                         render();
                         requestAnimationFrame(physicsLoop);
                     } else {
-                        // Settle into smooth float
+                        // Settle into smooth float or corner vertical bounce
                         if (wasMoving) {
                             wasMoving = false;
                             distanceAccumulator = 0;
@@ -3009,7 +3054,18 @@
                         }
                         render();
                         ball.style.transform = '';
-                        ball.classList.add('idle-float');
+                        ball.classList.remove('idle-float', 'corner-bounce');
+                        if (shadow) shadow.classList.remove('corner-bounce-shadow');
+
+                        const isAtCorner = (posX >= cachedMaxX - 25 || posX <= cachedMinX + 25);
+                        if (isAtCorner) {
+                            // In corner condition: Move vertically with lively hop & bounce!
+                            ball.classList.add('corner-bounce');
+                            if (shadow) shadow.classList.add('corner-bounce-shadow');
+                        } else {
+                            // Mid-screen: calm gentle float
+                            ball.classList.add('idle-float');
+                        }
                         isLoopRunning = false;
                     }
                 } else {
