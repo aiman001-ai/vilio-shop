@@ -315,6 +315,16 @@
             position: static;
         }
     }
+
+    /* Distraction-Free Mobile Checkout: Hide mobile bottom navbar */
+    @media (max-width: 768px) {
+        .mobile-bottom-nav {
+            display: none !important;
+        }
+        body {
+            padding-bottom: 24px !important;
+        }
+    }
 </style>
 {% endblock %}
 

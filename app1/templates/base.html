@@ -1789,11 +1789,11 @@
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <a href="javascript:void(0)" onclick="openDrawer()" class="b-nav-item" aria-label="Categories">
+        <a href="javascript:void(0)" onclick="openDrawer()" class="b-nav-item {% if request.resolver_match.url_name in 'category_default,category_products,category_type_products' %}active{% endif %}" aria-label="Categories">
             <i class="fa-solid fa-layer-group"></i>
             <span>Categories</span>
         </a>
-        <a href="javascript:void(0)" onclick="openSearchBar()" class="b-nav-item" aria-label="Search">
+        <a href="javascript:void(0)" onclick="openSearchBar()" class="b-nav-item {% if request.resolver_match.url_name == 'search' %}active{% endif %}" aria-label="Search">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search</span>
         </a>
@@ -1804,7 +1804,7 @@
                 {{ global_cart_count }}
             </span>
         </a>
-        <button type="button" onclick="openAccountSheet()" class="b-nav-item b-nav-btn {% if request.resolver_match.url_name in 'my_orders,my_addresses,login' %}active{% endif %}" id="bNavAccountItem" aria-label="Account">
+        <button type="button" onclick="openAccountSheet()" class="b-nav-item b-nav-btn {% if request.resolver_match.url_name in 'my_orders,my_addresses,add_address,edit_address,login,signup,track_orders' %}active{% endif %}" id="bNavAccountItem" aria-label="Account">
             <i class="fa-regular fa-user"></i>
             <span>Account</span>
         </button>

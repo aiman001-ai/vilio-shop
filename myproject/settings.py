@@ -246,6 +246,11 @@ SOCIALACCOUNT_PROVIDERS = {
 # Live site requires HTTPS protocol for OAuth callbacks; local uses HTTP
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if IS_PROD else 'http'
 
+# Authentication Login / Logout URLs
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'post_login'
+LOGOUT_REDIRECT_URL = 'home'
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True

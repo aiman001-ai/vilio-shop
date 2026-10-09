@@ -1759,7 +1759,7 @@ def terms_of_use(request):
 def track_orders(request):
     # यूजर के सारे ऑर्डर्स उठाएं, नए ऑर्डर्स सबसे ऊपर
     user_orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'track_orders.html', {'orders': user_orders})    
+    return render(request, 'my_orders.html', {'orders': user_orders})
 
 # app1/views.py
 def shipping_policy(request):

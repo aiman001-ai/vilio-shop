@@ -114,5 +114,11 @@ path('cancel-razorpay-order/', cancel_razorpay_order, name='cancel_razorpay_orde
 path('order-success/<int:order_id>/', order_success, name='order_success'),
 
 path('product-feed/', product_feed_json, name='product_feed'),
+
+    # --- Convenience URL Aliases ---
+    path('signup/', login_page, name='signup'),
+    path('contact/', contact_us),
+    path('returns/', return_policy),
+    path('shipping/', shipping_policy),
 ]
 

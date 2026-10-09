@@ -1887,7 +1887,7 @@ body {
     
     .product-container { 
         display: block !important; 
-        padding: 0 0 110px 0 !important; 
+        padding: 0 0 135px 0 !important; 
         margin: 0 !important; 
         width: 100vw !important;
         overflow-x: hidden;
@@ -2001,23 +2001,23 @@ body {
         height: 75px; 
     }
 
-    /* Fixed Sticky Buy/Cart Footer on Mobile */
+    /* Fixed Sticky Buy/Cart Footer on Mobile - docked neatly above mobile bottom nav */
     .action-btns { 
         position: fixed !important; 
-        bottom: 0 !important; 
+        bottom: var(--bottom-nav-height, 60px) !important; 
         left: 0 !important; 
-        right: 0 !important;
+        right: 0 !important; 
         width: 100% !important; 
         max-width: 100% !important;
-        background: rgba(255, 255, 255, 0.94) !important; 
+        background: rgba(13, 13, 16, 0.95) !important; 
         backdrop-filter: blur(18px) !important;
         -webkit-backdrop-filter: blur(18px) !important;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important; 
-        padding: 10px 14px !important; 
-        padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important; 
+        padding: 8px 12px !important; 
         margin: 0 !important; 
         gap: 10px !important; 
-        z-index: 9999 !important;
+        z-index: 999 !important;
         box-sizing: border-box !important;
     }
 
