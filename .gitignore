@@ -42,3 +42,12 @@ scripts/restore_*.py
 
 # 7. Static
 /static/
+
+# 8. Temporary scratch images and test folders
+/*.jpg
+/*.png
+/temp_p55_inspect/
+/flawless_chevron_v2/
+/production_ready_chevron/
+/test_full_collection/
+/test_perfect_render/
