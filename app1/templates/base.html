@@ -617,42 +617,218 @@
         }
 
         @media (max-width: 768px) {
-            .site-header {
-                height: 54px !important;
-                padding: 0 16px !important;
-                justify-content: center !important;
-                background: rgba(10, 10, 13, 0.96) !important;
-                backdrop-filter: blur(20px) !important;
-                -webkit-backdrop-filter: blur(20px) !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            :root {
+                --header-height: 56px;
+                --announcement-height: 24px;
+                --bottom-nav-height: 60px;
             }
-            .header-left {
+
+            body {
+                padding-top: calc(56px + var(--announcement-height, 24px)) !important;
+                padding-bottom: var(--bottom-nav-height, 60px);
+            }
+
+            /* Announcement Bar Ticker on Mobile */
+            .announcement-bar {
+                height: 24px !important;
+                line-height: 24px !important;
+                background: linear-gradient(90deg, #07070a 0%, #15151c 50%, #07070a 100%) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+                font-size: 9.5px !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.8px !important;
+            }
+
+            .announcement-ticker {
+                gap: 20px !important;
+            }
+
+            .ticker-highlight {
+                color: #ff3f6c !important;
+                font-weight: 800 !important;
+                text-shadow: 0 0 10px rgba(255, 63, 108, 0.5) !important;
+            }
+
+            /* Luxury Mobile Site Header */
+            .site-header {
+                height: 56px !important;
+                padding: 0 14px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                background: rgba(11, 11, 15, 0.92) !important;
+                backdrop-filter: blur(24px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+                box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+                position: fixed !important;
+                top: var(--announcement-height, 24px) !important;
+                left: 0 !important;
                 width: 100% !important;
-                justify-content: center !important;
+                box-sizing: border-box !important;
+                z-index: 1001 !important;
+                transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+
+            .site-header.header-scrolled {
+                background: rgba(8, 8, 12, 0.97) !important;
+                border-bottom-color: rgba(255, 63, 108, 0.22) !important;
+                box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 8px 30px rgba(0, 0, 0, 0.65) !important;
+            }
+
+            /* Left: Menu Drawer Trigger */
+            .header-left {
+                position: static !important;
+                width: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
                 margin: 0 !important;
                 gap: 0 !important;
+                flex: 0 0 40px !important;
+                z-index: 2 !important;
             }
-            /* Hide search, profile, bag & hamburger from top header on mobile - present in bottom nav */
-            .header-actions {
-                display: none !important;
-            }
+
             .mobile-menu-trigger {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 38px !important;
+                height: 38px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.09) !important;
+                border-radius: 11px !important;
+                color: #f4f4f6 !important;
+                font-size: 15px !important;
+                cursor: pointer !important;
+                padding: 0 !important;
+                transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            .mobile-menu-trigger:active {
+                transform: scale(0.92) !important;
+                background: rgba(255, 63, 108, 0.15) !important;
+                border-color: rgba(255, 63, 108, 0.35) !important;
+                color: #ff3f6c !important;
+            }
+
+            /* Center: Brand Logo Mathematically Dead-Center */
+            .brand-logo {
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                display: inline-flex !important;
+                align-items: baseline !important;
+                gap: 3px !important;
+                font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+                font-size: 21px !important;
+                font-weight: 900 !important;
+                letter-spacing: 3.5px !important;
+                color: #ffffff !important;
+                text-transform: uppercase !important;
+                text-decoration: none !important;
+                text-shadow: 0 2px 14px rgba(255, 255, 255, 0.14) !important;
+                transition: opacity 0.2s ease, transform 0.2s ease !important;
+                z-index: 1 !important;
+                white-space: nowrap !important;
+                pointer-events: auto !important;
+            }
+
+            .brand-logo:active {
+                opacity: 0.85 !important;
+                transform: translate(-50%, -50%) scale(0.97) !important;
+            }
+
+            .brand-logo .dot-shop {
+                font-size: 10px !important;
+                font-weight: 800 !important;
+                letter-spacing: 1.2px !important;
+                text-transform: uppercase !important;
+                background: linear-gradient(135deg, #ff3f6c 0%, #ff6b4a 100%) !important;
+                -webkit-background-clip: text !important;
+                -webkit-text-fill-color: transparent !important;
+                filter: drop-shadow(0 0 6px rgba(255, 63, 108, 0.6)) !important;
+                padding-left: 2px !important;
+            }
+
+            /* Right: Search & Cart Action Buttons */
+            .header-actions {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-end !important;
+                gap: 8px !important;
+                flex: 0 0 auto !important;
+                margin-left: auto !important;
+                z-index: 2 !important;
+            }
+
+            .header-actions .account-dropdown-wrap {
                 display: none !important;
             }
+
+            .header-actions .action-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 38px !important;
+                height: 38px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.09) !important;
+                border-radius: 11px !important;
+                color: #f4f4f6 !important;
+                font-size: 15px !important;
+                cursor: pointer !important;
+                padding: 0 !important;
+                position: relative !important;
+                transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            .header-actions .action-btn:active {
+                transform: scale(0.92) !important;
+                background: rgba(255, 63, 108, 0.15) !important;
+                border-color: rgba(255, 63, 108, 0.35) !important;
+                color: #ff3f6c !important;
+            }
+
+            .header-actions .action-btn i {
+                font-size: 15px !important;
+                width: auto !important;
+                height: auto !important;
+            }
+
+            .header-actions .cart-badge {
+                position: absolute !important;
+                top: -4px !important;
+                right: -4px !important;
+                min-width: 17px !important;
+                height: 17px !important;
+                border-radius: 999px !important;
+                background: linear-gradient(135deg, #ff3f6c 0%, #e11d48 100%) !important;
+                color: #ffffff !important;
+                font-size: 9.5px !important;
+                font-weight: 800 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 4px !important;
+                border: 2px solid #0b0b0f !important;
+                box-shadow: 0 2px 8px rgba(255, 63, 108, 0.6) !important;
+                animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            }
+
+            /* Hide Desktop Nav List */
             .desktop-nav {
                 display: none !important;
             }
+
             .mobile-bottom-nav {
                 display: flex !important;
                 z-index: 1005 !important;
-            }
-            .brand-logo {
-                font-size: 21px !important;
-                letter-spacing: 2px !important;
-            }
-            .brand-logo .dot-shop {
-                font-size: 11px !important;
             }
         }
 
