@@ -538,6 +538,93 @@
         background: rgba(225, 29, 72, 0.88);
     }
 
+    /* SOLD OUT BADGES & VISUAL INDICATORS */
+    .badge-sold-out {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: rgba(15, 15, 19, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ff3f6c;
+        border: 1px solid rgba(255, 63, 108, 0.4);
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        padding: 2.5px 8px;
+        border-radius: 4px;
+        z-index: 6;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .badge-sold-out i {
+        font-size: 8px;
+    }
+
+    .sold-out-center-tag {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(12, 12, 16, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 6px;
+        z-index: 6;
+        pointer-events: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sold-out-center-tag .dot-red {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff3f6c;
+        box-shadow: 0 0 8px #ff3f6c;
+    }
+
+    .product-card.is-sold-out .card-img {
+        filter: grayscale(35%) contrast(0.95);
+        opacity: 0.82;
+    }
+
+    .product-card.is-sold-out .card-img.active {
+        opacity: 0.88;
+    }
+
+    .quick-add-btn.btn-disabled {
+        background: rgba(28, 28, 34, 0.9) !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        opacity: 0.9 !important;
+    }
+
+    .price-sold-out {
+        font-size: 11px;
+        font-weight: 700;
+        color: #ff3f6c;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
     /* Urgency Tag (Top Right) */
     .badge-urgency {
         position: absolute;
@@ -2195,24 +2282,34 @@
              data-price="{{ product.current_price }}"
              data-name="{{ product.name|lower }}">
             
-            <div class="product-card"
+            <div class="product-card {% if product.is_sold_out %}is-sold-out{% endif %}"
                  onmouseenter="startCardSlider(this)"
                  onmouseleave="stopCardSlider(this)">
                 
                 <!-- Media / Image Container -->
                 <a href="{% url 'product_detail' product.id %}" class="card-media-box">
-                    <!-- Discount Badge -->
-                    {% if product.has_discount and product.discount_percentage > 0 %}
-                        <div class="badge-discount badge-deal-hot">
-                            {{ product.discount_percentage }}% OFF
+                    {% if product.is_sold_out %}
+                        <!-- Sold Out Badge -->
+                        <div class="badge-sold-out">
+                            <i class="fa-solid fa-circle-xmark"></i> SOLD OUT
                         </div>
-                    {% endif %}
+                        <div class="sold-out-center-tag">
+                            <span class="dot-red"></span> SOLD OUT
+                        </div>
+                    {% else %}
+                        <!-- Discount Badge -->
+                        {% if product.has_discount and product.discount_percentage > 0 %}
+                            <div class="badge-discount badge-deal-hot">
+                                {{ product.discount_percentage }}% OFF
+                            </div>
+                        {% endif %}
 
-                    <!-- Urgency Tag -->
-                    {% if forloop.counter|divisibleby:3 %}
-                        <div class="badge-urgency">
-                            <i class="fa-solid fa-fire"></i> Fast Selling
-                        </div>
+                        <!-- Urgency Tag -->
+                        {% if forloop.counter|divisibleby:3 %}
+                            <div class="badge-urgency">
+                                <i class="fa-solid fa-fire"></i> Fast Selling
+                            </div>
+                        {% endif %}
                     {% endif %}
 
                     <!-- Rating Pill -->
@@ -2236,19 +2333,32 @@
                     {% endfor %}
 
                     <!-- Quick Add Button -->
-                    <button type="button" 
-                            class="quick-add-btn" 
-                            onclick="event.preventDefault(); event.stopPropagation(); quickAddFromCard('{{ product.id }}');"
-                            aria-label="Add {{ product.name }} to Bag">
-                        <i class="fa-solid fa-bag-shopping"></i> Add
-                    </button>
+                    {% if product.is_sold_out %}
+                        <button type="button" 
+                                class="quick-add-btn btn-disabled" 
+                                disabled
+                                aria-label="{{ product.name }} is Sold Out">
+                            <i class="fa-solid fa-ban"></i> Sold Out
+                        </button>
+                    {% else %}
+                        <button type="button" 
+                                class="quick-add-btn" 
+                                onclick="event.preventDefault(); event.stopPropagation(); quickAddFromCard('{{ product.id }}');"
+                                aria-label="Add {{ product.name }} to Bag">
+                            <i class="fa-solid fa-bag-shopping"></i> Add
+                        </button>
+                    {% endif %}
                 </a>
 
                 <!-- Product Details -->
                 <div class="card-body">
                     <div class="card-brand-row">
                         <span class="card-brand-name">{{ product.brand|default:"VILIO" }}</span>
-                        <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
+                        {% if product.is_sold_out %}
+                            <span class="card-delivery-tag" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.08);"><i class="fa-solid fa-ban"></i> Out of Stock</span>
+                        {% else %}
+                            <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
+                        {% endif %}
                     </div>
 
                     <a href="{% url 'product_detail' product.id %}" class="card-title">
@@ -2257,7 +2367,9 @@
 
                     <div class="card-price-row">
                         <span class="price-current">₹{{ product.current_price }}</span>
-                        {% if product.has_discount %}
+                        {% if product.is_sold_out %}
+                            <span class="price-sold-out">Sold Out</span>
+                        {% elif product.has_discount %}
                             <span class="price-mrp">₹{{ product.original_price }}</span>
                             {% if product.save_amount > 0 %}
                                 <span class="price-save">Save ₹{{ product.save_amount }}</span>

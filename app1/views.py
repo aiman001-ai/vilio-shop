@@ -34,7 +34,7 @@ from .models import (
 # ================= HOME =================
 def home(request):
     # Smart caching: cached for 180 seconds in memory for instant ~15ms response
-    display_products = cache.get('home_display_products_v3')
+    display_products = cache.get('home_display_products_v4')
     banners = cache.get('home_banners')
     reviews = cache.get('home_reviews_v1')
 
@@ -45,11 +45,13 @@ def home(request):
             'product_type'
         ).prefetch_related(
             'images',
-            'color_variants'
+            'color_variants',
+            'color_variants__sizes',
+            'simple_size_stocks'
         ).order_by('-id')
 
         display_products = list(queryset)
-        cache.set('home_display_products_v3', display_products, 180)
+        cache.set('home_display_products_v4', display_products, 180)
 
     # Randomly shuffle product list on each request so positions change dynamically
     shuffled_products = list(display_products)
@@ -1357,7 +1359,9 @@ def search(request):
         products = list(Product.objects.filter(
             Q(name__icontains=query) | Q(brand__icontains=query) | Q(product_type__name__icontains=query),
             is_active=True
-        ).select_related('category', 'sub_category', 'product_type').prefetch_related('images', 'color_variants'))
+        ).select_related('category', 'sub_category', 'product_type').prefetch_related(
+            'images', 'color_variants', 'color_variants__sizes', 'simple_size_stocks'
+        ))
     else:
         products = []
     return render(request, 'search_results.html', {'products': products, 'query': query})
@@ -1433,7 +1437,7 @@ def category_products(request, category_slug, sub_slug=None, type_slug=None):
         display_sub_name = 'Bottom Wear' if 'bottom' in clean_s else ('Top Wear' if 'top' in clean_s else clean_s.title())
 
     products_list = list(products.select_related('category', 'sub_category', 'product_type')
-                                 .prefetch_related('images', 'color_variants'))
+                                 .prefetch_related('images', 'color_variants', 'color_variants__sizes', 'simple_size_stocks'))
 
     cat_payload = {
         'products': products_list,

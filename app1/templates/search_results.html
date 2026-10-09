@@ -122,6 +122,80 @@
         z-index: 5;
     }
 
+    /* SOLD OUT BADGES & VISUAL INDICATORS */
+    .badge-sold-out {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: rgba(15, 15, 19, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ff3f6c;
+        border: 1px solid rgba(255, 63, 108, 0.4);
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        padding: 2.5px 8px;
+        border-radius: 4px;
+        z-index: 6;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .badge-sold-out i {
+        font-size: 8px;
+    }
+
+    .sold-out-center-tag {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(12, 12, 16, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 6px;
+        z-index: 6;
+        pointer-events: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sold-out-center-tag .dot-red {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff3f6c;
+        box-shadow: 0 0 8px #ff3f6c;
+    }
+
+    .product-card.is-sold-out .card-img {
+        filter: grayscale(35%) contrast(0.95);
+        opacity: 0.82;
+    }
+
+    .price-sold-out {
+        font-size: 11px;
+        font-weight: 700;
+        color: #ff3f6c;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
     .card-body {
         padding: 12px 14px 16px;
         display: flex;
@@ -202,9 +276,16 @@
     {% if products %}
     <div class="product-grid">
         {% for product in products %}
-        <div class="product-card">
+        <div class="product-card {% if product.is_sold_out %}is-sold-out{% endif %}">
             <a href="{% url 'product_detail' product.id %}" class="card-media-box">
-                {% if product.has_discount and product.discount_percentage > 0 %}
+                {% if product.is_sold_out %}
+                    <div class="badge-sold-out">
+                        <i class="fa-solid fa-circle-xmark"></i> SOLD OUT
+                    </div>
+                    <div class="sold-out-center-tag">
+                        <span class="dot-red"></span> SOLD OUT
+                    </div>
+                {% elif product.has_discount and product.discount_percentage > 0 %}
                     <div class="badge-discount">{{ product.discount_percentage }}% OFF</div>
                 {% endif %}
 
@@ -218,7 +299,11 @@
             <div class="card-body">
                 <div class="card-brand-row">
                     <span class="card-brand-name">{{ product.brand|default:"VILIO" }}</span>
-                    <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
+                    {% if product.is_sold_out %}
+                        <span class="card-delivery-tag" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.08);"><i class="fa-solid fa-ban"></i> Out of Stock</span>
+                    {% else %}
+                        <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
+                    {% endif %}
                 </div>
 
                 <a href="{% url 'product_detail' product.id %}" class="card-title">
@@ -227,7 +312,9 @@
 
                 <div class="card-price-row">
                     <span class="price-current">₹{{ product.current_price }}</span>
-                    {% if product.has_discount %}
+                    {% if product.is_sold_out %}
+                        <span class="price-sold-out">Sold Out</span>
+                    {% elif product.has_discount %}
                         <span class="price-mrp">₹{{ product.original_price }}</span>
                         {% if product.save_amount > 0 %}
                             <span class="price-save" style="font-size: 11px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">Save ₹{{ product.save_amount }}</span>

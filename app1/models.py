@@ -180,6 +180,42 @@ class Product(models.Model):
             return self.price
         return None
 
+    @property
+    def total_stock(self):
+        """Calculates total available stock across all sizes/variants"""
+        if self.has_variants:
+            try:
+                if hasattr(self, '_prefetched_objects_cache') and 'color_variants' in self._prefetched_objects_cache:
+                    return sum(
+                        size.stock 
+                        for color in self.color_variants.all() 
+                        for size in getattr(color, 'sizes', []).all()
+                    )
+            except Exception:
+                pass
+            from .models import ColorSizeStock
+            total = ColorSizeStock.objects.filter(product_color__product=self).aggregate(t=models.Sum('stock'))['t']
+            return total if total is not None else 0
+        else:
+            try:
+                if hasattr(self, '_prefetched_objects_cache') and 'simple_size_stocks' in self._prefetched_objects_cache:
+                    stocks = list(self.simple_size_stocks.all())
+                    if stocks:
+                        return sum(s.stock for s in stocks)
+                    return self.simple_stock or 0
+            except Exception:
+                pass
+            from .models import SimpleProductSizeStock
+            size_total = self.simple_size_stocks.aggregate(t=models.Sum('stock'))['t']
+            if size_total is not None:
+                return size_total
+            return self.simple_stock or 0
+
+    @property
+    def is_sold_out(self):
+        """Returns True if all sizes and variants have 0 stock remaining"""
+        return self.total_stock <= 0
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
