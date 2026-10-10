@@ -304,67 +304,240 @@ class ColorSizeStockAdmin(admin.ModelAdmin):
 # --- Main Product Core Admin (RAM Optimized Layout) ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    # 1. List View Tweaks
-    list_display = [
-    'name',
-    'brand',
-    'price',
-    'original_price',
-    'offer_enabled',
-    'offer_started_at',
-    'offer_status',
-    'get_full_category',
-    'has_variants',
-    'is_active'
-]
-    list_filter = ['is_active', 'has_variants', 'brand']
+    change_list_template = "admin/app1/product/change_list.html"
 
+    # 1. Clean visual list display
+    list_display = [
+        'product_card',
+        'pricing_display',
+        'stock_summary',
+        'category_badge',
+        'offer_badge',
+        'status_toggle',
+        'row_actions'
+    ]
+    list_filter = [
+        'is_active',
+        'category',
+        'sub_category',
+        'has_variants',
+        'offer_enabled',
+        'brand'
+    ]
     
     # Autocomplete config mapping smoothly now
     autocomplete_fields = ['category', 'sub_category', 'product_type']
-    search_fields = ['name', 'brand']
-    list_per_page = 20  # RAM saturation security boundaries
+    search_fields = ['name', 'brand', 'category__name', 'sub_category__name', 'product_type__name', 'id']
+    list_per_page = 50  # Show 50 products per page for quick access
     readonly_fields = ('offer_started_at',)
     
     inlines = [ProductImageInline, SimpleProductSizeStockInline, ProductColorInline]
 
-    def save_model(self, request, obj, form, change):
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        try:
+            total_count = Product.objects.count()
+            active_count = Product.objects.filter(is_active=True).count()
+            offer_count = Product.objects.filter(offer_enabled=True).count()
+            variants_count = ProductColor.objects.count()
+            extra_context['product_stats'] = {
+                'total': total_count,
+                'active': active_count,
+                'inactive': total_count - active_count,
+                'offer': offer_count,
+                'variants': variants_count,
+            }
+        except Exception:
+            pass
+        return super().changelist_view(request, extra_context=extra_context)
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('quick-toggle-active/', self.admin_site.admin_view(csrf_exempt(self.quick_toggle_active_view)), name='product_quick_toggle_active'),
+        ]
+        return custom_urls + urls
+
+    def quick_toggle_active_view(self, request):
+        if request.method != 'POST':
+            return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            product_id = data.get('product_id')
+            product = Product.objects.get(id=product_id)
+            product.is_active = not product.is_active
+            product.save(update_fields=['is_active'])
+            cache.delete('home_display_products_v3')
+            cache.delete('home_display_products_v4')
+            return JsonResponse({'success': True, 'is_active': product.is_active})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    def save_model(self, request, obj, form, change):
         if change:
             old_obj = Product.objects.get(pk=obj.pk)
-
-            if not old_obj.offer_enabled and obj.       offer_enabled:
+            if not old_obj.offer_enabled and obj.offer_enabled:
                 obj.offer_started_at = timezone.now()
-
             elif old_obj.offer_enabled and not obj.offer_enabled:
                 obj.offer_started_at = None
-
         elif obj.offer_enabled:
             obj.offer_started_at = timezone.now()
-
         super().save_model(request, obj, form, change)
 
     # 2. SQL N+1 Query Optimization
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related('category', 'sub_category', 'product_type')
+        return queryset.select_related('category', 'sub_category', 'product_type').prefetch_related(
+            'color_variants__sizes',
+            'simple_size_stocks'
+        )
 
-    # 3. Dynamic Path Loader (No Database Overhead)
-    def get_full_category(self, obj):
-        path = f"{obj.category.name}" if obj.category else "No Category"
-        if obj.sub_category:
-            path += f" -> {obj.sub_category.name}"
-        if obj.product_type:
-            path += f" -> {obj.product_type.name}"
-        return path
-    get_full_category.short_description = 'Full Category Path'
+    # 3. Product Visual Presentation
+    def product_card(self, obj):
+        image_url = None
+        if obj.image:
+            try:
+                image_url = obj.image.url
+            except Exception:
+                pass
+        if not image_url and obj.has_variants:
+            first_c = obj.color_variants.first()
+            if first_c and first_c.color_image:
+                try:
+                    image_url = first_c.color_image.url
+                except Exception:
+                    pass
 
-    def offer_status(self, obj):
-        if obj.offer_active:
-            return "✅ Active"
-            return "❌ Expired"
+        img_tag = (
+            f'<img src="{image_url}" class="product-row-thumb" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0;" alt="{obj.name}">'
+            if image_url else
+            '<div style="width: 44px; height: 44px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #94a3b8; border: 1px dashed #cbd5e1; flex-shrink: 0;">No Img</div>'
+        )
 
-    offer_status.short_description = "Offer"
+        edit_url = reverse('admin:app1_product_change', args=[obj.id])
+        site_url = reverse('product_detail', args=[obj.id])
+        brand_name = obj.brand or 'VILIO'
+
+        return format_html(
+            '<div style="display: flex; align-items: center; gap: 12px; min-width: 230px;">'
+            '{}'
+            '<div style="line-height: 1.35;">'
+            '<a href="{}" style="font-weight: 700; color: #0f172a; font-size: 13.5px; text-decoration: none;" title="Edit Product">{}</a>'
+            '<div style="display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 11px; color: #64748b;">'
+            '<span style="background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-weight: 700;">#{}</span>'
+            '<span style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 10px;">{}</span>'
+            '<a href="{}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600;" title="View on live website">👁️ Store</a>'
+            '</div>'
+            '</div>'
+            '</div>',
+            mark_safe(img_tag), edit_url, obj.name, obj.id, brand_name, site_url
+        )
+    product_card.short_description = "Product"
+
+    def pricing_display(self, obj):
+        disc = obj.discount_percentage
+        disc_badge = f'<span style="background: #dcfce7; color: #15803d; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; font-weight: 800;">{disc}% OFF</span>' if disc > 0 else ''
+        mrp_tag = f'<span style="font-size: 11.5px; color: #94a3b8; text-decoration: line-through;">₹{obj.original_price}</span>' if obj.original_price and obj.original_price > obj.price else ''
+        
+        return format_html(
+            '<div style="line-height: 1.3;">'
+            '<div style="font-size: 14px; font-weight: 800; color: #0f172a;">₹{}</div>'
+            '<div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">{} {}</div>'
+            '</div>',
+            obj.price, mark_safe(mrp_tag), mark_safe(disc_badge)
+        )
+    pricing_display.short_description = "Price"
+
+    def stock_summary(self, obj):
+        total = obj.total_stock
+        is_sold_out = total <= 0
+        
+        if is_sold_out:
+            stock_badge = '<span style="display: inline-block; padding: 3px 8px; border-radius: 4px; background: #fee2e2; color: #dc2626; font-weight: 800; font-size: 11px; border: 1px solid #fca5a5;">❌ Sold Out (0)</span>'
+        else:
+            stock_badge = f'<span style="display: inline-block; padding: 3px 8px; border-radius: 4px; background: #dcfce7; color: #15803d; font-weight: 800; font-size: 11px; border: 1px solid #86efac;">✅ {total} in stock</span>'
+        
+        if obj.has_variants:
+            color_count = obj.color_variants.count()
+            color_url = f"{reverse('admin:app1_productcolor_changelist')}?product__id__exact={obj.id}"
+            return format_html(
+                '<div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">'
+                '{}'
+                '<div style="display: flex; align-items: center; gap: 6px;">'
+                '<span style="font-size: 11px; color: #64748b; font-weight: 600;">🎨 {} colors</span>'
+                '<a href="{}" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none;" title="Edit Color Stocks for this Product">⚡ Stocks</a>'
+                '</div>'
+                '</div>',
+                mark_safe(stock_badge), color_count, color_url
+            )
+        else:
+            return format_html('<div>{}</div>', mark_safe(stock_badge))
+    stock_summary.short_description = "Stock"
+
+    def category_badge(self, obj):
+        cat = obj.category.name if obj.category else "-"
+        sub = obj.sub_category.name if obj.sub_category else ""
+        ptype = obj.product_type.name if obj.product_type else ""
+        
+        parts = [f'<span style="font-weight: 700; color: #0369a1;">{cat}</span>']
+        if sub:
+            parts.append(f'<span style="color: #334155;">{sub}</span>')
+        if ptype:
+            parts.append(f'<span style="color: #64748b;">{ptype}</span>')
+            
+        return format_html(
+            '<div style="font-size: 11.5px; line-height: 1.4;">'
+            '{}'
+            '</div>',
+            mark_safe(' <span style="color: #cbd5e1;">›</span> '.join(parts))
+        )
+    category_badge.short_description = "Category"
+
+    def offer_badge(self, obj):
+        if obj.offer_enabled:
+            if obj.offer_active:
+                return mark_safe(
+                    '<span style="display: inline-block; padding: 3px 8px; border-radius: 12px; background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-weight: 800; font-size: 11px;">'
+                    '🔥 Active'
+                    '</span>'
+                )
+            else:
+                return mark_safe(
+                    '<span style="display: inline-block; padding: 3px 8px; border-radius: 12px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 700; font-size: 11px;" title="Timer cycle is currently off">'
+                    '⏸️ Paused'
+                    '</span>'
+                )
+        return mark_safe('<span style="color: #94a3b8; font-size: 12px;">—</span>')
+    offer_badge.short_description = "Offer"
+
+    def status_toggle(self, obj):
+        is_active = obj.is_active
+        btn_style = (
+            "background: #dcfce7; color: #15803d; border: 1px solid #86efac;"
+            if is_active else
+            "background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;"
+        )
+        label = "✅ Active" if is_active else "🚫 Inactive"
+        return format_html(
+            '<button type="button" id="active-btn-{}" onclick="toggleProductActive({}, this)" '
+            'style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; {}">'
+            '{}'
+            '</button>',
+            obj.id, obj.id, btn_style, label
+        )
+    status_toggle.short_description = "Status"
+
+    def row_actions(self, obj):
+        edit_url = reverse('admin:app1_product_change', args=[obj.id])
+        site_url = reverse('product_detail', args=[obj.id])
+        return format_html(
+            '<div style="display: flex; align-items: center; gap: 6px;">'
+            '<a href="{}" style="background: #2563eb; color: #ffffff; padding: 4px 10px; border-radius: 5px; font-size: 11.5px; font-weight: 700; text-decoration: none;" title="Edit Product">✏️ Edit</a>'
+            '<a href="{}" target="_blank" style="background: #f1f5f9; color: #334155; padding: 4px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 700; text-decoration: none; border: 1px solid #cbd5e1;" title="View on Live Store">👁️</a>'
+            '</div>',
+            edit_url, site_url
+        )
+    row_actions.short_description = "Actions"
     
             
     # 4. Detailed Sections Fieldsets

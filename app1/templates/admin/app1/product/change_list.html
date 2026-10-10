@@ -1,0 +1,345 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools %}
+<div class="product-dashboard-toolbar">
+    <div class="dashboard-header-row">
+        <div class="dashboard-branding">
+            <span class="dashboard-icon">🛍️</span>
+            <div>
+                <div class="dashboard-title">Products Catalog & Visibility Manager</div>
+                <div class="dashboard-subtitle">Sabhi products ki live visibility, pricing aur stock status yahi se easily manage karein.</div>
+            </div>
+        </div>
+        <div class="dashboard-action-buttons">
+            <a href="{% url 'admin:app1_productcolor_changelist' %}" class="btn-action-colors" title="Manage size stocks for all color variants">
+                ⚡ Live Color Stock Manager
+            </a>
+            <a href="{% url 'admin:app1_product_add' %}" class="btn-action-add" title="Add a brand new product">
+                ➕ Add New Product
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Row -->
+    <div class="dashboard-metrics-grid">
+        <div class="metric-card">
+            <span class="metric-icon">📦</span>
+            <div>
+                <div class="metric-label">Total Products</div>
+                <div class="metric-val">{{ product_stats.total|default:cl.result_count }}</div>
+            </div>
+        </div>
+        <div class="metric-card">
+            <span class="metric-icon">🟢</span>
+            <div>
+                <div class="metric-label">Active on Site</div>
+                <div class="metric-val text-green" id="stat-active-count">{{ product_stats.active|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="metric-card">
+            <span class="metric-icon">🚫</span>
+            <div>
+                <div class="metric-label">Inactive / Hidden</div>
+                <div class="metric-val text-gray" id="stat-inactive-count">{{ product_stats.inactive|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="metric-card">
+            <span class="metric-icon">🔥</span>
+            <div>
+                <div class="metric-label">Auto Offers</div>
+                <div class="metric-val text-orange">{{ product_stats.offer|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="metric-card">
+            <span class="metric-icon">🎨</span>
+            <div>
+                <div class="metric-label">Color Variants</div>
+                <div class="metric-val text-blue">{{ product_stats.variants|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Filter Shortcuts -->
+    <div class="dashboard-filters-row">
+        <span class="filter-label">Quick View:</span>
+        <a href="?" class="filter-chip {% if not request.GET %}active{% endif %}">All ({{ product_stats.total|default:cl.result_count }})</a>
+        <a href="?is_active__exact=1" class="filter-chip {% if request.GET.is_active__exact == '1' %}active{% endif %}">✅ Active Only</a>
+        <a href="?is_active__exact=0" class="filter-chip {% if request.GET.is_active__exact == '0' %}active{% endif %}">🚫 Inactive Only</a>
+        <a href="?offer_enabled__exact=1" class="filter-chip {% if request.GET.offer_enabled__exact == '1' %}active{% endif %}">🔥 On Offer</a>
+        <a href="?has_variants__exact=1" class="filter-chip {% if request.GET.has_variants__exact == '1' %}active{% endif %}">🎨 With Colors</a>
+        <a href="?has_variants__exact=0" class="filter-chip {% if request.GET.has_variants__exact == '0' %}active{% endif %}">⚡ Single (No Colors)</a>
+    </div>
+</div>
+
+<style>
+.product-dashboard-toolbar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.dashboard-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.dashboard-branding {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.dashboard-icon {
+    font-size: 26px;
+    background: rgba(255,255,255,0.1);
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+.dashboard-title {
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    color: #ffffff;
+}
+.dashboard-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+.dashboard-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.btn-action-colors {
+    background: #3b82f6;
+    color: #ffffff !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+    transition: all 0.2s ease;
+}
+.btn-action-colors:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+.btn-action-add {
+    background: #10b981;
+    color: #ffffff !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.35);
+    transition: all 0.2s ease;
+}
+.btn-action-add:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.dashboard-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.metric-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+}
+.metric-icon {
+    font-size: 20px;
+}
+.metric-label {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.metric-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-top: 1px;
+}
+.text-green { color: #34d399 !important; }
+.text-gray { color: #cbd5e1 !important; }
+.text-orange { color: #fb923c !important; }
+.text-blue { color: #38bdf8 !important; }
+
+.dashboard-filters-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+.filter-label {
+    color: #94a3b8;
+    font-weight: 700;
+    margin-right: 4px;
+}
+.filter-chip {
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1 !important;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none !important;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.15s ease;
+}
+.filter-chip:hover {
+    background: rgba(255,255,255,0.18);
+    color: #ffffff !important;
+}
+.filter-chip.active {
+    background: #3b82f6;
+    color: #ffffff !important;
+    border-color: #3b82f6;
+}
+
+#result_list th, #result_list td {
+    vertical-align: middle !important;
+}
+#result_list tr:hover {
+    background-color: #f8fafc !important;
+}
+.product-row-thumb {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.product-row-thumb:hover {
+    transform: scale(1.6);
+    z-index: 10;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+}
+</style>
+
+{{ block.super }}
+
+<div style="display:none;" id="product-admin-meta" data-csrf="{{ csrf_token }}">
+    {% csrf_token %}
+</div>
+
+<script>
+const TOGGLE_ACTIVE_URL = "{% url 'admin:product_quick_toggle_active' %}";
+const TEMPLATE_CSRF_TOKEN = "{{ csrf_token }}";
+
+function getProductCsrfToken() {
+    if (TEMPLATE_CSRF_TOKEN && TEMPLATE_CSRF_TOKEN.trim() !== '') {
+        return TEMPLATE_CSRF_TOKEN;
+    }
+    const metaEl = document.getElementById('product-admin-meta');
+    if (metaEl && metaEl.getAttribute('data-csrf')) {
+        return metaEl.getAttribute('data-csrf');
+    }
+    const tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+    if (tokenInput && tokenInput.value) {
+        return tokenInput.value;
+    }
+    const name = 'csrftoken';
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        }
+    }
+    return '';
+}
+
+function toggleProductActive(productId, btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    const oldText = btn.innerText;
+    btn.innerText = '⏳...';
+
+    fetch(TOGGLE_ACTIVE_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getProductCsrfToken()
+        },
+        body: JSON.stringify({ product_id: productId })
+    })
+    .then(async r => {
+        let data = null;
+        try {
+            data = await r.json();
+        } catch (e) {
+            data = null;
+        }
+        if (!r.ok) {
+            throw new Error((data && data.error) ? data.error : `HTTP ${r.status}`);
+        }
+        return data || {};
+    })
+    .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+            const activeStat = document.getElementById('stat-active-count');
+            const inactiveStat = document.getElementById('stat-inactive-count');
+            if (data.is_active) {
+                btn.innerText = '✅ Active';
+                btn.style.background = '#dcfce7';
+                btn.style.color = '#15803d';
+                btn.style.border = '1px solid #86efac';
+                if (activeStat && inactiveStat) {
+                    activeStat.innerText = parseInt(activeStat.innerText || '0', 10) + 1;
+                    inactiveStat.innerText = Math.max(0, parseInt(inactiveStat.innerText || '0', 10) - 1);
+                }
+            } else {
+                btn.innerText = '🚫 Inactive';
+                btn.style.background = '#fee2e2';
+                btn.style.color = '#dc2626';
+                btn.style.border = '1px solid #fca5a5';
+                if (activeStat && inactiveStat) {
+                    activeStat.innerText = Math.max(0, parseInt(activeStat.innerText || '0', 10) - 1);
+                    inactiveStat.innerText = parseInt(inactiveStat.innerText || '0', 10) + 1;
+                }
+            }
+        } else {
+            btn.innerText = oldText;
+            alert(data.error || 'Failed to update status');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerText = oldText;
+        alert(err.message || 'Error updating product status');
+    });
+}
+</script>
+{% endblock %}
