@@ -176,4 +176,12 @@
     }
 </style>
 
+<script>
+document.querySelector('form')?.addEventListener('submit', function() {
+    if (typeof fbq === 'function') {
+        fbq('track', 'Contact');
+    }
+});
+</script>
+
 {% endblock %}

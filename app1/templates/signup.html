@@ -335,4 +335,14 @@
         </div>
     </div>
 </div>
+
+<script>
+document.querySelector('form.auth-form')?.addEventListener('submit', function() {
+    if (typeof fbq === 'function') {
+        fbq('track', 'CompleteRegistration', {
+            status: 'submitted'
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -301,4 +301,12 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+if (typeof fbq === 'function') {
+    fbq('track', 'Search', {
+        search_string: '{{ query|escapejs }}'
+    });
+}
+</script>
 {% endblock %}

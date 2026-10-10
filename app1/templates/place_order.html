@@ -489,6 +489,12 @@ document.querySelectorAll('input[name="payment_method"]').forEach(function(radio
 });
 
 document.addEventListener("DOMContentLoaded", function() {
+    if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout', {
+            value: Number('{{ total|default:0 }}'),
+            currency: 'INR'
+        });
+    }
     const activePayment = document.querySelector('input[name="payment_method"]:checked');
     if (activePayment) {
         activePayment.dispatchEvent(new Event('change'));
@@ -505,6 +511,13 @@ document.getElementById('checkout-form').onsubmit = function(e) {
     }
     const addressId = addressRadio.value;
     const btn = document.getElementById('final-submit-btn');
+
+    if (typeof fbq === 'function') {
+        fbq('track', 'AddPaymentInfo', {
+            value: Number('{{ total|default:0 }}'),
+            currency: 'INR'
+        });
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Order...';
