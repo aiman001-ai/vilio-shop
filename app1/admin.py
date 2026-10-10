@@ -7,6 +7,7 @@ from django.urls import reverse, path
 from django.utils import timezone
 from django.utils.html import format_html  # <-- यह इम्पोर्ट करना ज़रूरी है
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -200,9 +201,9 @@ class ProductColorAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('quick-update-stock/', self.admin_site.admin_view(self.quick_update_stock_view), name='productcolor_quick_update_stock'),
-            path('quick-init-sizes/', self.admin_site.admin_view(self.quick_init_sizes_view), name='productcolor_quick_init_sizes'),
-            path('quick-add-custom-size/', self.admin_site.admin_view(self.quick_add_custom_size_view), name='productcolor_quick_add_custom_size'),
+            path('quick-update-stock/', self.admin_site.admin_view(csrf_exempt(self.quick_update_stock_view)), name='productcolor_quick_update_stock'),
+            path('quick-init-sizes/', self.admin_site.admin_view(csrf_exempt(self.quick_init_sizes_view)), name='productcolor_quick_init_sizes'),
+            path('quick-add-custom-size/', self.admin_site.admin_view(csrf_exempt(self.quick_add_custom_size_view)), name='productcolor_quick_add_custom_size'),
         ]
         return custom_urls + urls
 

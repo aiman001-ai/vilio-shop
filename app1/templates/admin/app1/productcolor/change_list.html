@@ -119,21 +119,39 @@
 
 {{ block.super }}
 
+<div style="display:none;" id="stock-admin-meta" data-csrf="{{ csrf_token }}">
+    {% csrf_token %}
+</div>
+
 <script>
+const STOCK_UPDATE_URL = "{% url 'admin:productcolor_quick_update_stock' %}";
+const STOCK_INIT_URL = "{% url 'admin:productcolor_quick_init_sizes' %}";
+const STOCK_ADD_CUSTOM_URL = "{% url 'admin:productcolor_quick_add_custom_size' %}";
+const TEMPLATE_CSRF_TOKEN = "{{ csrf_token }}";
+
 function getCsrfToken() {
+    if (TEMPLATE_CSRF_TOKEN && TEMPLATE_CSRF_TOKEN.trim() !== '') {
+        return TEMPLATE_CSRF_TOKEN;
+    }
+    const metaEl = document.getElementById('stock-admin-meta');
+    if (metaEl && metaEl.getAttribute('data-csrf')) {
+        return metaEl.getAttribute('data-csrf');
+    }
+    const tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+    if (tokenInput && tokenInput.value) {
+        return tokenInput.value;
+    }
     const name = 'csrftoken';
-    let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
             const cookie = cookies[i].trim();
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+                return decodeURIComponent(cookie.substring(name.length + 1));
             }
         }
     }
-    return cookieValue;
+    return '';
 }
 
 function updateChangedCounter() {
@@ -183,7 +201,7 @@ function saveColorStock(colorId) {
         status.innerText = 'Saving...';
     }
 
-    fetch('quick-update-stock/', {
+    fetch(STOCK_UPDATE_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -191,7 +209,18 @@ function saveColorStock(colorId) {
         },
         body: JSON.stringify({ updates: updates, color_id: colorId })
     })
-    .then(r => r.json())
+    .then(async r => {
+        let data = null;
+        try {
+            data = await r.json();
+        } catch (e) {
+            data = null;
+        }
+        if (!r.ok) {
+            throw new Error((data && data.error) ? data.error : `HTTP ${r.status}`);
+        }
+        return data || {};
+    })
     .then(data => {
         if (btn) btn.disabled = false;
         if (data.success) {
@@ -231,7 +260,7 @@ function saveColorStock(colorId) {
         if (btn) btn.disabled = false;
         if (status) {
             status.style.color = '#ef4444';
-            status.innerText = 'Network error';
+            status.innerText = err.message || 'Error saving';
         }
     });
 }
@@ -269,7 +298,7 @@ function saveAllChangedStocks() {
         msg.innerText = `Saving ${updates.length} sizes...`;
     }
 
-    fetch('quick-update-stock/', {
+    fetch(STOCK_UPDATE_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -277,7 +306,18 @@ function saveAllChangedStocks() {
         },
         body: JSON.stringify({ updates: updates })
     })
-    .then(r => r.json())
+    .then(async r => {
+        let data = null;
+        try {
+            data = await r.json();
+        } catch (e) {
+            data = null;
+        }
+        if (!r.ok) {
+            throw new Error((data && data.error) ? data.error : `HTTP ${r.status}`);
+        }
+        return data || {};
+    })
     .then(data => {
         if (saveAllBtn) saveAllBtn.disabled = false;
         if (data.success) {
@@ -322,14 +362,14 @@ function saveAllChangedStocks() {
         if (saveAllBtn) saveAllBtn.disabled = false;
         if (msg) {
             msg.style.color = '#f87171';
-            msg.innerText = 'Network error while saving';
+            msg.innerText = err.message || 'Error saving';
         }
     });
 }
 
 function initStandardSizes(colorId) {
     if (!confirm('Add standard sizes (S, M, L, XL, 2XL) with 0 stock to this color?')) return;
-    fetch('quick-init-sizes/', {
+    fetch(STOCK_INIT_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -337,7 +377,18 @@ function initStandardSizes(colorId) {
         },
         body: JSON.stringify({ color_id: colorId })
     })
-    .then(r => r.json())
+    .then(async r => {
+        let data = null;
+        try {
+            data = await r.json();
+        } catch (e) {
+            data = null;
+        }
+        if (!r.ok) {
+            throw new Error((data && data.error) ? data.error : `HTTP ${r.status}`);
+        }
+        return data || {};
+    })
     .then(data => {
         if (data.success && data.sizes) {
             const box = document.getElementById(`sizes-box-${colorId}`);
@@ -358,6 +409,9 @@ function initStandardSizes(colorId) {
         } else {
             alert(data.error || 'Could not add sizes');
         }
+    })
+    .catch(err => {
+        alert(err.message || 'Error initializing sizes');
     });
 }
 
@@ -366,7 +420,7 @@ function addCustomSizePrompt(colorId) {
     if (!sizeName || !sizeName.trim()) return;
     const stockVal = parseInt(prompt(`Enter initial stock quantity for size "${sizeName.trim()}":`, '0'), 10) || 0;
 
-    fetch('quick-add-custom-size/', {
+    fetch(STOCK_ADD_CUSTOM_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -374,13 +428,27 @@ function addCustomSizePrompt(colorId) {
         },
         body: JSON.stringify({ color_id: colorId, size_name: sizeName.trim(), stock: stockVal })
     })
-    .then(r => r.json())
+    .then(async r => {
+        let data = null;
+        try {
+            data = await r.json();
+        } catch (e) {
+            data = null;
+        }
+        if (!r.ok) {
+            throw new Error((data && data.error) ? data.error : `HTTP ${r.status}`);
+        }
+        return data || {};
+    })
     .then(data => {
         if (data.success) {
             window.location.reload();
         } else {
             alert(data.error || 'Could not add custom size');
         }
+    })
+    .catch(err => {
+        alert(err.message || 'Error adding size');
     });
 }
 </script>
