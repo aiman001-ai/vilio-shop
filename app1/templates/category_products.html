@@ -298,27 +298,6 @@
         flex: 1;
     }
 
-    .card-brand-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 4px;
-    }
-
-    .card-brand-name {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #71717a;
-        letter-spacing: 0.8px;
-    }
-
-    .card-delivery-tag {
-        font-size: 10px;
-        color: var(--success);
-        font-weight: 700;
-    }
-
     .card-title {
         font-size: 14px;
         font-weight: 600;
@@ -431,11 +410,6 @@
             </a>
 
             <div class="card-body">
-                <div class="card-brand-row">
-                    <span class="card-brand-name">{{ product.brand|default:"VILIO" }}</span>
-                    <span class="card-delivery-tag"><i class="fa-solid fa-bolt"></i> COD</span>
-                </div>
-
                 <a href="{% url 'product_detail' product.id %}" class="card-title">
                     {{ product.name }}
                 </a>
