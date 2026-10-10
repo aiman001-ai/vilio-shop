@@ -53,7 +53,7 @@
             --radius-lg: 14px;
             --radius-full: 9999px;
             --header-height: 52px;
-            --announcement-height: 24px;
+            --announcement-height: 0px;
             --bottom-nav-height: 60px;
         }
 
@@ -68,7 +68,7 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-page);
             color: var(--text-main);
-            padding-top: calc(var(--header-height) + var(--announcement-height));
+            padding-top: var(--header-height);
             padding-bottom: 0;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
@@ -95,59 +95,10 @@
             font-family: inherit;
         }
 
-        /* ===== 2. ANNOUNCEMENT BAR TICKER ===== */
-        .announcement-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--announcement-height);
-            background: #000000;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.6px;
-            line-height: var(--announcement-height);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1002;
-            overflow: hidden;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            text-transform: uppercase;
-        }
-
-        .announcement-ticker {
-            display: inline-flex;
-            align-items: center;
-            gap: 16px;
-            white-space: nowrap;
-            animation: tickerSlide 22s linear infinite;
-        }
-
-        @keyframes tickerSlide {
-            0% { transform: translateX(25%); }
-            100% { transform: translateX(-50%); }
-        }
-
-        .announcement-ticker:hover {
-            animation-play-state: paused;
-        }
-
-        .ticker-highlight {
-            color: #ff3f6c;
-            font-weight: 700;
-        }
-
-        .ticker-dot {
-            opacity: 0.4;
-            font-size: 8px;
-        }
-
-        /* ===== 3. LUXURY PRIMARY HEADER ===== */
+        /* ===== LUXURY PRIMARY HEADER ===== */
         .site-header {
             position: fixed;
-            top: var(--announcement-height);
+            top: 0;
             left: 0;
             width: 100%;
             height: var(--header-height);
@@ -165,7 +116,7 @@
         }
 
         .site-header.header-hidden {
-            transform: translateY(calc(-100% - var(--announcement-height)));
+            transform: translateY(-100%);
             pointer-events: none;
         }
 
@@ -619,34 +570,13 @@
         @media (max-width: 768px) {
             :root {
                 --header-height: 56px;
-                --announcement-height: 24px;
+                --announcement-height: 0px;
                 --bottom-nav-height: 60px;
             }
 
             body {
-                padding-top: calc(56px + var(--announcement-height, 24px)) !important;
+                padding-top: 56px !important;
                 padding-bottom: var(--bottom-nav-height, 60px);
-            }
-
-            /* Announcement Bar Ticker on Mobile */
-            .announcement-bar {
-                height: 24px !important;
-                line-height: 24px !important;
-                background: linear-gradient(90deg, #07070a 0%, #15151c 50%, #07070a 100%) !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-                font-size: 9.5px !important;
-                font-weight: 700 !important;
-                letter-spacing: 0.8px !important;
-            }
-
-            .announcement-ticker {
-                gap: 20px !important;
-            }
-
-            .ticker-highlight {
-                color: #ff3f6c !important;
-                font-weight: 800 !important;
-                text-shadow: 0 0 10px rgba(255, 63, 108, 0.5) !important;
             }
 
             /* Luxury Mobile Site Header */
@@ -662,7 +592,7 @@
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
                 box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 4px 24px rgba(0, 0, 0, 0.45) !important;
                 position: fixed !important;
-                top: var(--announcement-height, 24px) !important;
+                top: 0 !important;
                 left: 0 !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
@@ -1649,23 +1579,6 @@
 </head>
 
 <body>
-    <!-- 1. TOP ANNOUNCEMENT BAR TICKER -->
-    <div class="announcement-bar">
-        <div class="announcement-ticker">
-            <span>⚡ <span class="ticker-highlight">NEW DROPS LIVE</span> • PREMIUM STREETWEAR COLLECTION</span>
-            <span class="ticker-dot">•</span>
-            <span>🚚 FREE EXPRESS SHIPPING ON ORDERS OVER ₹499</span>
-            <span class="ticker-dot">•</span>
-            <span>💵 CASH ON DELIVERY (COD) AVAILABLE ACROSS INDIA</span>
-            <span class="ticker-dot">•</span>
-            <span>🔄 7 DAYS HASSLE-FREE EXCHANGES & RETURNS</span>
-            <span class="ticker-dot">•</span>
-            <span>⚡ <span class="ticker-highlight">NEW DROPS LIVE</span> • PREMIUM STREETWEAR COLLECTION</span>
-            <span class="ticker-dot">•</span>
-            <span>🚚 FREE EXPRESS SHIPPING ON ORDERS OVER ₹499</span>
-        </div>
-    </div>
-
     <!-- 2. EXPANDABLE SEARCH OVERLAY -->
     <div id="search-overlay" class="search-overlay-bar">
         <div class="search-container-inner">

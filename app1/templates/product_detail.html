@@ -451,7 +451,7 @@
 <style>
 /* ===== 1. CORE RESET & HEADER CLEARANCE FIX ===== */
 body {
-    padding-top: calc(var(--header-height, 56px) + var(--announcement-height, 24px)) !important;
+    padding-top: var(--header-height, 52px) !important;
     background-color: #ffffff;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #18181b;
@@ -536,7 +536,7 @@ body {
 /* ===== 4. LEFT GALLERY: VERTICAL THUMBNAILS ON LEFT, MAIN SHOWCASE ON RIGHT ===== */
 .gallery-section { 
     position: sticky; 
-    top: calc(var(--header-height, 52px) + var(--announcement-height, 24px) + 16px); 
+    top: calc(var(--header-height, 52px) + 16px); 
     height: fit-content; 
     width: 100%;
     display: flex;
@@ -1875,7 +1875,7 @@ body {
 /* ===== 11. RESPONSIVE MOBILE OVERHAUL (max-width: 768px) ===== */
 @media (max-width: 768px) {
     body {
-        padding-top: calc(var(--header-height, 56px) + var(--announcement-height, 24px)) !important;
+        padding-top: var(--header-height, 56px) !important;
     }
     
     .pdp-breadcrumbs-bar {
