@@ -225,5 +225,13 @@ if (typeof gtag === 'function') {
           'transaction_id': '{{ order.id }}'
     });
 }
+if (typeof fbq === 'function') {
+    fbq('track', 'Purchase', {
+        value: {{ order.total_amount }},
+        currency: 'INR',
+        content_type: 'product',
+        order_id: '{{ order.id }}'
+    });
+}
 </script>
 {% endblock %}

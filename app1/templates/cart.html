@@ -576,5 +576,16 @@ function updateItemQuantity(itemId, action) {
         console.error("Cart update error:", err);
     });
 }
+
+document.querySelectorAll('.btn-checkout-primary').forEach(el => {
+    el.addEventListener('click', function() {
+        if (typeof fbq === 'function') {
+            fbq('track', 'InitiateCheckout', {
+                value: Number('{{ total|default:0 }}'),
+                currency: 'INR'
+            });
+        }
+    });
+});
 </script>
 {% endblock %}

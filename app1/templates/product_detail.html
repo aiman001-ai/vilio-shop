@@ -2536,6 +2536,15 @@ function validatedAddToCart(productId) {
             if (typeof showToast === 'function') {
                 showToast("🛍️ Added to your bag!");
             }
+            if (typeof fbq === 'function') {
+                fbq('track', 'AddToCart', {
+                    content_name: '{{ product.name|escapejs }}',
+                    content_ids: [String(productId)],
+                    content_type: 'product',
+                    value: Number('{{ product.price|default:0 }}'),
+                    currency: 'INR'
+                });
+            }
         } else { 
             showPopup("❌ " + (data.message || "Could not add to bag")); 
         }
@@ -2547,6 +2556,16 @@ function validatedBuyNow(productId) {
     const selection = validateSelection();
     if (!selection) return; 
     
+    if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout', {
+            content_name: '{{ product.name|escapejs }}',
+            content_ids: [String(productId)],
+            content_type: 'product',
+            value: Number('{{ product.price|default:0 }}'),
+            currency: 'INR'
+        });
+    }
+
     window.location.href = `/shop-now/${productId}/?color=${encodeURIComponent(selection.color)}&size=${encodeURIComponent(selection.size)}`;
 }
 
@@ -2934,6 +2953,18 @@ document.addEventListener('DOMContentLoaded', startDetailTimer);
       "name": "Vilio"
     }
   }
+}
+</script>
+
+<script>
+if (typeof fbq === 'function') {
+    fbq('track', 'ViewContent', {
+        content_name: '{{ product.name|escapejs }}',
+        content_ids: ['{{ product.id }}'],
+        content_type: 'product',
+        value: Number('{{ product.price|default:0 }}'),
+        currency: 'INR'
+    });
 }
 </script>
 
