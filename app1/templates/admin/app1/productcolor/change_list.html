@@ -1,0 +1,387 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools %}
+<div class="live-stock-toolbar">
+    <div class="toolbar-info">
+        <span class="toolbar-icon">⚡</span>
+        <div>
+            <div class="toolbar-title">Live Product Color Stock Manager</div>
+            <div class="toolbar-subtitle">Ab stock update karne ke liye product ke andar jaane ki zaroorat nahi hai. Sabhi size stock yahi se edit karke <b>Save</b> karein.</div>
+        </div>
+    </div>
+    <div class="toolbar-actions">
+        <button id="save-all-stocks-btn" type="button" class="btn-save-all" onclick="saveAllChangedStocks()">
+            <span>💾 Save All Stock Changes</span>
+            <span id="changed-counter" class="counter-chip">0 modified</span>
+        </button>
+        <span id="save-all-msg" class="save-all-msg"></span>
+    </div>
+</div>
+
+<style>
+.live-stock-toolbar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.toolbar-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.toolbar-icon {
+    font-size: 26px;
+    background: rgba(255,255,255,0.1);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+.toolbar-title {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    color: #ffffff;
+}
+.toolbar-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 3px;
+    line-height: 1.4;
+}
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.btn-save-all {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 10px rgba(16,185,129,0.4);
+    transition: all 0.2s ease;
+}
+.btn-save-all:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+.counter-chip {
+    background: rgba(0,0,0,0.25);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.save-all-msg {
+    font-size: 12px;
+    font-weight: 700;
+}
+.stock-pill {
+    transition: all 0.2s ease;
+}
+.stock-pill.is-modified {
+    border-color: #f59e0b !important;
+    background: #fffbeb !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3) !important;
+}
+.stock-pill.is-saved {
+    border-color: #10b981 !important;
+    background: #ecfdf5 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+}
+.stock-input:focus {
+    background: #ffffff !important;
+}
+#result_list th, #result_list td {
+    vertical-align: middle !important;
+}
+</style>
+
+{{ block.super }}
+
+<script>
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateChangedCounter() {
+    const inputs = document.querySelectorAll('.stock-input');
+    let changedCount = 0;
+    inputs.forEach(input => {
+        const original = input.getAttribute('data-original');
+        const current = input.value.trim();
+        const pill = input.closest('.stock-pill');
+        if (original !== current) {
+            changedCount++;
+            if (pill) pill.classList.add('is-modified');
+        } else {
+            if (pill) pill.classList.remove('is-modified');
+        }
+    });
+    const counter = document.getElementById('changed-counter');
+    if (counter) counter.innerText = `${changedCount} modified`;
+}
+
+function handleStockInput(input, colorId) {
+    updateChangedCounter();
+    const status = document.getElementById(`status-${colorId}`);
+    if (status) status.innerText = '';
+}
+
+function saveColorStock(colorId) {
+    const box = document.getElementById(`sizes-box-${colorId}`);
+    if (!box) return;
+    const inputs = box.querySelectorAll('.stock-input');
+    const updates = [];
+    inputs.forEach(input => {
+        const sizeId = input.getAttribute('data-size-id');
+        const stockVal = parseInt(input.value, 10);
+        if (sizeId && !isNaN(stockVal) && stockVal >= 0) {
+            updates.push({ size_id: parseInt(sizeId, 10), stock: stockVal });
+        }
+    });
+
+    if (updates.length === 0) return;
+
+    const btn = document.getElementById(`save-btn-${colorId}`);
+    const status = document.getElementById(`status-${colorId}`);
+    if (btn) btn.disabled = true;
+    if (status) {
+        status.style.color = '#3b82f6';
+        status.innerText = 'Saving...';
+    }
+
+    fetch('quick-update-stock/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ updates: updates, color_id: colorId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) btn.disabled = false;
+        if (data.success) {
+            inputs.forEach(input => {
+                input.setAttribute('data-original', input.value.trim());
+                const pill = input.closest('.stock-pill');
+                if (pill) {
+                    pill.classList.remove('is-modified');
+                    pill.classList.add('is-saved');
+                    setTimeout(() => pill.classList.remove('is-saved'), 1500);
+                }
+            });
+            updateChangedCounter();
+
+            const badge = document.getElementById(`total-badge-${colorId}`);
+            if (badge && data.total_stock !== undefined) {
+                if (data.total_stock <= 0) {
+                    badge.outerHTML = `<span id="total-badge-${colorId}" style="display: inline-block; padding: 4px 9px; border-radius: 4px; background: #fee2e2; color: #dc2626; font-weight: 800; font-size: 11px; border: 1px solid #fca5a5;">❌ SOLD OUT (0)</span>`;
+                } else {
+                    badge.outerHTML = `<span id="total-badge-${colorId}" style="display: inline-block; padding: 4px 9px; border-radius: 4px; background: #dcfce7; color: #15803d; font-weight: 800; font-size: 11px; border: 1px solid #86efac;">✅ ${data.total_stock} in stock</span>`;
+                }
+            }
+
+            if (status) {
+                status.style.color = '#10b981';
+                status.innerText = '✓ Saved!';
+                setTimeout(() => { if (status.innerText === '✓ Saved!') status.innerText = ''; }, 2500);
+            }
+        } else {
+            if (status) {
+                status.style.color = '#ef4444';
+                status.innerText = data.error || 'Error saving';
+            }
+        }
+    })
+    .catch(err => {
+        if (btn) btn.disabled = false;
+        if (status) {
+            status.style.color = '#ef4444';
+            status.innerText = 'Network error';
+        }
+    });
+}
+
+function saveAllChangedStocks() {
+    const inputs = document.querySelectorAll('.stock-input');
+    const updates = [];
+    inputs.forEach(input => {
+        const original = input.getAttribute('data-original');
+        const current = input.value.trim();
+        if (original !== current) {
+            const sizeId = input.getAttribute('data-size-id');
+            const stockVal = parseInt(current, 10);
+            if (sizeId && !isNaN(stockVal) && stockVal >= 0) {
+                updates.push({ size_id: parseInt(sizeId, 10), stock: stockVal });
+            }
+        }
+    });
+
+    const msg = document.getElementById('save-all-msg');
+    const saveAllBtn = document.getElementById('save-all-stocks-btn');
+
+    if (updates.length === 0) {
+        if (msg) {
+            msg.style.color = '#f59e0b';
+            msg.innerText = 'No changed stocks to save!';
+            setTimeout(() => { msg.innerText = ''; }, 2500);
+        }
+        return;
+    }
+
+    if (saveAllBtn) saveAllBtn.disabled = true;
+    if (msg) {
+        msg.style.color = '#38bdf8';
+        msg.innerText = `Saving ${updates.length} sizes...`;
+    }
+
+    fetch('quick-update-stock/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ updates: updates })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (saveAllBtn) saveAllBtn.disabled = false;
+        if (data.success) {
+            inputs.forEach(input => {
+                input.setAttribute('data-original', input.value.trim());
+                const pill = input.closest('.stock-pill');
+                if (pill) {
+                    pill.classList.remove('is-modified');
+                    pill.classList.add('is-saved');
+                    setTimeout(() => pill.classList.remove('is-saved'), 1500);
+                }
+            });
+            updateChangedCounter();
+
+            if (data.variant_totals) {
+                Object.keys(data.variant_totals).forEach(cId => {
+                    const total = data.variant_totals[cId];
+                    const badge = document.getElementById(`total-badge-${cId}`);
+                    if (badge) {
+                        if (total <= 0) {
+                            badge.outerHTML = `<span id="total-badge-${cId}" style="display: inline-block; padding: 4px 9px; border-radius: 4px; background: #fee2e2; color: #dc2626; font-weight: 800; font-size: 11px; border: 1px solid #fca5a5;">❌ SOLD OUT (0)</span>`;
+                        } else {
+                            badge.outerHTML = `<span id="total-badge-${cId}" style="display: inline-block; padding: 4px 9px; border-radius: 4px; background: #dcfce7; color: #15803d; font-weight: 800; font-size: 11px; border: 1px solid #86efac;">✅ ${total} in stock</span>`;
+                        }
+                    }
+                });
+            }
+
+            if (msg) {
+                msg.style.color = '#34d399';
+                msg.innerText = `✓ Successfully saved ${data.updated_count || updates.length} stock items!`;
+                setTimeout(() => { msg.innerText = ''; }, 3500);
+            }
+        } else {
+            if (msg) {
+                msg.style.color = '#f87171';
+                msg.innerText = data.error || 'Failed to save all stocks';
+            }
+        }
+    })
+    .catch(err => {
+        if (saveAllBtn) saveAllBtn.disabled = false;
+        if (msg) {
+            msg.style.color = '#f87171';
+            msg.innerText = 'Network error while saving';
+        }
+    });
+}
+
+function initStandardSizes(colorId) {
+    if (!confirm('Add standard sizes (S, M, L, XL, 2XL) with 0 stock to this color?')) return;
+    fetch('quick-init-sizes/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ color_id: colorId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.sizes) {
+            const box = document.getElementById(`sizes-box-${colorId}`);
+            if (box) {
+                let html = '';
+                data.sizes.forEach(s => {
+                    html += `
+                        <div class="stock-pill" style="display: inline-flex; align-items: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin: 2px 4px 2px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <span style="background: #f1f5f9; color: #334155; font-size: 11px; font-weight: 700; padding: 4px 7px; border-right: 1px solid #cbd5e1; text-transform: uppercase;">${s.size_name}</span>
+                            <input type="number" class="stock-input" data-size-id="${s.id}" data-color-id="${colorId}" data-original="${s.stock}" value="${s.stock}" min="0" 
+                                   style="width: 48px; border: none; padding: 4px 6px; font-size: 12px; font-weight: 700; text-align: center; color: #0f172a; outline: none; background: transparent;" 
+                                   oninput="handleStockInput(this, ${colorId})" onkeydown="if(event.key==='Enter'){event.preventDefault();saveColorStock(${colorId});}">
+                        </div>`;
+                });
+                html += `<button type="button" onclick="addCustomSizePrompt(${colorId})" style="background: #f8fafc; border: 1px dashed #94a3b8; color: #64748b; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; margin-left: 4px;" title="Add another size">+ Size</button>`;
+                box.innerHTML = html;
+            }
+        } else {
+            alert(data.error || 'Could not add sizes');
+        }
+    });
+}
+
+function addCustomSizePrompt(colorId) {
+    const sizeName = prompt('Enter size name (e.g. 3XL, 30, Free Size):');
+    if (!sizeName || !sizeName.trim()) return;
+    const stockVal = parseInt(prompt(`Enter initial stock quantity for size "${sizeName.trim()}":`, '0'), 10) || 0;
+
+    fetch('quick-add-custom-size/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ color_id: colorId, size_name: sizeName.trim(), stock: stockVal })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Could not add custom size');
+        }
+    });
+}
+</script>
+{% endblock %}
