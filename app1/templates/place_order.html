@@ -325,6 +325,94 @@
             padding-bottom: 24px !important;
         }
     }
+
+    /* Seamless Inline Address Form */
+    .inline-address-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 10px;
+    }
+    .form-grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .form-grid-3col {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+    .addr-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .addr-field-group label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #3f3f46;
+    }
+    .addr-field-group input,
+    .addr-field-group textarea,
+    .addr-field-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1.5px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        font-size: 13.5px;
+        font-family: inherit;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-sizing: border-box;
+    }
+    .addr-field-group input:focus,
+    .addr-field-group textarea:focus {
+        border-color: #09090b;
+        box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.08);
+    }
+    .phone-prefix-wrap {
+        display: flex;
+        align-items: center;
+        border: 1.5px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .phone-prefix-badge {
+        padding: 12px 12px;
+        background: #f4f4f5;
+        font-size: 13px;
+        font-weight: 700;
+        color: #52525b;
+        border-right: 1.5px solid var(--border-light);
+    }
+    .phone-prefix-wrap input {
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    .guest-checkout-banner {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        font-size: 12.5px;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    @media (max-width: 600px) {
+        .form-grid-2col, .form-grid-3col {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -375,28 +463,83 @@
                 <!-- 2. Delivery Address -->
                 <div class="checkout-section-card">
                     <div class="section-head">
-                        <div><span class="step-num">2</span> Select Delivery Address</div>
-                        <a href="{% url 'add_address' %}?next=checkout" style="font-size: 12px; color: #2563eb; text-transform: none; font-weight: 700;">+ Add New</a>
+                        <div><span class="step-num">2</span> Delivery Address</div>
+                        {% if addresses %}
+                        <button type="button" onclick="toggleNewAddressForm()" id="toggle-new-addr-btn" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #2563eb; font-weight: 700;">+ Deliver to Different Address</button>
+                        {% endif %}
                     </div>
 
-                    {% if addresses %}
-                        {% for address in addresses %}
-                        <label class="option-card-label">
-                            <input type="radio" name="address_id" value="{{ address.id }}" class="option-radio" required {% if forloop.first %}checked{% endif %}>
-                            <div class="option-text-wrap">
-                                <div class="option-title">
-                                    <span>{{ address.first_name }} {{ address.last_name }}</span>
-                                    <span style="font-size: 11px; color: #71717a;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> {{ address.mobile }}</span>
-                                </div>
-                                <p style="margin: 0; color: #52525b;">{{ address.address }}{% if address.address_2 %}, {{ address.address_2 }}{% endif %}</p>
-                                <p style="margin: 0; color: #71717a;">{{ address.city }}, {{ address.state }} - <strong>{{ address.pincode }}</strong></p>
-                            </div>
-                        </label>
-                        {% endfor %}
-                    {% else %}
-                        <p style="color: #71717a; font-size: 13px; margin-bottom: 12px;">No saved address found.</p>
-                        <a href="{% url 'add_address' %}?next=checkout" style="display: inline-block; background: #0d0d0f; color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 13px; font-weight: 700; text-decoration: none;">+ Add Delivery Address</a>
+                    {% if is_guest %}
+                    <div class="guest-checkout-banner">
+                        <i class="fa-solid fa-bolt" style="color: #f59e0b; font-size: 14px;"></i>
+                        <span><strong>Instant 1-Click Order:</strong> Enter your details below to place order directly. No password required!</span>
+                    </div>
                     {% endif %}
+
+                    {% if addresses %}
+                        <div id="saved-addresses-list">
+                            {% for address in addresses %}
+                            <label class="option-card-label">
+                                <input type="radio" name="address_id" value="{{ address.id }}" class="option-radio" {% if forloop.first %}checked{% endif %}>
+                                <div class="option-text-wrap">
+                                    <div class="option-title">
+                                        <span>{{ address.first_name }} {{ address.last_name }}</span>
+                                        <span style="font-size: 11px; color: #71717a;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> {{ address.mobile }}</span>
+                                    </div>
+                                    <p style="margin: 0; color: #52525b;">{{ address.address }}{% if address.address_2 %}, {{ address.address_2 }}{% endif %}</p>
+                                    <p style="margin: 0; color: #71717a;">{{ address.city }}, {{ address.state }} - <strong>{{ address.pincode }}</strong></p>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- INLINE ADDRESS FORM (Shown when no saved address, or when toggled) -->
+                    <div id="inline-address-container" class="inline-address-form" style="display: {% if addresses %}none{% else %}flex{% endif %};">
+                        <div class="form-grid-2col">
+                            <div class="addr-field-group">
+                                <label for="addr_first_name">First Name *</label>
+                                <input type="text" name="first_name" id="addr_first_name" placeholder="e.g. Rahul" value="{{ saved_guest_addr.first_name|default:user.first_name|default:'' }}">
+                            </div>
+                            <div class="addr-field-group">
+                                <label for="addr_last_name">Last Name</label>
+                                <input type="text" name="last_name" id="addr_last_name" placeholder="e.g. Sharma" value="{{ saved_guest_addr.last_name|default:user.last_name|default:'' }}">
+                            </div>
+                        </div>
+
+                        <div class="addr-field-group">
+                            <label for="addr_mobile">Mobile Number (For Courier Updates) *</label>
+                            <div class="phone-prefix-wrap">
+                                <span class="phone-prefix-badge">+91</span>
+                                <input type="tel" name="mobile" id="addr_mobile" placeholder="10-digit mobile number" maxlength="10" value="{{ saved_guest_addr.mobile|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
+                        </div>
+
+                        <div class="addr-field-group">
+                            <label for="addr_street">Flat / House No. / Building / Street *</label>
+                            <input type="text" name="address" id="addr_street" placeholder="e.g. Flat 402, Royal Palms, MG Road" value="{{ saved_guest_addr.address|default:'' }}">
+                        </div>
+
+                        <div class="addr-field-group">
+                            <label for="addr_landmark">Landmark / Colony (Optional)</label>
+                            <input type="text" name="address_2" id="addr_landmark" placeholder="e.g. Near City Hospital" value="{{ saved_guest_addr.address_2|default:'' }}">
+                        </div>
+
+                        <div class="form-grid-3col">
+                            <div class="addr-field-group">
+                                <label for="addr_pincode">Pincode *</label>
+                                <input type="text" name="pincode" id="addr_pincode" placeholder="6 Digits" maxlength="6" value="{{ saved_guest_addr.pincode|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
+                            <div class="addr-field-group">
+                                <label for="addr_city">City *</label>
+                                <input type="text" name="city" id="addr_city" placeholder="e.g. Mumbai" value="{{ saved_guest_addr.city|default:'' }}">
+                            </div>
+                            <div class="addr-field-group">
+                                <label for="addr_state">State *</label>
+                                <input type="text" name="state" id="addr_state" placeholder="e.g. Maharashtra" value="{{ saved_guest_addr.state|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 3. Payment Method -->
@@ -468,6 +611,23 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
+function toggleNewAddressForm() {
+    const formEl = document.getElementById('inline-address-container');
+    const radios = document.querySelectorAll('input[name="address_id"]');
+    const btn = document.getElementById('toggle-new-addr-btn');
+    if (!formEl) return;
+
+    if (formEl.style.display === 'none') {
+        formEl.style.display = 'flex';
+        radios.forEach(r => r.checked = false);
+        if (btn) btn.innerText = "← Use Saved Address";
+    } else {
+        formEl.style.display = 'none';
+        if (radios.length > 0) radios[0].checked = true;
+        if (btn) btn.innerText = "+ Deliver to Different Address";
+    }
+}
+
 // COD vs ONLINE price toggle
 document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
     radio.addEventListener('change', function() {
@@ -501,15 +661,49 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// Secure Checkout Submission (Prevents double orders)
+// Secure Checkout Submission (Prevents double orders & supports guest checkout)
 document.getElementById('checkout-form').onsubmit = function(e) {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
     const addressRadio = document.querySelector('input[name="address_id"]:checked');
-    if (!addressRadio) {
-        alert("Please select or add a delivery address first.");
-        return false;
+    let addressId = addressRadio ? addressRadio.value : null;
+    let addressData = null;
+
+    if (!addressId) {
+        const fnInput = document.getElementById('addr_first_name');
+        const phInput = document.getElementById('addr_mobile');
+        const streetInput = document.getElementById('addr_street');
+        const pinInput = document.getElementById('addr_pincode');
+        const cityInput = document.getElementById('addr_city');
+        const stateInput = document.getElementById('addr_state');
+
+        if (!phInput || !phInput.value.trim() || phInput.value.trim().length < 10) {
+            alert("Please enter a valid 10-digit mobile number.");
+            if (phInput) phInput.focus();
+            return false;
+        }
+        if (!streetInput || !streetInput.value.trim()) {
+            alert("Please enter your complete delivery address.");
+            if (streetInput) streetInput.focus();
+            return false;
+        }
+        if (!pinInput || !pinInput.value.trim() || pinInput.value.trim().length < 6) {
+            alert("Please enter a valid 6-digit Pincode.");
+            if (pinInput) pinInput.focus();
+            return false;
+        }
+
+        addressData = {
+            first_name: fnInput ? fnInput.value.trim() : '',
+            last_name: (document.getElementById('addr_last_name') || {}).value || '',
+            mobile: phInput.value.trim(),
+            address: streetInput.value.trim(),
+            address_2: (document.getElementById('addr_landmark') || {}).value || '',
+            pincode: pinInput.value.trim(),
+            city: cityInput ? cityInput.value.trim() : '',
+            state: stateInput ? stateInput.value.trim() : ''
+        };
     }
-    const addressId = addressRadio.value;
+
     const btn = document.getElementById('final-submit-btn');
 
     if (typeof fbq === 'function') {
@@ -531,7 +725,10 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 "Content-Type": "application/json",
                 "X-CSRFToken": "{{ csrf_token }}"
             },
-            body: JSON.stringify({ address_id: addressId })
+            body: JSON.stringify({ 
+                address_id: addressId,
+                address_data: addressData
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -542,6 +739,7 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                 return;
             }
             document.getElementById('hidden_razorpay_order_id').value = data.order_id;
+            const finalAddressId = data.address_id || addressId;
 
             var options = {
                 "key": data.key_id,
@@ -561,7 +759,7 @@ document.getElementById('checkout-form').onsubmit = function(e) {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_signature: response.razorpay_signature,
-                            address_id: addressId
+                            address_id: finalAddressId
                         })
                     })
                     .then(res => res.json())

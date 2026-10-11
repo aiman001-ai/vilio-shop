@@ -18,11 +18,28 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '27446769361621989');
+    {% if user.is_authenticated and user.email %}
+    fbq('init', '{{ META_PIXEL_ID|default:"27446769361621989" }}', {
+        em: '{{ user.email|lower }}',
+        {% if user.first_name %}fn: '{{ user.first_name|lower }}',{% endif %}
+        {% if user.last_name %}ln: '{{ user.last_name|lower }}'{% endif %}
+    });
+    {% else %}
+    fbq('init', '{{ META_PIXEL_ID|default:"27446769361621989" }}');
+    {% endif %}
     fbq('track', 'PageView');
+
+    // Auto-capture Meta Ad fbclid into _fbc cookie for highest Event Match Quality
+    try {
+        var urlP = new URLSearchParams(window.location.search);
+        var fbcVal = urlP.get('fbclid');
+        if (fbcVal && !document.cookie.includes('_fbc=')) {
+            document.cookie = '_fbc=fb.1.' + Date.now() + '.' + fbcVal + '; path=/; max-age=7776000; SameSite=Lax';
+        }
+    } catch(e) {}
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=27446769361621989&ev=PageView&noscript=1"
+    src="https://www.facebook.com/tr?id={{ META_PIXEL_ID|default:'27446769361621989' }}&ev=PageView&noscript=1"
     /></noscript>
     <!-- End Meta Pixel Code -->
 

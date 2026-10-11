@@ -139,7 +139,8 @@ def shop_now(request, product_id):
     color = request.GET.get('color', 'Default')
     size = request.GET.get('size', 'S')
     add_product_to_cart(request, product_id, color=color, size=size)
-    return redirect('cart')
+    return redirect('checkout')
+
 
 # ================= LOGIN =================
 def login_page(request):
@@ -504,7 +505,8 @@ def add_product_to_cart(request, product_id, color=None, size=None):
 
 def cart(request):
     if request.user.is_authenticated:
-        merge_cart(request)
+        if request.session.get('guest_cart') or request.session.get('cart') or request.session.get('buy_now_product'):
+            merge_cart(request)
 
     cart_items = []
     total = 0
@@ -521,7 +523,9 @@ def cart(request):
                 if item.product.image:
                     display_img = item.product.image.url
             else:
-                variant = item.product.color_variants.filter(color_name__iexact=item.color).first()
+                # Fast in-memory lookup - zero SQL query!
+                color_vars = list(item.product.color_variants.all())
+                variant = next((v for v in color_vars if str(v.color_name).lower() == str(item.color).lower()), None)
                 if variant and variant.color_image:
                     display_img = variant.color_image.url
                 elif item.product.image:
@@ -537,15 +541,23 @@ def cart(request):
                 'display_image': display_img,
             })
     else:
-        # GUEST USER CART FROM SESSION
+        # GUEST USER CART FROM SESSION - ⚡ Bulk prefetch for instant loading
         guest_cart = request.session.get('guest_cart', [])
+        pids = [int(g.get('product_id')) for g in guest_cart if g.get('product_id')]
+        products_dict = {
+            p.id: p for p in Product.objects.prefetch_related('color_variants').filter(id__in=pids, is_active=True)
+        }
+
         for idx, g_item in enumerate(guest_cart):
             pid = g_item.get('product_id')
             p_color = g_item.get('color', 'Default')
             p_size = g_item.get('size', 'S')
             p_qty = g_item.get('quantity', 1)
+
             try:
-                prod = Product.objects.prefetch_related('color_variants').get(id=pid, is_active=True)
+                prod = products_dict.get(int(pid))
+                if not prod:
+                    continue
                 subtotal = prod.current_price * p_qty
                 total += subtotal
                 
@@ -554,7 +566,8 @@ def cart(request):
                     if prod.image:
                         display_img = prod.image.url
                 else:
-                    variant = prod.color_variants.filter(color_name=p_color).first()
+                    color_vars = list(prod.color_variants.all())
+                    variant = next((v for v in color_vars if str(v.color_name).lower() == str(p_color).lower()), None)
                     if variant and variant.color_image:
                         display_img = variant.color_image.url
                     elif prod.image:
@@ -570,10 +583,11 @@ def cart(request):
                     'size': p_size,
                     'display_image': display_img,
                 })
-            except Product.DoesNotExist:
+            except Exception:
                 continue
 
     return render(request, 'cart.html', {'cart_items': cart_items, 'total': total})
+
 
 # ================= QUANTITY CONTROLS (AJAX) =================
 @csrf_exempt
@@ -1131,59 +1145,99 @@ def product_detail(request, id):
 
     return render(request, 'product_detail.html', context_data)
 # ================= CHECKOUT & ORDERS =================
-@login_required
 def checkout(request):
-    merge_cart(request)
-    cart_obj = Cart.objects.filter(user=request.user).first()
-    
-    # 1. Basic Checks
-    if not cart_obj or not cart_obj.items.exists():
+    processed_cart_items = []
+    total = 0
+    addresses = Address.objects.none()
+
+    if request.user.is_authenticated:
+        if request.session.get('guest_cart') or request.session.get('cart') or request.session.get('buy_now_product'):
+            merge_cart(request)
+        cart_obj = Cart.objects.filter(user=request.user).first()
+        
+        # 1. Basic Checks
+        if not cart_obj or not cart_obj.items.exists():
+            messages.error(request, "Your cart is empty")
+            return redirect('cart')
+
+        addresses = Address.objects.filter(user=request.user)
+        if not addresses.exists():
+            sync_user_address_data(request, request.user)
+            addresses = Address.objects.filter(user=request.user)
+
+        # 2. Cart items calculation (Fast in-memory)
+        for item in cart_obj.items.select_related('product').prefetch_related('product__color_variants'):
+            subtotal = item.product.current_price * item.quantity
+            total += subtotal
+            
+            color_vars = list(item.product.color_variants.all())
+            color_var = next((v for v in color_vars if str(v.color_name).lower() == str(item.color).lower()), None)
+            if color_var and color_var.color_image:
+                variant_image = color_var.color_image.url
+            elif item.product.image:
+                variant_image = item.product.image.url
+            else:
+                variant_image = "/static/images/no-image.png"
+
+            processed_cart_items.append({
+                'product': item.product,
+                'quantity': item.quantity,
+                'subtotal': subtotal,
+                'color': item.color,
+                'size': item.size,
+                'display_image': variant_image,
+            })
+    else:
+        # 🚀 GUEST CHECKOUT: Allow instant checkout without forced login!
+        guest_cart = request.session.get('guest_cart', [])
+        if not guest_cart:
+            messages.error(request, "Your cart is empty")
+            return redirect('cart')
+
+        pids = [int(g.get('product_id')) for g in guest_cart if g.get('product_id')]
+        products_dict = {
+            p.id: p for p in Product.objects.prefetch_related('color_variants').filter(id__in=pids, is_active=True)
+        }
+
+        for g_item in guest_cart:
+            pid = g_item.get('product_id')
+            p_color = g_item.get('color', 'Default')
+            p_size = g_item.get('size', 'S')
+            p_qty = max(1, int(g_item.get('quantity', 1)))
+
+            prod = products_dict.get(int(pid))
+            if not prod:
+                continue
+
+            subtotal = prod.current_price * p_qty
+            total += subtotal
+
+            if p_color == "Default" or not p_color:
+                variant_image = prod.image.url if prod.image else "/static/images/no-image.png"
+            else:
+                color_vars = list(prod.color_variants.all())
+                color_var = next((v for v in color_vars if str(v.color_name).lower() == str(p_color).lower()), None)
+                if color_var and color_var.color_image:
+                    variant_image = color_var.color_image.url
+                elif prod.image:
+                    variant_image = prod.image.url
+                else:
+                    variant_image = "/static/images/no-image.png"
+
+            processed_cart_items.append({
+                'product': prod,
+                'quantity': p_qty,
+                'subtotal': subtotal,
+                'color': p_color,
+                'size': p_size,
+                'display_image': variant_image,
+            })
+
+    if not processed_cart_items:
         messages.error(request, "Your cart is empty")
         return redirect('cart')
 
-    addresses = Address.objects.filter(user=request.user)
-    
-    # 🚀 ZERO-CLICK AUTO-SYNC: If user has no address in DB, sync from device cookie, session, or recent store records
-    if not addresses.exists():
-        sync_user_address_data(request, request.user)
-        addresses = Address.objects.filter(user=request.user)
-
-        # Only if completely impossible to find any address, redirect to add-address
-        if not addresses.exists():
-            messages.info(request, "Please add a delivery address first.")
-            return redirect('/add-address/?next=checkout')
-
-    processed_cart_items = []
-    total = 0
-    
-    # 2. Cart items calculation
-    for item in cart_obj.items.select_related('product'):
-        subtotal = item.product.current_price * item.quantity
-        total += subtotal
-        
-        color_var = ProductColor.objects.filter(
-            product=item.product, 
-            color_name__iexact=item.color
-        ).first()
-
-        if color_var and color_var.color_image:
-            variant_image = color_var.color_image.url
-        elif item.product.image:
-            variant_image = item.product.image.url
-        else:
-            variant_image = "/static/images/no-image.png"
-
-        processed_cart_items.append({
-            'product': item.product,
-            'quantity': item.quantity,
-            'subtotal': subtotal,
-            'color': item.color,
-            'size': item.size,
-            'display_image': variant_image,
-        })
-
-    # 3. Razorpay Order Create Karna (Crucial Step)
-    # Amount ko paise mein convert karne ke liye 100 se multiply karte hain
+    # 3. Razorpay Order Create Karna
     razorpay_order_id = None
     try:
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -1195,89 +1249,182 @@ def checkout(request):
         razorpay_order_id = razorpay_order['id']
     except Exception as e:
         print(f"Razorpay Order Error: {e}")
-        # Agar Razorpay fail ho jaye toh bhi page load hone do, error handle baad mein hoga
+
+    # Saved address from cookie for guests
+    saved_addr_cookie = None
+    try:
+        cookie_raw = request.COOKIES.get('vilio_user_addr')
+        if cookie_raw:
+            saved_addr_cookie = json.loads(unquote(cookie_raw))
+    except Exception:
+        pass
 
     context = {
         'cart_items': processed_cart_items,
         'addresses': addresses,
         'total': total,
-        'razorpay_order_id': razorpay_order_id, # Template mein hidden field mein jayega
-        'razorpay_key': settings.RAZORPAY_KEY_ID  # Frontend script ke liye
+        'razorpay_order_id': razorpay_order_id,
+        'razorpay_key': settings.RAZORPAY_KEY_ID,
+        'is_guest': not request.user.is_authenticated,
+        'saved_guest_addr': saved_addr_cookie or {}
     }
 
     response = render(request, 'place_order.html', context)
-    first_addr = addresses.first()
-    if first_addr:
-        try:
-            import json
-            from urllib.parse import quote
-            cookie_payload = {
-                'first_name': first_addr.first_name,
-                'last_name': first_addr.last_name,
-                'mobile': first_addr.mobile,
-                'address': first_addr.address,
-                'address_2': first_addr.address_2 or '',
-                'city': first_addr.city,
-                'state': first_addr.state,
-                'pincode': first_addr.pincode
-            }
-            response.set_cookie('vilio_user_addr', quote(json.dumps(cookie_payload)), max_age=365*24*60*60, httponly=False)
-        except Exception:
-            pass
     return response
 
-@login_required
 @require_POST
-@transaction.atomic  # Sabse zaroori: Taaki data beech mein na fase
+@transaction.atomic
 def place_order(request):
     address_id = request.POST.get("address_id")
-    payment_method = request.POST.get("payment_method")
+    payment_method = request.POST.get("payment_method", "COD")
     
-    # 1. Basic Fetching
-    address = get_object_or_404(Address, id=address_id, user=request.user)
-    cart_obj = get_object_or_404(Cart, user=request.user)
-    cart_items = cart_obj.items.all()
+    # 1. Resolve User and Delivery Address
+    if request.user.is_authenticated:
+        order_user = request.user
+        if address_id:
+            address_obj = get_object_or_404(Address, id=address_id, user=order_user)
+        else:
+            first_name = request.POST.get("first_name", "").strip()
+            last_name = request.POST.get("last_name", "").strip()
+            mobile = request.POST.get("mobile", "").strip()
+            addr_text = request.POST.get("address", "").strip()
+            addr_2 = request.POST.get("address_2", "").strip()
+            city = request.POST.get("city", "").strip()
+            state = request.POST.get("state", "").strip()
+            pincode = request.POST.get("pincode", "").strip()
 
-    if not cart_items.exists():
+            clean_ph = ''.join(filter(str.isdigit, mobile))[-10:]
+            if len(clean_ph) < 10 or not addr_text:
+                messages.error(request, "Please enter your mobile number and full delivery address.")
+                return redirect('checkout')
+
+            address_obj = Address.objects.create(
+                user=order_user,
+                first_name=first_name,
+                last_name=last_name,
+                mobile=clean_ph,
+                address=addr_text,
+                address_2=addr_2,
+                city=city,
+                state=state,
+                pincode=pincode
+            )
+    else:
+        # 🚀 GUEST CHECKOUT (Seamless - No password, No forced Google login!)
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        mobile = request.POST.get("mobile", "").strip()
+        addr_text = request.POST.get("address", "").strip()
+        addr_2 = request.POST.get("address_2", "").strip()
+        city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+        email = request.POST.get("email", "").strip()
+
+        clean_ph = ''.join(filter(str.isdigit, mobile))[-10:]
+        if len(clean_ph) < 10:
+            messages.error(request, "Please enter a valid 10-digit mobile number.")
+            return redirect('checkout')
+        if not addr_text or len(addr_text) < 4:
+            messages.error(request, "Please enter your complete delivery address.")
+            return redirect('checkout')
+
+        # Auto-create or fetch user by mobile
+        username = f"user_{clean_ph}"
+        order_user = User.objects.filter(username=username).first()
+        if not order_user:
+            order_user = User.objects.filter(email=f"{clean_ph}@vilio.shop").first()
+        if not order_user:
+            order_user = User.objects.create_user(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email or f"{clean_ph}@vilio.shop"
+            )
+            order_user.set_unusable_password()
+            order_user.save()
+        else:
+            if first_name and not order_user.first_name:
+                order_user.first_name = first_name
+                order_user.last_name = last_name
+                order_user.save(update_fields=['first_name', 'last_name'])
+
+        address_obj = Address.objects.create(
+            user=order_user,
+            first_name=first_name,
+            last_name=last_name,
+            mobile=clean_ph,
+            address=addr_text,
+            address_2=addr_2,
+            city=city,
+            state=state,
+            pincode=pincode
+        )
+
+        # Log in user in session so they can view and track order
+        login(request, order_user, backend='django.contrib.auth.backends.ModelBackend')
+
+    # 2. Fetch Order Items
+    cart_items_data = []
+    db_cart = Cart.objects.filter(user=order_user).first()
+    if db_cart and db_cart.items.exists():
+        for item in db_cart.items.select_related('product'):
+            cart_items_data.append({
+                'product': item.product,
+                'color': item.color,
+                'size': item.size,
+                'quantity': item.quantity
+            })
+    else:
+        guest_cart = request.session.get('guest_cart', [])
+        pids = [int(g.get('product_id')) for g in guest_cart if g.get('product_id')]
+        prods = {p.id: p for p in Product.objects.filter(id__in=pids, is_active=True)}
+        for g_item in guest_cart:
+            p = prods.get(int(g_item.get('product_id')))
+            if p:
+                cart_items_data.append({
+                    'product': p,
+                    'color': g_item.get('color', 'Default'),
+                    'size': g_item.get('size', 'S'),
+                    'quantity': max(1, int(g_item.get('quantity', 1)))
+                })
+
+    if not cart_items_data:
         messages.error(request, "Your cart is empty")
         return redirect('cart')
 
-    # --- 🟢 STEP 1: PRE-CHECK STOCK (Pehle tasalli kar lo ki maal hai ya nahi) ---
+    # --- 🟢 STEP 1: PRE-CHECK STOCK ---
     stock_to_update = []
-    for item in cart_items:
+    for item in cart_items_data:
+        prod = item['product']
         try:
-            if item.product.has_variants:
-                color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-                stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
+            if prod.has_variants:
+                color_obj = ProductColor.objects.get(product=prod, color_name=item['color'])
+                stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item['size'])
             else:
-                stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
+                stock_obj = SimpleProductSizeStock.objects.get(product=prod, size_name=item['size'])
             
-            # Agar stock kam hai
-            if stock_obj.stock < item.quantity:
-                messages.error(request, f"Sorry, {item.product.name} ({item.size}) is out of stock.")
+            if stock_obj.stock < item['quantity']:
+                messages.error(request, f"Sorry, {prod.name} ({item['size']}) is out of stock.")
                 return redirect('cart')
             
-            # List mein save kar lo baad mein update karne ke liye
             stock_to_update.append((stock_obj, item))
-            
         except (ProductColor.DoesNotExist, ColorSizeStock.DoesNotExist, SimpleProductSizeStock.DoesNotExist):
-            messages.error(request, f"Product configuration error for {item.product.name}.")
+            messages.error(request, f"Product configuration error for {prod.name}.")
             return redirect('cart')
 
     # --- 🟢 STEP 2: ORDER CREATE LOGIC ---
-    base_total = sum(item.product.current_price * item.quantity for item in cart_items)
-    
-    # 🚀 FIX: Agar payment method COD hai toh ₹60 jod kar final total banega, online me free
+    base_total = sum(item['product'].current_price * item['quantity'] for item in cart_items_data)
     shipping_charges = 60 if payment_method == "COD" else 0
     final_total = base_total + shipping_charges
 
-    full_name = f"{address.first_name} {address.last_name}".strip()
-    full_address_string = f"{full_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+    full_name = f"{address_obj.first_name} {address_obj.last_name}".strip()
+    full_address_string = f"{full_name}, {address_obj.mobile}, {address_obj.address}, {address_obj.city}, {address_obj.state} - {address_obj.pincode}"
 
     order = Order.objects.create(
-        user=request.user,
+        user=order_user,
         address=full_address_string,
-        total_amount=final_total,  # <-- Isme updated final price chali gayi
+        total_amount=final_total,
         payment_method=payment_method,
         status="Confirmed"
     )
@@ -1294,40 +1441,65 @@ def place_order(request):
 
     # --- 🟢 STEP 3: ACTUAL STOCK UPDATE & ORDER ITEMS ---
     for stock_obj, item in stock_to_update:
-        # Stock minus karo
-        stock_obj.stock -= item.quantity
+        stock_obj.stock -= item['quantity']
         stock_obj.save()
 
-        # Order Item banao (Yeh item ke base price par hi banega, extra fee pure order par jukti h)
         OrderItem.objects.create(
             order=order,
-            product=item.product,
-            color=item.color,
-            size=item.size,
-            quantity=item.quantity,
-            price=item.product.current_price
+            product=item['product'],
+            color=item['color'],
+            size=item['size'],
+            quantity=item['quantity'],
+            price=item['product'].current_price
         )
     
     # 4. Cart Saaf Karein
-    cart_items.delete()
-    
-    # Message me clear dikhega agar COD charge lga h
+    if db_cart:
+        db_cart.items.all().delete()
+    request.session.pop('guest_cart', None)
+    request.session.pop('cart', None)
+    request.session['last_order_id'] = order.id
+    request.session.modified = True
+
+    # 5. 🚀 Trigger Meta Conversions API (CAPI) Server-Side Purchase Event
+    try:
+        from .meta_capi import send_meta_capi_purchase
+        send_meta_capi_purchase(request, order)
+    except Exception as e:
+        print(f"Meta CAPI trigger error: {e}")
+
+    # Set address cookie for next time
     msg_addon = " (including ₹60 COD Fee)" if payment_method == "COD" else ""
     messages.success(request, f"🎉 Order placed successfully via {payment_method}{msg_addon}!")
 
-    return redirect(
-        'order_success',
-        order_id=order.id
-    )
+    response = redirect('order_success', order_id=order.id)
+    try:
+        cookie_payload = {
+            'first_name': address_obj.first_name,
+            'last_name': address_obj.last_name,
+            'mobile': address_obj.mobile,
+            'address': address_obj.address,
+            'address_2': address_obj.address_2 or '',
+            'city': address_obj.city,
+            'state': address_obj.state,
+            'pincode': address_obj.pincode
+        }
+        response.set_cookie('vilio_user_addr', quote(json.dumps(cookie_payload)), max_age=365*24*60*60, httponly=False)
+    except Exception:
+        pass
+    return response
 
-@login_required
 def order_success(request, order_id):
-
-    order = get_object_or_404(
-        Order,
-        id=order_id,
-        user=request.user
-    )
+    order = None
+    if request.user.is_authenticated:
+        order = Order.objects.filter(id=order_id, user=request.user).first()
+    
+    if not order:
+        session_order_id = request.session.get('last_order_id')
+        if session_order_id and str(session_order_id) == str(order_id):
+            order = get_object_or_404(Order, id=order_id)
+        else:
+            return redirect('home')
 
     return render(
         request,
@@ -1336,6 +1508,7 @@ def order_success(request, order_id):
             "order": order
         }
     )
+
 
 
 @login_required
@@ -1856,7 +2029,6 @@ Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
 # Client initialize karein
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-@login_required
 @csrf_exempt
 @transaction.atomic
 def create_razorpay_order(request):
@@ -1868,44 +2040,114 @@ def create_razorpay_order(request):
         body = json.loads(request.body)
         address_id = body.get("address_id")
 
-        if not address_id:
-            return JsonResponse({"error": "Address not selected"}, status=400)
+        # 🔹 2. Address & User resolution
+        if request.user.is_authenticated:
+            order_user = request.user
+            if address_id:
+                try:
+                    address_obj = Address.objects.get(id=address_id, user=order_user)
+                except Address.DoesNotExist:
+                    return JsonResponse({"error": "Invalid address"}, status=404)
+            else:
+                addr_data = body.get("address_data", {})
+                clean_ph = ''.join(filter(str.isdigit, addr_data.get('mobile', '')))[-10:]
+                address_obj = Address.objects.create(
+                    user=order_user,
+                    first_name=addr_data.get('first_name', ''),
+                    last_name=addr_data.get('last_name', ''),
+                    mobile=clean_ph,
+                    address=addr_data.get('address', ''),
+                    address_2=addr_data.get('address_2', ''),
+                    city=addr_data.get('city', ''),
+                    state=addr_data.get('state', ''),
+                    pincode=addr_data.get('pincode', '')
+                )
+        else:
+            addr_data = body.get("address_data", {})
+            mobile = addr_data.get("mobile", "")
+            clean_ph = ''.join(filter(str.isdigit, mobile))[-10:]
+            if len(clean_ph) < 10 or not addr_data.get("address"):
+                return JsonResponse({"error": "Please provide your mobile number and delivery address"}, status=400)
+            
+            username = f"user_{clean_ph}"
+            order_user = User.objects.filter(username=username).first()
+            if not order_user:
+                order_user = User.objects.filter(email=f"{clean_ph}@vilio.shop").first()
+            if not order_user:
+                order_user = User.objects.create_user(
+                    username=username,
+                    first_name=addr_data.get('first_name', ''),
+                    last_name=addr_data.get('last_name', ''),
+                    email=addr_data.get('email') or f"{clean_ph}@vilio.shop"
+                )
+                order_user.set_unusable_password()
+                order_user.save()
+            
+            address_obj = Address.objects.create(
+                user=order_user,
+                first_name=addr_data.get('first_name', ''),
+                last_name=addr_data.get('last_name', ''),
+                mobile=clean_ph,
+                address=addr_data.get('address', ''),
+                address_2=addr_data.get('address_2', ''),
+                city=addr_data.get('city', ''),
+                state=addr_data.get('state', ''),
+                pincode=addr_data.get('pincode', '')
+            )
+            login(request, order_user, backend='django.contrib.auth.backends.ModelBackend')
 
-        # 🔹 2. Address fetch
-        try:
-            address_obj = Address.objects.get(id=address_id, user=request.user)
-        except Address.DoesNotExist:
-            return JsonResponse({"error": "Invalid address"}, status=404)
+        # 🔹 3. Cart items fetch (DB vs Guest Cart)
+        cart = Cart.objects.filter(user=order_user).first()
+        cart_items_data = []
+        if cart and cart.items.exists():
+            for item in cart.items.all():
+                cart_items_data.append({
+                    'product': item.product,
+                    'color': item.color,
+                    'size': item.size,
+                    'quantity': item.quantity
+                })
+        else:
+            guest_cart = request.session.get('guest_cart', [])
+            pids = [int(g.get('product_id')) for g in guest_cart if g.get('product_id')]
+            prods = {p.id: p for p in Product.objects.filter(id__in=pids, is_active=True)}
+            for g_item in guest_cart:
+                p = prods.get(int(g_item.get('product_id')))
+                if p:
+                    cart_items_data.append({
+                        'product': p,
+                        'color': g_item.get('color', 'Default'),
+                        'size': g_item.get('size', 'S'),
+                        'quantity': max(1, int(g_item.get('quantity', 1)))
+                    })
 
-        # 🔹 3. Cart fetch
-        cart = Cart.objects.filter(user=request.user).first()
-        if not cart or not cart.items.exists():
+        if not cart_items_data:
             return JsonResponse({"error": "Cart is empty"}, status=400)
 
         # --- 🟢 CRITICAL CHANGE: STOCK VALIDATION BEFORE RAZORPAY ---
-        for item in cart.items.all():
+        for item in cart_items_data:
+            prod = item['product']
             try:
-                if item.product.has_variants:
-                    color_obj = ProductColor.objects.get(product=item.product, color_name=item.color)
-                    stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item.size)
+                if prod.has_variants:
+                    color_obj = ProductColor.objects.get(product=prod, color_name=item['color'])
+                    stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name=item['size'])
                 else:
-                    stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
+                    stock_obj = SimpleProductSizeStock.objects.get(product=prod, size_name=item['size'])
                 
-                if stock_obj.stock < item.quantity:
+                if stock_obj.stock < item['quantity']:
                     return JsonResponse({
-                        "error": f"Sorry, {item.product.name} ({item.size}) abhi out of stock ho gaya hai!"
+                        "error": f"Sorry, {prod.name} ({item['size']}) is out of stock!"
                     }, status=400)
             except Exception:
-                return JsonResponse({"error": f"Stock check failed for {item.product.name}"}, status=400)
-        # --- END OF STOCK VALIDATION ---
+                return JsonResponse({"error": f"Stock check failed for {prod.name}"}, status=400)
 
         # 🔹 4. Total calculate
-        total_amount = sum(item.product.current_price * item.quantity for item in cart.items.all())
+        total_amount = sum(item['product'].current_price * item['quantity'] for item in cart_items_data)
         amount_in_paise = int(total_amount * 100)
 
         # 🔹 5. Duplicate pending order delete
         Order.objects.filter(
-            user=request.user,
+            user=order_user,
             payment_method="ONLINE",
             payment_status="Pending",
             status="Pending"  
@@ -1915,7 +2157,7 @@ def create_razorpay_order(request):
         data = {
             "amount": amount_in_paise,
             "currency": "INR",
-            "receipt": f"receipt_user_{request.user.id}_{random.randint(1000,9999)}"
+            "receipt": f"receipt_user_{order_user.id}_{random.randint(1000,9999)}"
         }
 
         razorpay_order = client.order.create(data=data)
@@ -1925,7 +2167,7 @@ def create_razorpay_order(request):
 
         # 🔥 8. Order create (Pending)
         order = Order.objects.create(
-            user=request.user,
+            user=order_user,
             address=full_address,
             total_amount=total_amount,
             status="Pending",
@@ -1934,21 +2176,22 @@ def create_razorpay_order(request):
             razorpay_order_id=razorpay_order['id']
         )
 
-        # 🔥 9. Cart snapshot → OrderItem (Tumhare purane flow ke hisaab se)
-        for item in cart.items.all():
+        # 🔥 9. Cart snapshot → OrderItem
+        for item in cart_items_data:
             OrderItem.objects.create(
                 order=order,
-                product=item.product,
-                color=item.color,
-                size=item.size,
-                quantity=item.quantity,
-                price=item.product.current_price
+                product=item['product'],
+                color=item['color'],
+                size=item['size'],
+                quantity=item['quantity'],
+                price=item['product'].current_price
             )
 
         return JsonResponse({
             "order_id": razorpay_order['id'],
             "amount": amount_in_paise,
-            "key_id": settings.RAZORPAY_KEY_ID
+            "key_id": settings.RAZORPAY_KEY_ID,
+            "address_id": address_obj.id
         })
 
     except Exception as e:
@@ -1957,7 +2200,6 @@ def create_razorpay_order(request):
 @csrf_exempt
 def razorpay_webhook(request):
     if request.method == "POST":
-        # Render/Gunicorn request body ko bytes mein hi rakhta hai
         payload = request.body 
         signature = request.headers.get('X-Razorpay-Signature')
         secret = settings.RAZORPAY_WEBHOOK_SECRET
@@ -1969,21 +2211,13 @@ def razorpay_webhook(request):
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
         try:
-            # ✅ Sabse safe tareeka: 
-            # Pehle bytes mein verify karo, agar wo "encoding" error de 
-            # toh use string mein convert karke try karo.
             try:
                 client.utility.verify_webhook_signature(payload, signature, secret)
             except Exception:
-                # Agar bytes fail ho, toh string (utf-8) try karo
                 client.utility.verify_webhook_signature(payload.decode('utf-8'), signature, secret)
             
-            # Data parse karne ke liye hamesha decode zaroori hai
             data = json.loads(payload.decode('utf-8'))
-            
-            # Tumhara baaki logic...
             if data.get("event") == "payment.captured":
-                # ... order update code ...
                 pass
 
             return HttpResponse(status=200)
@@ -1995,7 +2229,7 @@ def razorpay_webhook(request):
     return HttpResponse(status=400)
 
 @csrf_exempt
-@transaction.atomic  # Sabse zaroori: Data consistency bani rahegi
+@transaction.atomic
 def verify_payment(request):
     if request.method == "POST":
         params_dict = {
@@ -2013,8 +2247,7 @@ def verify_payment(request):
             # 2. Order fetch karo
             order = Order.objects.get(razorpay_order_id=params_dict['razorpay_order_id'])
             
-            # --- 🟢 STEP 1: STOCK VALIDATION (Final Check before confirming) ---
-            # Hum OrderItems se check karenge jo create_razorpay_order ne banaye the
+            # --- 🟢 STEP 1: STOCK VALIDATION ---
             order_items = order.items.all()
             stock_to_update = []
 
@@ -2027,7 +2260,6 @@ def verify_payment(request):
                         stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name=item.size)
                     
                     if stock_obj.stock < item.quantity:
-                        # Rare case: Payment window ke beech stock khatam ho gaya
                         order.status = "Failed"
                         order.payment_status = "Refund Needed"
                         order.save()
@@ -2041,10 +2273,14 @@ def verify_payment(request):
                     return JsonResponse({"status": "Failure", "error": "Stock check error during verification."})
 
             # --- 🟢 STEP 2: ORDER & ADDRESS UPDATE ---
-            address = Address.objects.get(id=address_id, user=order.user)
-            full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+            if address_id:
+                try:
+                    address = Address.objects.get(id=address_id, user=order.user)
+                    full_address = f"{address.first_name} {address.last_name}, {address.mobile}, {address.address}, {address.city}, {address.state} - {address.pincode}"
+                    order.address = full_address
+                except Address.DoesNotExist:
+                    pass
 
-            order.address = full_address
             order.payment_status = "Paid"
             order.razorpay_payment_id = params_dict['razorpay_payment_id']
             order.razorpay_signature = params_dict['razorpay_signature']
@@ -2056,25 +2292,33 @@ def verify_payment(request):
                 stock_obj.stock -= quantity
                 stock_obj.save()
 
-            # 4. Cart saaf karo (Kyunki order confirm ho gaya hai)
-            cart = Cart.objects.get(user=order.user)
-            cart.items.all().delete()
+            # 4. Cart saaf karo
+            cart = Cart.objects.filter(user=order.user).first()
+            if cart:
+                cart.items.all().delete()
+            request.session.pop('guest_cart', None)
+            request.session['last_order_id'] = order.id
+            request.session.modified = True
+
+            # 5. 🚀 Trigger Meta Conversions API (CAPI) Server-Side Purchase Event
+            try:
+                from .meta_capi import send_meta_capi_purchase
+                send_meta_capi_purchase(request, order)
+            except Exception as e:
+                print(f"Meta CAPI trigger error on verify_payment: {e}")
 
             messages.success(request, "Order placed successfully!")
 
             return JsonResponse({
-    "status": "Success",
-    "redirect_url": reverse(
-        "order_success",
-        args=[order.id]
-    )
-})
+                "status": "Success",
+                "redirect_url": reverse("order_success", args=[order.id])
+            })
 
         except Exception as e:
-            # Agar signature mismatch ya koi aur technical error aaye
             return JsonResponse({"status": "Failure", "error": str(e)})
 
     return JsonResponse({"status": "Invalid Request"}, status=400)
+
 
 
 @login_required

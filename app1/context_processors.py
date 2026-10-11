@@ -2,7 +2,16 @@ from django.core.cache import cache
 from .models import Cart, CartItem, Category
 from django.db.models import Sum
 
+from django.conf import settings
+
 def cart_count_processor(request):
+    # Capture Meta Ad fbclid for ad attribution & CAPI
+    if hasattr(request, 'GET') and 'fbclid' in request.GET:
+        try:
+            request.session['fbclid'] = request.GET['fbclid']
+        except Exception:
+            pass
+
     count = 0
     if request.user.is_authenticated:
         if request.session.get('guest_cart') or request.session.get('cart') or request.session.get('buy_now_product'):
@@ -23,7 +32,11 @@ def cart_count_processor(request):
         else:
             count = 0
         
-    return {'global_cart_count': count}
+    return {
+        'global_cart_count': count,
+        'META_PIXEL_ID': getattr(settings, 'META_PIXEL_ID', '27446769361621989')
+    }
+
 
 
 def menu_categories(request):

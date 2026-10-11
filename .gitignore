@@ -48,6 +48,8 @@ scripts/restore_*.py
 /*.png
 /temp_p55_inspect/
 /flawless_chevron_v2/
-/production_ready_chevron/
 /test_full_collection/
-/test_perfect_render/
+/test_perfect_render/
+/test_inspect/
+/test_preview/
+

@@ -290,3 +290,9 @@ INTERNAL_IPS = [
     "127.0.0.1",
     "localhost",
 ]
+
+# ==========================================
+# META ADS TRACKING (PIXEL & CONVERSIONS API)
+# ==========================================
+META_PIXEL_ID = os.getenv('META_PIXEL_ID', '27446769361621989')
+META_ACCESS_TOKEN = os.getenv('META_ACCESS_TOKEN', '')

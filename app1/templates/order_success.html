@@ -217,6 +217,7 @@
 </div>
 
 <script>
+// 1. Google Ads Conversion Tracking
 if (typeof gtag === 'function') {
     gtag('event', 'conversion', {
           'send_to': 'AW-18260900548/gYjaCKer88McEMT1vINE',
@@ -225,13 +226,32 @@ if (typeof gtag === 'function') {
           'transaction_id': '{{ order.id }}'
     });
 }
+
+// 2. Meta Pixel Purchase Tracking (With eventID for CAPI Deduplication & Max Match Quality)
 if (typeof fbq === 'function') {
     fbq('track', 'Purchase', {
-        value: {{ order.total_amount }},
+        value: Number('{{ order.total_amount }}'),
         currency: 'INR',
         content_type: 'product',
-        order_id: '{{ order.id }}'
+        contents: [
+            {% for item in order.items.all %}
+            {
+                id: '{{ item.product.id }}',
+                quantity: {{ item.quantity }},
+                item_price: {{ item.price }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        num_items: {{ order.items.count }}
+    }, {
+        eventID: 'order_{{ order.id }}'
     });
 }
 </script>
+
+<!-- Meta Pixel Fallback Noscript Image -->
+<noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=27446769361621989&ev=Purchase&cd[value]={{ order.total_amount }}&cd[currency]=INR&cd[content_type]=product&eid=order_{{ order.id }}&noscript=1"/>
+</noscript>
 {% endblock %}
