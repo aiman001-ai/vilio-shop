@@ -1252,12 +1252,34 @@ def checkout(request):
 
     # Saved address from cookie for guests
     saved_addr_cookie = None
+    default_first_name = ""
+    default_last_name = ""
+    default_mobile = ""
+    default_address = ""
+    default_address_2 = ""
+    default_pincode = ""
+    default_city = ""
+    default_state = ""
+
     try:
         cookie_raw = request.COOKIES.get('vilio_user_addr')
         if cookie_raw:
             saved_addr_cookie = json.loads(unquote(cookie_raw))
     except Exception:
         pass
+
+    if request.user.is_authenticated:
+        default_first_name = getattr(request.user, 'first_name', '') or ""
+        default_last_name = getattr(request.user, 'last_name', '') or ""
+    elif saved_addr_cookie and isinstance(saved_addr_cookie, dict):
+        default_first_name = saved_addr_cookie.get('first_name', '')
+        default_last_name = saved_addr_cookie.get('last_name', '')
+        default_mobile = saved_addr_cookie.get('mobile', '')
+        default_address = saved_addr_cookie.get('address', '')
+        default_address_2 = saved_addr_cookie.get('address_2', '')
+        default_pincode = saved_addr_cookie.get('pincode', '')
+        default_city = saved_addr_cookie.get('city', '')
+        default_state = saved_addr_cookie.get('state', '')
 
     context = {
         'cart_items': processed_cart_items,
@@ -1266,7 +1288,14 @@ def checkout(request):
         'razorpay_order_id': razorpay_order_id,
         'razorpay_key': settings.RAZORPAY_KEY_ID,
         'is_guest': not request.user.is_authenticated,
-        'saved_guest_addr': saved_addr_cookie or {}
+        'default_first_name': default_first_name,
+        'default_last_name': default_last_name,
+        'default_mobile': default_mobile,
+        'default_address': default_address,
+        'default_address_2': default_address_2,
+        'default_pincode': default_pincode,
+        'default_city': default_city,
+        'default_state': default_state,
     }
 
     response = render(request, 'place_order.html', context)

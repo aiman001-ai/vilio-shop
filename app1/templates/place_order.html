@@ -499,11 +499,11 @@
                         <div class="form-grid-2col">
                             <div class="addr-field-group">
                                 <label for="addr_first_name">First Name *</label>
-                                <input type="text" name="first_name" id="addr_first_name" placeholder="e.g. Rahul" value="{{ saved_guest_addr.first_name|default:user.first_name|default:'' }}">
+                                <input type="text" name="first_name" id="addr_first_name" placeholder="e.g. Rahul" value="{{ default_first_name|default:'' }}">
                             </div>
                             <div class="addr-field-group">
                                 <label for="addr_last_name">Last Name</label>
-                                <input type="text" name="last_name" id="addr_last_name" placeholder="e.g. Sharma" value="{{ saved_guest_addr.last_name|default:user.last_name|default:'' }}">
+                                <input type="text" name="last_name" id="addr_last_name" placeholder="e.g. Sharma" value="{{ default_last_name|default:'' }}">
                             </div>
                         </div>
 
@@ -511,32 +511,32 @@
                             <label for="addr_mobile">Mobile Number (For Courier Updates) *</label>
                             <div class="phone-prefix-wrap">
                                 <span class="phone-prefix-badge">+91</span>
-                                <input type="tel" name="mobile" id="addr_mobile" placeholder="10-digit mobile number" maxlength="10" value="{{ saved_guest_addr.mobile|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                <input type="tel" name="mobile" id="addr_mobile" placeholder="10-digit mobile number" maxlength="10" value="{{ default_mobile|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                             </div>
                         </div>
 
                         <div class="addr-field-group">
                             <label for="addr_street">Flat / House No. / Building / Street *</label>
-                            <input type="text" name="address" id="addr_street" placeholder="e.g. Flat 402, Royal Palms, MG Road" value="{{ saved_guest_addr.address|default:'' }}">
+                            <input type="text" name="address" id="addr_street" placeholder="e.g. Flat 402, Royal Palms, MG Road" value="{{ default_address|default:'' }}">
                         </div>
 
                         <div class="addr-field-group">
                             <label for="addr_landmark">Landmark / Colony (Optional)</label>
-                            <input type="text" name="address_2" id="addr_landmark" placeholder="e.g. Near City Hospital" value="{{ saved_guest_addr.address_2|default:'' }}">
+                            <input type="text" name="address_2" id="addr_landmark" placeholder="e.g. Near City Hospital" value="{{ default_address_2|default:'' }}">
                         </div>
 
                         <div class="form-grid-3col">
                             <div class="addr-field-group">
                                 <label for="addr_pincode">Pincode *</label>
-                                <input type="text" name="pincode" id="addr_pincode" placeholder="6 Digits" maxlength="6" value="{{ saved_guest_addr.pincode|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                <input type="text" name="pincode" id="addr_pincode" placeholder="6 Digits" maxlength="6" value="{{ default_pincode|default:'' }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                             </div>
                             <div class="addr-field-group">
                                 <label for="addr_city">City *</label>
-                                <input type="text" name="city" id="addr_city" placeholder="e.g. Mumbai" value="{{ saved_guest_addr.city|default:'' }}">
+                                <input type="text" name="city" id="addr_city" placeholder="e.g. Mumbai" value="{{ default_city|default:'' }}">
                             </div>
                             <div class="addr-field-group">
                                 <label for="addr_state">State *</label>
-                                <input type="text" name="state" id="addr_state" placeholder="e.g. Maharashtra" value="{{ saved_guest_addr.state|default:'' }}">
+                                <input type="text" name="state" id="addr_state" placeholder="e.g. Maharashtra" value="{{ default_state|default:'' }}">
                             </div>
                         </div>
                     </div>
