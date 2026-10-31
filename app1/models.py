@@ -141,8 +141,8 @@ class Product(models.Model):
     @property
     def next_offer_change_time(self):
         """
-        Offer chahe ON ho ya OFF, agla transition kab hoga — wo hamesha deta hai.
-        Isse frontend hamesha next flip ka time jaanta hai, reload ki zaroorat nahi.
+        Returns the timestamp of the next promotional cycle transition.
+        Enables frontend components to display accurate countdowns without page refreshes.
         """
         if not self.offer_enabled or not self.offer_started_at or self.original_price <= self.price:
             return None
@@ -155,9 +155,9 @@ class Product(models.Model):
         current_position = elapsed_seconds % cycle_seconds
 
         if current_position < on_seconds:
-            remaining = on_seconds - current_position   # ON hai -> OFF hone tak
+            remaining = on_seconds - current_position
         else:
-            remaining = cycle_seconds - current_position # OFF hai -> ON hone tak
+            remaining = cycle_seconds - current_position
 
         return now + timedelta(seconds=remaining)    
             
@@ -165,17 +165,17 @@ class Product(models.Model):
     @property
     def current_price(self):
         if self.offer_active:
-            return self.price      # Offer mein: discounted price
+            return self.price
         return self.original_price 
 
     @property
     def google_price(self):
-        """Google Merchant ke liye hamesha consistent price"""
-        return self.original_price  # Regular selling price
+        """Standard catalog selling price for Google Merchant Center feed."""
+        return self.original_price
 
     @property
     def google_sale_price(self):
-        """Offer active ho toh sale price, warna None"""
+        """Promotional sale price for Google Merchant Center feed when offer is active."""
         if self.offer_active:
             return self.price
         return None
@@ -293,7 +293,7 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, default="Pending") 
     razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
     razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
-    razorpay_signature = models.CharField(max_length=300, null=True, blank=True)  # ← YE ADD KARO
+    razorpay_signature = models.CharField(max_length=300, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

@@ -4,6 +4,7 @@ Django settings for myproject project.
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
@@ -58,7 +59,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # ======================
 
 INSTALLED_APPS = [
-    'cloudinary_storage',  # Sabse upar zaroori hai
+    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -119,28 +120,35 @@ TEMPLATES = [
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # ==========================================
-# DATABASE - NEON POSTGRES
+# DATABASE - SUPABASE POSTGRESQL
 # ==========================================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.esqnwszpvbnozqtgckyj',
-        'PASSWORD': 'g9ML7v$-d.wX?8t',  # Special characters bina kisi dikkat ke chalenge
-        'HOST': 'aws-1-ap-south-1.pooler.supabase.com',  # Naya validated host
-        'PORT': '6543',
+        'NAME': os.getenv('DATABASE_NAME', 'postgres'),
+        'USER': os.getenv('DATABASE_USER', 'postgres.esqnwszpvbnozqtgckyj'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'g9ML7v$-d.wX?8t'),
+        'HOST': os.getenv('DATABASE_HOST', 'aws-1-ap-south-1.pooler.supabase.com'),
+        'PORT': os.getenv('DATABASE_PORT', '6543'),
         'OPTIONS': {
             'sslmode': 'require',
         },
-        'CONN_MAX_AGE': 600,  # 🚀 Persistent connection pooling avoids re-connecting on every page
+        'CONN_MAX_AGE': 600,
     }
 }
+
+# Fast in-memory database for local test runs
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 
 # =========================
 # STORAGE & MEDIA CONFIG
 # =========================
-
-
 
 # Static and Media URLs
 STATIC_URL = '/static/'
@@ -157,16 +165,15 @@ STATICFILES_DIRS = [
 # STORAGE CONFIGURATION (Django 5.1 & Cloudinary)
 # ==========================================
 
-# WhiteNoise settings (Missing files par crash nahi karega)
+# WhiteNoise settings
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
-# Niche wali line ko change karke simple kar do (Bina compression ke)
-# 1. Pehle variables define karo (Inhe STORAGES ke upar hona chahiye)
+
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', 'iftjznoq')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '279582544763469')
-CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'KrTpyDKhg88jFySMC-NdbbVaU7I') # <--- Apni secret key yahan string mein daal de local testing ke liye
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'KrTpyDKhg88jFySMC-NdbbVaU7I')
 
-# 2. Base Configuration
+# Base Configuration
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=CLOUDINARY_API_KEY,
@@ -174,7 +181,6 @@ cloudinary.config(
     secure=True
 )
 
-# 3. Ab STORAGES block aayega (Ab ye crash nahi karega)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -184,7 +190,7 @@ STORAGES = {
             "API_SECRET": CLOUDINARY_API_SECRET,
             "QUALITY": "auto:eco",       
             "FETCH_FORMAT": "auto",    
-            "USE_FILENAME": True,       # 🚀 Version number ke jhanjhat ko बाईपास karega
+            "USE_FILENAME": True,
             "UNIQUE_FILENAME": False,
         }
     },
@@ -193,14 +199,14 @@ STORAGES = {
     },
 }
 
-# 4. Old compatibility config (Isko bhi niche rehne do)
+# Cloudinary fallback configuration
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
     'API_KEY': CLOUDINARY_API_KEY,
     'API_SECRET': CLOUDINARY_API_SECRET,
 }
 
-# Legacy support (Sirf compatibility ke liye, agar koi purani library ise dhoonde)
+# Legacy support
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
@@ -259,12 +265,10 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-load_dotenv() # Ye line .env file se saari keys load kar degi
+load_dotenv()
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
-
-# ✅ Webhook Secret (yahi add karna hai)
 RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
 
 # Email Config
@@ -272,12 +276,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'aiman7417@gmail.com'
-EMAIL_HOST_PASSWORD = 'rhun pqyy uqwd onzq'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'aiman7417@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'rhun pqyy uqwd onzq')
 DEFAULT_FROM_EMAIL = f"Vilio Store <{EMAIL_HOST_USER}>"
 
-
-# settings.py ke bilkul last mein paste karein
+# In-memory Cache Configuration
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

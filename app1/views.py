@@ -16,19 +16,16 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.http import HttpResponse
-# In dono lines ko dhyan se dekhein, ye alag-alag aayengi
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt  # Sahi import yahan hai
-from .models import SimpleProductSizeStock, ColorSizeStock
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import F, Sum, Q
 from django.utils import timezone
 
-# Models में से razorpay हटा दिया गया है क्योंकि वो मॉडल नहीं है
 from .models import (
     Address, Profile, Product, Cart, CartItem, 
-    Order, OrderItem, ProductColor, ColorSizeStock, Category, SubCategory, ProductType, Blog, Lead, Banner, CustomerReview
+    Order, OrderItem, ProductColor, ColorSizeStock, SimpleProductSizeStock,
+    Category, SubCategory, ProductType, Blog, Lead, Banner, CustomerReview
 )
 
 # ================= HOME =================
@@ -159,10 +156,7 @@ def post_login_redirect(request):
     # Ensure guest cart items are merged into user's DB cart first
     merge_cart(request)
 
-    # ==========================================================
-    # 📦 LAYER 1: PURE SESSION CHECK (Sabse safe aur tez)
-    # ==========================================================
-    # Google login ke baad agar session intact hai, toh pehle yahan se uthao
+    # 1. Primary Session State Check
     product_id = request.session.pop('buy_now_product', None)
     if product_id:
         color = request.session.pop('buy_now_color', 'Default')
@@ -170,7 +164,7 @@ def post_login_redirect(request):
         add_product_to_cart(request, product_id, color=color, size=size)
         return redirect('cart')
 
-    # Add to Bag wala pending check bhi session se pehle kar lo
+    # Pending Cart Item Resolution
     pending_product = request.session.pop('pending_cart_product', None)
     if pending_product:
         p_color = request.session.pop('pending_color', 'Default')
@@ -178,16 +172,11 @@ def post_login_redirect(request):
         add_product_to_cart(request, pending_product, color=p_color, size=p_size)
         return redirect('cart')
 
-    # ==========================================================
-    # 🚀 LAYER 2: DOUBLE-DECODING RAW URL TEXT SCANNING (Google Auth ke liye)
-    # ==========================================================
-    # Agar Allauth ne URL ko ghumaya hai, toh full path ko decode karke check karo
+    # 2. OAuth Callback Parameter Inspection
     full_path = request.get_full_path()
-    
-    # Do baar unquote chalayenge taaki %252F ya %2F fully decode hokar "/" aur "?" ban jayein
     decoded_path = unquote(unquote(full_path))
 
-    # Tarika A: Agar URL string me 'buy_now_product' param dikha
+    # Match buy_now_product query parameter
     if 'buy_now_product=' in decoded_path:
         try:
             parts = decoded_path.split('buy_now_product=')
@@ -206,7 +195,7 @@ def post_login_redirect(request):
         except:
             pass
 
-    # Tarika B: Agar aapka purana '/shop-now/5/' format string me dikha
+    # Match legacy /shop-now/ path segment
     if 'shop-now' in decoded_path:
         try:
             parts = decoded_path.split('shop-now/')
@@ -225,13 +214,10 @@ def post_login_redirect(request):
         except:
             pass
 
-    # ==========================================================
-    # 🔍 LAYER 3: AAPKA PURANA URL PARSING LOGIC (Slightly Improved)
-    # ==========================================================
+    # 3. Next Parameter Redirection
     next_url = request.GET.get('next') or request.POST.get('next')
     
     if next_url:
-        # Puraani parsing ko safely decode karke chalao
         decoded_next = unquote(unquote(next_url))
         parsed_url = urlparse(decoded_next)
         path_parts = parsed_url.path.strip('/').split('/')
@@ -251,14 +237,12 @@ def post_login_redirect(request):
         
         return redirect(next_url)
 
-    # ==========================================================
-    # 🛡️ DEFAULT FALLBACK
-    # ==========================================================
+    # Default fallback
     redirect_to = request.session.pop('after_login_redirect', None)
     if redirect_to == 'cart':
         return redirect('cart')
         
-    return redirect('cart')  # Kuch samajh na aaye toh login ke baad cart dikhao
+    return redirect('cart')
 
 def merge_cart(request):
     """
@@ -1113,18 +1097,16 @@ def product_detail(request, id):
             key=lambda s: size_sort_key(s.size_name)
         )
 
-    # ===== DEDUPLICATION: Gallery images se main image aur variant image hata do =====
+    # Deduplicate gallery images matching primary or variant previews
     seen_public_ids = set()
 
     if current_product.image:
         seen_public_ids.add(str(current_product.image))
 
-    # 🚀 SPEED FIX: Avoid DB hit from .first() by using cached_first_variant
     first_variant_obj = current_product.cached_first_variant if current_product.has_variants else None
     if first_variant_obj and first_variant_obj.color_image:
         seen_public_ids.add(str(first_variant_obj.color_image))
 
-    # Gallery mein sirf wo images rakho jo pehle se nahi dikhaayi
     clean_gallery = []
     for img in current_product.images.all():
         public_id = str(img.image)
@@ -1237,7 +1219,7 @@ def checkout(request):
         messages.error(request, "Your cart is empty")
         return redirect('cart')
 
-    # 3. Razorpay Order Create Karna
+    # 3. Initialize Razorpay Order
     razorpay_order_id = None
     try:
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -1482,7 +1464,7 @@ def place_order(request):
             price=item['product'].current_price
         )
     
-    # 4. Cart Saaf Karein
+    # 4. Clear active cart after successful order placement
     if db_cart:
         db_cart.items.all().delete()
     request.session.pop('guest_cart', None)
@@ -1544,7 +1526,7 @@ def order_success(request, order_id):
 def my_orders(request):
     orders = Order.objects.filter(user=request.user)\
                           .exclude(
-                              # Orphan orders hide karo: ONLINE + dono Pending = payment kabhi hua hi nahi
+                              # Exclude incomplete online checkout attempts
                               payment_method="ONLINE",
                               payment_status="Pending",
                               status="Pending"
@@ -1569,7 +1551,7 @@ def search(request):
     return render(request, 'search_results.html', {'products': products, 'query': query})
 
 def get_menu_data(request):
-    # यह डेटा हर पेज पर भेजने के लिए context processor में भी डाल सकते हैं
+    # Retrieve category hierarchy for navigation menus
     categories = Category.objects.prefetch_related('subcategories').all()
     return {'all_categories': categories}
 
@@ -1673,7 +1655,7 @@ def get_product_data(request, product_id):
             return SIZE_ORDER.index(name) if name in SIZE_ORDER else 999
 
         if color_variant:
-            # Sort karke sizes add karo
+            # Sort and populate available sizes according to standard ordering
             sorted_sizes = sorted(color_variant.sizes.all(), key=lambda s: size_sort_key(s.size_name))
             for s in sorted_sizes:
                 sizes.append({
@@ -1780,51 +1762,45 @@ def category_default(request, category_slug):
 def cancel_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # 1. Status Check (Sirf in status wale order cancel honge)
+    # 1. Status verification: only eligible statuses can be cancelled
     if order.status in ['Confirmed', 'Placed', 'Pending']:
-        # 2. Time Window Check (Jo aapne model me 5 min set kiya hai)
+        # 2. Time window check based on cancellation policy
         if order.can_cancel:
             order_items = OrderItem.objects.filter(order=order)
             
             for item in order_items:
                 try:
-                    # --- Universal Stock Restoration Logic ---
+                    # Universal stock restoration
                     if item.product.has_variants:
-                        # Case A: Variant Product ka stock wapas badhao
                         color_obj = ProductColor.objects.get(product=item.product, color_name__iexact=item.color.strip())
                         stock_obj = ColorSizeStock.objects.get(product_color=color_obj, size_name__iexact=item.size.strip())
                     else:
-                        # Case B: Simple Product ka stock wapas badhao (Jo pehle missing tha)
                         stock_obj = SimpleProductSizeStock.objects.get(product=item.product, size_name__iexact=item.size.strip())
                     
-                    # F expression use karne se race condition nahi aati
+                    # Atomic update via F expression
                     stock_obj.stock = F('stock') + item.quantity
                     stock_obj.save()
                     
                 except Exception as e:
-                    # Agar kisi wajah se stock restore na ho, toh error print ho par loop na ruke
-                    print(f"Cancel Restore Error for {item.product.name}: {e}")
+                    print(f"Stock restore error for {item.product.name}: {e}")
 
-            # 3. Order Status Update
+            # 3. Order status transition
             order.status = 'Cancelled'
             order.save()
             messages.success(request, "Order successfully cancelled.")
         else:
-            messages.error(request, "Cancellation time expired.")
+            messages.error(request, "Cancellation window has expired.")
     else:
         messages.error(request, "This order cannot be cancelled anymore.")
     
     return redirect('my_orders')
 
 
-# ===== ADD KARO: views.py mein kahi bhi (cancel_order ke paas rakho) =====
-
 @login_required
 @csrf_exempt
 def cancel_razorpay_order(request):
     """
-    Jab user Razorpay modal dismiss kare (cancel/back button),
-    tab frontend ye endpoint call karta hai taaki orphan pending order delete ho sake.
+    Cleans up pending orphan online orders when user dismisses the payment modal.
     """
     if request.method == "POST":
         try:
@@ -1832,8 +1808,6 @@ def cancel_razorpay_order(request):
             razorpay_order_id = body.get("razorpay_order_id")
             
             if razorpay_order_id:
-                # Sirf us specific order ko delete karo jo abhi bana tha
-                # Extra filters: sirf ONLINE + Pending + is user ka — galti se kuch aur na ude
                 deleted_count, _ = Order.objects.filter(
                     user=request.user,
                     razorpay_order_id=razorpay_order_id,
@@ -1842,14 +1816,12 @@ def cancel_razorpay_order(request):
                     status="Pending"
                 ).delete()
                 
-                print(f"Cleanup: {deleted_count} orphan order(s) deleted for user {request.user.id}")
-                return JsonResponse({"status": "cleaned"})
+                return JsonResponse({"status": "cleaned", "count": deleted_count})
             
             return JsonResponse({"status": "no_order_id"})
             
         except Exception as e:
-            print(f"Cleanup error: {e}")
-            return JsonResponse({"status": "error"}, status=500)
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
     
     return JsonResponse({"error": "invalid method"}, status=400)
 
@@ -1870,26 +1842,20 @@ def return_policy(request):
 # app1/views.py
 
 def cheapify_insider(request):
-    # हम discount_percentage फ़ील्ड को कैलकुलेट करेंगे: ((original_price - price) / original_price) * 100
-    # लेकिन आसान रास्ता ये है कि बस वो प्रोडक्ट्स दिखाएं जिनका original_price, actual price से ज्यादा है।
-    
     exclusive_deals = Product.objects.filter(
         original_price__gt=F('price'), 
         is_active=True
-    ).order_by('?')[:8] # '?' का मतलब है हर बार रैंडम प्रोडक्ट्स दिखेंगे
+    ).order_by('?')[:8]
     
     return render(request, 'insider.html', {'deals': exclusive_deals})  
 
-# app1/views.py
 def careers_page(request):
-    # हम कुछ डमी जॉब वैकेंसीज बना देते हैं जिन्हें आप बाद में बदल सकते हैं
     jobs = [
         {'title': 'Fashion Designer', 'location': 'Remote / Delhi', 'type': 'Full-time'},
         {'title': 'Social Media Manager', 'location': 'Mumbai', 'type': 'Internship'},
         {'title': 'Operations Lead', 'location': 'Bangalore', 'type': 'Full-time'},
     ]
     return render(request, 'careers.html', {'jobs': jobs})    
-
 
 def blog_list(request):
     blogs = Blog.objects.all().order_by('-created_at')
@@ -1899,16 +1865,13 @@ def blog_detail(request, slug):
     blog = Blog.objects.get(slug=slug)
     return render(request, 'blog_detail.html', {'blog': blog})    
 
-
 def sitemap_page(request):
     categories = Category.objects.all()
     return render(request, 'sitemap.html', {'categories': categories})   
 
-
 def corporate_info(request):
     return render(request, 'corporate_info.html')     
 
-# app1/views.py
 from django.contrib import messages
 
 def contact_us(request):
@@ -1918,7 +1881,6 @@ def contact_us(request):
         phone   = request.POST.get('phone', '').strip()
         message = request.POST.get('message', '').strip()
 
-        # Database mein save karo
         if name:
             Lead.objects.create(
                 name    = name,
@@ -1933,7 +1895,6 @@ def contact_us(request):
 
     return render(request, 'contact.html')  
 
-    # app1/views.py
 def faq_page(request):
     faqs = [
         {
@@ -1953,8 +1914,6 @@ def faq_page(request):
     ]
     return render(request, 'faq.html', {'faqs': faqs})
 
-
-# app1/views.py
 def terms_conditions(request):
     return render(request, 'terms.html')
 
@@ -1963,19 +1922,15 @@ def terms_of_use(request):
 
 @login_required
 def track_orders(request):
-    # यूजर के सारे ऑर्डर्स उठाएं, नए ऑर्डर्स सबसे ऊपर
     user_orders = Order.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'my_orders.html', {'orders': user_orders})
 
-# app1/views.py
 def shipping_policy(request):
     return render(request, 'shipping.html')    
 
-# app1/views.py
 def return_policy(request):
     return render(request, 'returns.html')    
 
-# app1/views.py
 def privacy_policy(request):
     return render(request, 'privacy.html')    
 
@@ -1984,7 +1939,6 @@ def edit_address(request, id):
     address = get_object_or_404(Address, id=id, user=request.user)
     
     if request.method == 'POST':
-        # Data update karna
         address.first_name = request.POST.get('first_name')
         address.last_name = request.POST.get('last_name')
         address.mobile = request.POST.get('mobile')
@@ -1998,37 +1952,30 @@ def edit_address(request, id):
         messages.success(request, "Address updated successfully!")
         return redirect('my_addresses')
 
-    # GET request par wahi design wala page dikhao
     return render(request, 'edit_address.html', {'address': address})  
 
 @login_required
 def delete_address(request, id):
-    # Sirf wahi address delete ho jo usi user ka ho
     address = get_object_or_404(Address, id=id, user=request.user)
     address.delete()
     messages.success(request, "Address deleted successfully!")
     return redirect('my_addresses')    
 
-
 def send_admin_order_notification(order):
     try:
-        # Email ka Subject
-        subject = f"🚨 NAYA ORDER AAYA HAI - #{order.id}"
+        subject = f"New Order Received - #{order.id}"
         
-        # Order items ki list banana (Taki pata chale kya bika hai)
         items = order.items.all()
         item_details = ""
         for item in items:
-            item_details += f"- {item.product.name} (Qty: {item.quantity}) - ₹{item.price}\n"
+            item_details += f"- {item.product.name} (Qty: {item.quantity}) - Rs. {item.price}\n"
 
-        # Email ki Body
-        message = f"""
-Bhai, website par naya order receive hua hai!
+        message = f"""New order received on Vilio Store.
 
 --- ORDER SUMMARY ---
 Order ID: #{order.id}
 Customer: {order.user.get_full_name() or order.user.username}
-Total Amount: ₹{order.total_amount}
+Total Amount: Rs. {order.total_amount}
 Payment Mode: {order.payment_method}
 
 --- ITEMS ---
@@ -2036,13 +1983,8 @@ Payment Mode: {order.payment_method}
 
 --- SHIPPING ADDRESS ---
 {order.address}
-
-Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
-        """
-
-        # Kisko bhejna hai? (Settings mein jo email hai usi par)
+"""
         admin_email = settings.EMAIL_HOST_USER
-        
         send_mail(
             subject,
             message,
@@ -2050,12 +1992,10 @@ Jaldi se Admin Panel check karo aur Shiprocket CSV nikaalo!
             [admin_email],
             fail_silently=True,
         )
-        print("Notification sent to Admin!")
     except Exception as e:
-        print(f"Mail bhejte waqt error aaya: {e}")    
+        print(f"Error sending order notification email: {e}")
 
-
-# Client initialize karein
+# Initialize Razorpay Client
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 @csrf_exempt
@@ -2270,13 +2210,13 @@ def verify_payment(request):
         address_id = request.POST.get('address_id')
 
         try:
-            # 1. Signature Verify Karo (Security Check)
+            # 1. Verify Payment Signature
             client.utility.verify_payment_signature(params_dict)
 
-            # 2. Order fetch karo
+            # 2. Retrieve Matching Order
             order = Order.objects.get(razorpay_order_id=params_dict['razorpay_order_id'])
             
-            # --- 🟢 STEP 1: STOCK VALIDATION ---
+            # --- 1. Stock Validation ---
             order_items = order.items.all()
             stock_to_update = []
 
@@ -2301,7 +2241,7 @@ def verify_payment(request):
                 except Exception:
                     return JsonResponse({"status": "Failure", "error": "Stock check error during verification."})
 
-            # --- 🟢 STEP 2: ORDER & ADDRESS UPDATE ---
+            # --- 2. Order & Address Update ---
             if address_id:
                 try:
                     address = Address.objects.get(id=address_id, user=order.user)
@@ -2316,12 +2256,12 @@ def verify_payment(request):
             order.status = "Confirmed"
             order.save()
 
-            # --- 🟢 STEP 3: STOCK ACTUAL REDUCE ---
+            # --- 3. Decrement Inventory ---
             for stock_obj, quantity in stock_to_update:
                 stock_obj.stock -= quantity
                 stock_obj.save()
 
-            # 4. Cart saaf karo
+            # 4. Clear Cart
             cart = Cart.objects.filter(user=order.user).first()
             if cart:
                 cart.items.all().delete()
@@ -2357,7 +2297,7 @@ def initiate_payment(request):
     total_amount = sum(item.product.price * item.quantity for item in cart.items.all())
     amount_in_paise = int(total_amount * 100)
 
-    # 1. Razorpay Order Create karna
+    # 1. Initialize Razorpay order payload
     data = {
         "amount": amount_in_paise,
         "currency": "INR",
@@ -2375,9 +2315,8 @@ def initiate_payment(request):
 
 def product_feed_json(request):
     """
-    Google Merchant Center ke liye TSV (Tab-Separated) feed
+    Generates a TSV feed for Google Merchant Center catalog integration.
     URL: /product-feed/
-    Google ye format expect karta hai — JSON nahi
     """
     from django.http import HttpResponse
 
@@ -2385,7 +2324,7 @@ def product_feed_json(request):
         'category', 'sub_category'
     )
 
-    # Google Merchant required headers — exact spelling zaroori hai
+    # Standard Google Merchant Center required header schema
     headers = [
         "id", "title", "description", "link", "image_link",
         "availability", "price", "sale_price", "sale_price_effective_date",
@@ -2398,7 +2337,7 @@ def product_feed_json(request):
         image_url = p.image.url if p.image else ""
         product_link = request.build_absolute_uri(f"/product/{p.id}/")
 
-        # Description se tabs/newlines hatao (TSV format break na ho)
+        # Sanitize text to avoid breaking TSV delimiter structure
         clean_title = (p.name or "").replace("\t", " ").replace("\n", " ")
         clean_desc = (p.description or p.name or "").replace("\t", " ").replace("\n", " ")
 
@@ -2409,22 +2348,22 @@ def product_feed_json(request):
             product_link,
             image_url,
             "in stock",
-            f"{p.original_price} INR",   # Regular price hamesha consistent
+            f"{p.original_price} INR",
         ]
 
-        # Sale price sirf offer active hone par
+        # Promotional pricing when offer is active
         if p.offer_active and p.current_offer_end_time:
             row.append(f"{p.price} INR")
             start_date = timezone.now().strftime('%Y-%m-%d')
             end_date = p.current_offer_end_time.strftime('%Y-%m-%dT%H:%M:%S+05:30')
             row.append(f"{start_date}T00:00:00+05:30/{end_date}")
         else:
-            row.append("")  # sale_price khaali
-            row.append("")  # sale_price_effective_date khaali
+            row.append("")
+            row.append("")
 
         row.append(p.brand or "Vilio")
         row.append("new")
-        row.append("")  # google_product_category khaali rakho abhi
+        row.append("")
 
         lines.append("\t".join(row))
 

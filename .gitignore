@@ -1,55 +1,39 @@
-# 1. Security (Sabse zaroori)
+# Environment & Security
 .env
+*.pem
+*.key
 
-# 2. Python/Django temporary files
+# Python Bytecode & Cache
 __pycache__/
-*.pyc
-db.sqlite3
+*.py[cod]
+*$py.class
 *.log
+*.sqlite3
+db.sqlite3
 
-# 3. Media aur Static (Local testing ka kachra)
+# Static & Media Asset Build Outputs
 media/
 staticfiles/
+static/
 
-# 4. Environments
+# Virtual Environments
 venv/
 env/
+ENV/
 .python
 
-# 5. OS specific files
+# OS Generated Files
 .DS_Store
 Thumbs.db
+*.tmp
 
-# 6. Scripts folder temporary test and scratch files
-scripts/archive_assets/
-scripts/*.json
-scripts/*.txt
-scripts/*.log
-scripts/analyze_*.py
-scripts/check_*.py
-scripts/inspect_*.py
-scripts/create_*.py
-scripts/download_*.py
-scripts/generate_*.py
-scripts/test_*.py
-scripts/detailed_*.py
-scripts/find_*.py
-scripts/list_*.py
-scripts/full_store_audit.py
-scripts/build_*.py
-scripts/refine_*.py
-scripts/restore_*.py
-
-# 7. Static
-/static/
-
-# 8. Temporary scratch images and test folders
-/*.jpg
-/*.png
-/temp_p55_inspect/
-/flawless_chevron_v2/
-/test_full_collection/
-/test_perfect_render/
-/test_inspect/
-/test_preview/
-
+# Local Development & Scratch Folders
+scripts/
+test_inspect/
+test_preview/
+temp_p55_inspect/
+flawless_chevron_v2/
+test_full_collection/
+test_perfect_render/
+*.mp4
+*.wav

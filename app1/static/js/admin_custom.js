@@ -4,11 +4,11 @@
         var hasVariants = $('#id_has_variants');
         function toggleFields() {
             if (hasVariants.is(':checked')) {
-                // Agar "Without Color" tick hai (Simple Product)
+                // Display simple product inventory fields when variants are disabled
                 $('.field-simple_sizes, .field-simple_stock').show();
                 $('#color_variants-group').hide();
             } else {
-                // Agar variants hain
+                // Display color variant formset when variants are enabled
                 $('.field-simple_sizes, .field-simple_stock').hide();
                 $('#color_variants-group').show();
             }

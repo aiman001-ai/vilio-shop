@@ -47,7 +47,7 @@
         },
         "modal": {
             "ondismiss": function(){
-                // 3. User cancel kare toh wapas checkout par
+                // Redirect back to checkout on modal dismiss
                 window.location.href = "/checkout/";
             }
         }
@@ -55,13 +55,13 @@
 
     var rzp1 = new Razorpay(options);
 
-    // Backup: Agar user button par click kare
+    // Fallback trigger if payment button is manually clicked
     document.getElementById('rzp-button1').onclick = function(e){
         rzp1.open();
         e.preventDefault();
     }
 
-    // Auto-Open: Jaise hi page load ho, popup khul jaye
+    // Automatically initialize payment modal on page load
     window.onload = function(){
         rzp1.open();
     };

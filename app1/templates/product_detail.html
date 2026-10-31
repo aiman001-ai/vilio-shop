@@ -2149,48 +2149,43 @@ function initImageSlider() {
     const dotsContainer = document.getElementById('sliderDots');
     if (!slider || !dotsContainer) return;
 
-    // ===== STEP 1: DUPLICATE SLIDES HATAO =====
-    // URL ke base path se compare karo — Cloudinary version/transformation ignore karo
+    // 1. Deduplicate slide images by unique asset key
     const seenKeys = new Set();
     Array.from(slider.querySelectorAll('.slide-img')).forEach(function(img) {
         const src = img.getAttribute('src') || '';
-        // /upload/v123456/folder/filename.jpg → folder/filename (key)
         const match = src.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\?.*)?$/);
-        const key = match ? match[1].split('.')[0] : src; // Extension bhi hata do
+        const key = match ? match[1].split('.')[0] : src;
         if (seenKeys.has(key)) {
-            img.remove(); // Duplicate — hata do
+            img.remove();
         } else {
             seenKeys.add(key);
         }
     });
 
-    // ===== STEP 2: NON-VARIANT PRODUCTS KE THUMBNAILS REBUILD KARO =====
-    // Variant products ke thumbs HTML mein hain (selectVariantViaThumb ke saath)
-    // Non-variant products ke gallery thumbs JS se dynamically banao
+    // 2. Synchronize gallery thumbnails
     const thumbRow = document.querySelector('.thumbnail-row');
 
-if (thumbRow) {
-    const cleanSlides = slider.querySelectorAll('.slide-img');
-    if (cleanSlides.length > 1) {
-        thumbRow.innerHTML = '';
-        cleanSlides.forEach(function(slide, idx) {
+    if (thumbRow) {
+        const cleanSlides = slider.querySelectorAll('.slide-img');
+        if (cleanSlides.length > 1) {
+            thumbRow.innerHTML = '';
+            cleanSlides.forEach(function(slide, idx) {
+                const th = document.createElement('img');
+                th.className = 'thumb' + (idx === 0 ? ' active' : '');
+                th.src = slide.getAttribute('src') || slide.src;
+                th.setAttribute('onclick', 'goToSlide(' + idx + ')');
+                thumbRow.appendChild(th);
+            });
+        } else if (cleanSlides.length === 1) {
+            thumbRow.innerHTML = '';
             const th = document.createElement('img');
-            th.className = 'thumb' + (idx === 0 ? ' active' : '');
-            th.src = slide.getAttribute('src') || slide.src;
-            th.setAttribute('onclick', 'goToSlide(' + idx + ')');
+            th.className = 'thumb active';
+            th.src = cleanSlides[0].getAttribute('src') || cleanSlides[0].src;
             thumbRow.appendChild(th);
-        });
-    } else if (cleanSlides.length === 1) {
-        // single image ho to bhi ek thumb dikhado
-        thumbRow.innerHTML = '';
-        const th = document.createElement('img');
-        th.className = 'thumb active';
-        th.src = cleanSlides[0].getAttribute('src') || cleanSlides[0].src;
-        thumbRow.appendChild(th);
+        }
     }
-}
 
-    // ===== STEP 3: DOTS AUR SCROLL SETUP (clean slides ke baad) =====
+    // 3. Carousel indicators setup
     const slides = slider.querySelectorAll('.slide-img');
     dotsContainer.innerHTML = '';
 
@@ -2366,7 +2361,7 @@ const saveBadgeEl     = document.getElementById('main-save-badge');
 const salePillEl      = document.getElementById('main-sale-badge-pill');
 const timerEl         = document.getElementById('offer-timer-detail');
 
-// Check karo kya product ka active discount hai
+// Check if promotional discount is active
 if (data.has_discount) {
 
     if (discountPriceEl)
@@ -2613,17 +2608,10 @@ function setupImageInteractions() {
     let startX = 0;
     let startY = 0;
 
-    // cloneNode hataya — expensive DOM rebuild avoid karo
-    // Event delegation use karo — sirf ek listener slider pe
     const slider = document.getElementById('imageSlider');
     if (!slider) return;
 
-    // Cursor set karo CSS se (JS se nahi)
     slider.style.cursor = 'zoom-in';
-
-    // Purane listeners hata ke naye lagao (slider pe, har image pe nahi)
-    const newSlider = slider.cloneNode(false); // Sirf element clone, children nahi
-    // Nahi — bas listeners directly lagao with { once: false } aur guard
 
     slider.addEventListener('touchstart', function(e) {
         startX = e.changedTouches[0].clientX;
@@ -2646,12 +2634,7 @@ function setupImageInteractions() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    // Fallback selection trigger if first-variant class wasn't manually set
-    // Auto-click hataya — server-side clean_gallery se deduplication ho chuki hai
-// Ab page load pe extra API call ki zaroorat nahi
-// Color items sirf manual click pe hi API call karenge
-const colorItems = document.querySelectorAll('.color-item-wrapper');
-// (kuch nahi karna — template se images aur sizes already sahi hain)
+    const colorItems = document.querySelectorAll('.color-item-wrapper');
 
     // Rating Badge Generator Logic
     document.querySelectorAll(".rating-badge").forEach(function(badge) {

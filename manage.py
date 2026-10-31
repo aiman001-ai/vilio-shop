@@ -4,7 +4,7 @@ import os
 import platform
 import sys
 
-# Fake values taaki Cloudinary/Platform bina crash hue pass ho jaye
+# Compatibility defaults for platform environment metadata
 os.environ['PROCESSOR_IDENTIFIER'] = 'Intel64 Family 6 Model 158 Stepping 10, GenuineIntel'
 os.environ['PROCESSOR_ARCHITECTURE'] = 'AMD64'
 

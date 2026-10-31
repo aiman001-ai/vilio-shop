@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import admin
 from django.urls import reverse, path
 from django.utils import timezone
-from django.utils.html import format_html  # <-- यह इम्पोर्ट करना ज़रूरी है
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
@@ -18,7 +18,7 @@ from .models import (
 )
 
 # --- Autocomplete Mandatory Registration Engine ---
-# In teeno models me search_fields hona compulsory hai kyunki ProductAdmin me autocomplete_fields use ho rha hai
+# Related models must define search_fields for ProductAdmin autocomplete integration
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
@@ -553,13 +553,13 @@ class ProductAdmin(admin.ModelAdmin):
             )
         }),
         ("Product Specifications (Admin Only)", {
-            'description': "Yahan Product ki Fabric, Fit aur washing instructions bharein.",
+            'description': "Fabric details, garment fit, and wash care instructions.",
             'fields': (
                 'fabric', 'fit', 'care_instructions', 'additional_info'
             )
         }),
         ("Product Variant Control", {
-            'description': "अगर इस प्रोडक्ट में कलर्स हैं, तो नीचे 'Product Colors' भरें। अगर कलर्स नहीं हैं, तो 'Does this product have Colors?' को अनटिक रखें और 'Simple Product Size Stocks' भरें।",
+            'description': "Enable variants for multi-color products; otherwise configure inventory via simple product size stocks.",
             'fields': ('has_variants',), 
         }),
     )
@@ -677,8 +677,8 @@ class CartItemAdmin(admin.ModelAdmin):
 admin.site.register(Cart)
 admin.site.register(Profile)
 
-# ===== ADDRESS ADMIN (Improved) =====
-# Pehle plain registration hatao
+# ===== ADDRESS ADMIN =====
+# Re-register Address with enhanced admin list displays
 admin.site.unregister(Address) if Address in [m.model for m in admin.site._registry.values()] else None
 
 @admin.register(Address)
@@ -707,8 +707,8 @@ class AddressAdmin(admin.ModelAdmin):
     submitted_at.short_description = 'Submitted At'
 
 
-# ===== USER ADMIN (Google Login + Normal dono dikhaye) =====
-# Pehle Django ka default User admin unregister karo
+# ===== CUSTOM USER ADMIN =====
+# Unregister default Django User admin to apply custom configuration
 try:
     admin.site.unregister(User)
 except admin.sites.NotRegistered:
@@ -728,14 +728,14 @@ class CustomUserAdmin(BaseUserAdmin):
     full_name.short_description = 'Name'
 
     def login_type(self, obj):
-        # Google se login kiya toh socialaccount hoga
+        # Identify users registered via Google OAuth
         try:
             from allauth.socialaccount.models import SocialAccount
             if SocialAccount.objects.filter(user=obj, provider='google').exists():
-                return '🟢 Google'
+                return 'Google'
         except ImportError:
             pass
-        return '🔵 Email'
+        return 'Email'
     login_type.short_description = 'Login Type'
 
     def has_address(self, obj):
